@@ -89,6 +89,9 @@ nativo. Para distribuir Android, configurar chave Google Maps restrita ao app,
 conforme https://docs.expo.dev/versions/v57.0.0/sdk/map-view/ . Não há chave
 embutida neste projeto. Testar no Expo Go compatível ou development build.
 
-A aba Criar rolê consulta sugestões existentes pelo mesmo critério da web. Ainda
-não salva roteiros nem calcula sequência, duração ou custo total de múltiplas
-paradas. O formulário Figma mais completo será o próximo incremento desse fluxo.
+A aba Criar rolê agora tem duas etapas e montagem manual de várias paradas.
+Data, participantes, orçamento total, ordem e duração estimada são considerados.
+O roteiro fica em memória nesta sessão. Consulte ../docs/roteiro-mobile.md.
+
+Testes de regras: pnpm test (Node 24). Ainda pendente: salvar na conta, preferências
+de ambientes, trajetos, horários reais e integração no aparelho.

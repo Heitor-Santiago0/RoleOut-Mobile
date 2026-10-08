@@ -29,7 +29,7 @@ fontes e assets não foram exportados em Dev Mode.
 
 O primeiro app terá introdução, login/cadastro, Explorar e detalhes. Marca recriada em texto e SVG, sem imagem de tela. Fotos do Figma não foram extraídas; não atribuir
 imagens, avaliações, preços ou endereços do protótipo a locais reais.
-Mapa nativo de proximidade e aba Criar rolê com filtros da web acrescentados. Avaliações, horários, onboarding persistido e roteiros com múltiplas paradas seguem pendentes.
+Mapa nativo de proximidade e aba Criar rolê com filtros da web acrescentados. Avaliações, horários, onboarding persistido e roteiros persistidos seguem pendentes. A montagem manual com múltiplas paradas e duas etapas foi acrescentada; detalhes em roteiro-mobile.md.
 
 O mock deve estar visivelmente identificado como demonstração e nunca servir
 como fallback silencioso quando a API falhar. Erros, carregamento, lista vazia e
