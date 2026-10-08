@@ -15,6 +15,7 @@ incrementos. Os rolês anteriores são dados de teste.
 - [API de consulta](docs/api-rest.md) e [OpenAPI](docs/openapi.yaml)
 - [Cadastro de organizações e locais](docs/cadastro-de-locais.md)
 - [Login, permissões e rascunhos](docs/login-e-rascunhos.md)
+- [Primeiro app mobile](mobile/README.md) e [referência Figma](docs/referencia-figma.md)
 
 Em bancos/volumes novos, Docker inicializa o esquema com V001/V002/V003. Em volumes
 existentes, é necessário comparar e aplicar a evolução do banco explicitamente;

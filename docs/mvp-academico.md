@@ -55,9 +55,11 @@ alta disponibilidade sem um problema medido que exija isso.
 
 ## Limitações atuais
 
-Ainda não existe app, painel de responsáveis ou aprovação administrativa.
+O primeiro app em `mobile/` já implementa introdução, login/cadastro, Explorar,
+detalhes e conta. A demonstração foi verificada no navegador; ainda não houve
+integração real API/aparelho. Não há painel de responsáveis ou aprovação administrativa.
 Há APIs de consulta, login e rascunhos. Os testes são H2 e servlets simulados,
 não testes reais MySQL/Tomcat nem garantia de capacidade sob carga.
 Login novo não protege automaticamente os controllers da web legada.
-As 12 imagens Figma mencionadas na conversa não estão disponíveis nesta cópia
-local; obter as imagens ou um link acessível antes de reproduzir o visual.
+O link Figma foi recebido e visualizado; observações em `referencia-figma.md`.
+Assets e tokens exatos não foram exportados.

@@ -1,0 +1,70 @@
+# RolêOut Mobile — primeiro fluxo
+
+App React Native + Expo + TypeScript, independente do WAR Java. Criado com o
+template oficial blank-typescript; Expo SDK 57 e dependências compatíveis,
+fixadas em `pnpm-lock.yaml`. Navegação por Expo Router em `src/app`. Referência visual: `../docs/referencia-figma.md`.
+
+Entregue: introdução, login/cadastro, Explorar com busca por cidade/categorias,
+paginação, detalhes, conta e logout. Estados de carregamento, lista vazia,
+erro de conexão e sessão inválida são separados. Na API real, nenhum dado fictício
+é retornado como fallback de falha.
+
+## Executar
+
+Com Node e pnpm disponíveis:
+
+```text
+cd mobile
+pnpm install --frozen-lockfile
+pnpm start
+```
+
+Abrir no Expo Go compatível com SDK 57 ou numa development build correspondente.
+O projeto ainda não foi testado num aparelho/emulador nem empacotado em APK/IPA.
+Para preview de interface no navegador: `pnpm web`. A prévia web não representa
+validação Android/iOS; API de outra origem exige CORS configurado no servidor.
+O backend atual não oferece CORS para essa prévia e não foi alterado para isso.
+
+## API real
+
+Copiar `.env.example` para `.env` e ajustar `EXPO_PUBLIC_API_URL`. Esse valor é
+público no bundle e deve conter apenas a URL; não colocar senhas ou tokens nele.
+
+- Emulador Android: `http://10.0.2.2:8080/RoleOut/api/v1`.
+- Aparelho: endereço acessível do servidor na mesma rede, não localhost do aparelho.
+- Produção: HTTPS obrigatório pelo cliente. HTTP é apenas para desenvolvimento
+  local. Builds nativas também precisam permitir a rede de desenvolvimento.
+
+O servidor deve usar V001/V002/V003, MySQL e Tomcat. Criar conta no app e fazer
+login com os mesmos campos da API Java. Senha: 12 a 128 caracteres.
+
+Token guardado com Expo SecureStore no Android/iOS, nunca com senha.
+Na prévia web, token fica somente em memória e some ao recarregar. Token é
+validado ao restaurar o app e ao abrir Conta. Logout revoga a sessão no servidor
+e remove o token local; em falha de rede, informa erro para permitir nova tentativa.
+Se o servidor já considera a sessão inválida, a saída remove o token local.
+Persistência segura no aparelho ainda precisa de teste real.
+
+## Demonstração
+
+Em execução de desenvolvimento, “Conhecer a demonstração” abre quatro registros
+fictícios, sem criar conta e sem chamar o banco. O aviso permanece visível na
+listagem e nos detalhes. O atalho não aparece em builds de produção.
+
+Fotos, mapa, avaliações e horários do Figma não foram simulados como informações
+reais. Os cartões usam blocos de categoria até haver imagens disponíveis na API.
+O login complementa o design; não foi identificada tela de login na faixa
+principal inspecionada. As cores são aproximações visuais, não tokens exportados.
+
+## Validação e próximos passos
+
+TypeScript e lint passaram (`pnpm typecheck`, `pnpm lint -- --max-warnings 0`). Exportação Android/iOS/web passou: `pnpm exec expo export --platform all` (bundles, não APK/IPA).
+Navegação verificada no navegador a 390×844: introdução -> login -> demonstração
+-> detalhes -> volta; filtros de música e cidade sem resultados; conta -> saída.
+
+Ainda pendentes: teste real API/Android/iOS, onboarding persistido, perfil completo,
+roteiros, painel dos responsáveis e aprovação administrativa. Backend e web
+continuam separados desta pasta; nenhum arquivo JSP foi substituído.
+
+Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
+e o Figma indicado em `../docs/referencia-figma.md`.
