@@ -1,4 +1,5 @@
 import { NearbyMap } from './NearbyMap';
+import { PreferenceHighlights } from './PreferenceHighlights';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { roles, type Role } from './api';
@@ -25,6 +26,7 @@ export function ExploreScreen({ demo, token, onSelect }: { demo: boolean; token?
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
       {['Todos', 'Cultura', 'Música', 'Gastronomia'].map(c => <Pressable key={c} accessibilityRole="button" accessibilityState={{ selected: c === category }} style={[s.chip, c === category && s.selected]} onPress={() => { if (c !== category) { setBusy(true); setError(''); setItems([]); setPage(0); setCategory(c); } }}><Text style={[s.chipText, c === category && s.selectedText]}>{c}</Text></Pressable>)}
     </ScrollView>
+    {!demo && token && <PreferenceHighlights key={token} token={token} items={items} onSelect={onSelect} />}
     <Text style={[s.text, { fontWeight: '700' }]}>Rolês para explorar</Text>
     {busy && <ActivityIndicator color={colors.blue} accessibilityLabel="Carregando rolês" />}<Message text={error} />
     {!!error && <Button title="Tentar novamente" onPress={() => { setBusy(true); setError(''); setRetry(v => v + 1); }} />}

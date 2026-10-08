@@ -64,9 +64,11 @@ Navegação verificada no navegador a 390×844: introdução -> login -> demonst
 -> detalhes -> volta; filtros de música e cidade sem resultados; conta -> saída.
 
 Preferências opcionais persistidas e editáveis na conta: `../docs/preferencias.md`.
+Explorar destaca até três afinidades por categoria nos resultados carregados e
+explica cada relação, mantendo filtros e a listagem completa.
 Roteiros com múltiplas paradas e persistência já estão implementados.
 Ainda pendentes: validação completa pelas telas e Android/iOS, perfil completo,
-uso das preferências nas recomendações, painel dos responsáveis e aprovação administrativa. Backend e web
+recomendações precisas com metadados dos locais, painel dos responsáveis e aprovação administrativa. Backend e web
 continuam separados desta pasta; nenhum arquivo JSP foi substituído.
 
 Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
