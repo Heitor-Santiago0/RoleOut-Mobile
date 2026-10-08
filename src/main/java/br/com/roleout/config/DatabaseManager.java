@@ -31,6 +31,11 @@ public final class DatabaseManager implements AutoCloseable {
         HikariConfig config = new HikariConfig();
         config.setPoolName("RoleOutPool");
         config.setJdbcUrl(env.getOrDefault("DB_URL", "jdbc:mysql://localhost:3306/roleout"));
+        // Tomcat may initialize DriverManager before loading drivers inside WEB-INF/lib.
+        // Explicit loading uses the application's classloader; H2 tests retain auto-discovery.
+        if (config.getJdbcUrl().startsWith("jdbc:mysql:")) {
+            config.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        }
         config.setUsername(env.getOrDefault("DB_USER", "roleout"));
         config.setPassword(env.getOrDefault("DB_PASSWORD", "roleout123"));
         int maximum = Integer.parseInt(env.getOrDefault("DB_POOL_MAX_SIZE", "10"));

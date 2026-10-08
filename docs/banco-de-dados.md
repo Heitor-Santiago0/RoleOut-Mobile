@@ -1,5 +1,9 @@
 # Banco de desenvolvimento e validação
 
+Atualização de 08/10/2026: integração real MySQL/Tomcat aprovada em ambiente
+separado; veja [integração local](integracao-local.md). Os resultados abaixo
+registram a primeira etapa, anterior à autenticação e aos roteiros salvos.
+
 ## Scripts versionados
 
 `src/main/resources/db/migration/V001__roles.sql` cria uma tabela compatível com
@@ -15,7 +19,7 @@ como dados de teste, mas nenhum banco existente foi acessado ou apagado aqui.
 
 ## Como aplicar
 
-No Docker Compose, os dois scripts estão montados em modo leitura na pasta de
+No Docker Compose, os scripts V001 a V004 estão montados em modo leitura na pasta de
 inicialização do MySQL. São executados em ordem apenas quando o volume do banco
 é inicializado vazio. Um volume já existente não recebe esses scripts
 automaticamente. O WAR também não executa migrações na inicialização.
@@ -45,9 +49,8 @@ os DAOs reais: inserir, listar, buscar, editar, excluir e filtrar sugestões.
 Também verificam paginação, filtros preparados, relacionamentos e ocultação de
 rolês vinculados a locais/organizações ainda não aprovados ou suspensos.
 
-Isso testa o código e o esquema em H2. Não comprova equivalência com MySQL 8.4
-nem renderização JSP. Docker não está instalado neste ambiente, e a validação
-real MySQL/Tomcat permanece pendente.
+Essa primeira rodada testou o código e o esquema em H2. A validação posterior
+com MySQL 8.4 e páginas JSP está registrada em `integracao-local.md`.
 
 ## Checklist para o ambiente com Docker
 

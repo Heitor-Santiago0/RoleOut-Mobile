@@ -1,0 +1,32 @@
+name: roleout-integration
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: roleout
+      MYSQL_USER: roleout
+      MYSQL_PASSWORD: integration-local-only
+    volumes:
+      - integration_data:/var/lib/mysql
+      - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  tomcat:
+    image: tomcat:10.1-jdk17-temurin
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/roleout
+      DB_USER: roleout
+      DB_PASSWORD: integration-local-only
+    ports:
+      - "127.0.0.1:8082:8080"
+    volumes:
+      - ./target/RoleOut.war:/usr/local/tomcat/webapps/RoleOut.war:ro
+volumes:
+  integration_data:
