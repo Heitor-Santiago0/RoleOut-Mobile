@@ -1,7 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { candidates, isoDate, moneyCents, planProblem, schedule, totalCents, validatePlan } from '../src/itinerary.ts';
+import { candidates, formatDateInput, groupBudgetCents, isoDate, moneyCents, planProblem, schedule, totalCents, validatePlan } from '../src/itinerary.ts';
 const role = (id, valor) => ({ id, valor });
+test('date mask formats digits, pasted dates and deletion without trapping separators', () => {
+  assert.equal(formatDateInput('15102026'), '15/10/2026');
+  assert.equal(formatDateInput('15/10/2026'), '15/10/2026');
+  assert.equal(formatDateInput('151'), '15/1');
+  assert.equal(formatDateInput('15/'), '15');
+  assert.equal(formatDateInput(''), '');
+  assert.equal(formatDateInput('15102026123'), '15/10/2026');
+});
+test('per-person budget converts to group limit without changing group mode', () => {
+  const plan = { people: '3', budget: '50,25', budgetMode: 'person' };
+  assert.equal(groupBudgetCents(plan), 15075);
+  assert.equal(groupBudgetCents({ ...plan, budgetMode: 'group' }), 5025);
+  assert.equal(groupBudgetCents({ ...plan, people: '2', budget: '0,10' }), 20);
+  assert.equal(groupBudgetCents({ ...plan, budget: '0' }), 0);
+  assert.equal(groupBudgetCents({ ...plan, people: '' }), null);
+  assert.equal(groupBudgetCents({ ...plan, budget: '' }), null);
+  assert.match(planProblem([{ role: role(1, 51), minutes: 60 }], 3, groupBudgetCents(plan), 60), /orçamento/);
+});
 test('candidates respect date, group budget and categories without inventing availability', () => {
   const roles = [
     { ...role(1, 20), categoria: 'cultura', data: '2026-10-15' },

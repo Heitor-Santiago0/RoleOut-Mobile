@@ -31,3 +31,15 @@ Validação: seis testes de lógica (datas, centavos, candidatos, limites, ordem
 virada de dia), TypeScript e lint. Fluxo de demonstração conferido no navegador
 390×844: duas etapas, duas paradas, orçamento excedido, ordenação e retorno dos
 detalhes sem perda. API real e Android/iOS no aparelho permanecem pendentes.
+
+## Ajuste de orçamento e data
+
+O orçamento pode ser definido por pessoa (mesmo limite para todos) ou como total
+do grupo. No primeiro modo, o limite total é valor informado × participantes;
+a consulta e a soma das paradas usam esse limite. O resumo mostra custo por pessoa,
+total, limite do grupo e saldo. Não há valores individuais diferentes por participante.
+
+O campo de data aceita somente os números e insere DD/MM/AAAA automaticamente,
+inclusive ao colar. Datas inexistentes continuam sendo recusadas. Oito testes de
+lógica passaram, incluindo máscara e conversão de orçamento; TypeScript/lint e
+os dois ajustes foram conferidos na prévia do navegador.

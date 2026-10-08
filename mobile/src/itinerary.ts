@@ -1,6 +1,16 @@
 import type { Role } from './api';
 export type Stop = { role: Role; minutes: number };
-export type Plan = { city: string; date: string; start: string; hours: string; people: string; budget: string };
+export type Plan = { city: string; date: string; start: string; hours: string; people: string; budget: string; budgetMode?: 'person' | 'group' };
+export function formatDateInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)].filter(Boolean).join('/');
+}
+export function groupBudgetCents(plan: Plan): number | null {
+  const amount = moneyCents(plan.budget);
+  const people = Number(plan.people);
+  if (amount === null || !Number.isInteger(people) || people < 1 || people > 50) return null;
+  return plan.budgetMode === 'person' ? amount * people : amount;
+}
 export function moneyCents(value: string): number | null {
   if (!/^\d{1,7}([.,]\d{1,2})?$/.test(value.trim())) return null;
   const [whole, fraction = ''] = value.trim().replace(',', '.').split('.');
