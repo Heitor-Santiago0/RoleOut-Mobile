@@ -1,25 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { request, type Role } from './api';
+import { ApiError, request, type Role, type ItinerarySummary, type SavedItinerary } from './api';
 import { useAuth } from './AuthContext';
 import { demoRoles } from './demo';
 import { Button, DemoBanner, Field, Message, price } from './ui';
 import { styles as s } from './theme';
-import { candidates, formatDateInput, groupBudgetCents, isoDate, planProblem, schedule, totalCents, validatePlan, type Plan, type Stop } from './itinerary';
+import { candidates, formatDateInput, groupBudgetCents, isoDate, moneyCents, planProblem, schedule, totalCents, validatePlan, type Plan, type Stop } from './itinerary';
 
 export function PersonalizeScreen() {
-  const { demo, session } = useAuth();
+  const { demo, session, expire } = useAuth();
   const [stage, setStage] = useState<1 | 2 | 3>(1);
   const [plan, setPlan] = useState<Plan>({ city: '', date: '', start: '10:00', hours: '4', people: '1', budget: '', budgetMode: 'group' });
   const [categories, setCategories] = useState<string[]>([]);
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Role[]>([]); const [stops, setStops] = useState<Stop[]>([]);
   const [limited, setLimited] = useState(false);
+  const [saving, setSaving] = useState(false); const [saved, setSaved] = useState<ItinerarySummary | null>(null);
   const generation = useRef(0); const scroll = useRef<ScrollView>(null);
   useEffect(() => () => { generation.current++; }, []);
+  function invalidateSave() { generation.current++; setSaving(false); setSaved(null); }
   function field(name: keyof Plan, value: string) {
-    generation.current++; setBusy(false); setError(''); setPlan(previous => ({ ...previous, [name]: value }));
+    invalidateSave(); setBusy(false); setError(''); setPlan(previous => ({ ...previous, [name]: value }));
   }
   function navigate(next: 1 | 2 | 3) { setStage(next); scroll.current?.scrollTo({ y: 0, animated: false }); }
   function next() { const issue = validatePlan(plan, 1); if (issue) setError(issue); else { setError(''); navigate(2); } }
@@ -33,13 +35,29 @@ export function PersonalizeScreen() {
       const data = demo ? { itens: demoRoles.filter(role => role.cidade.toLowerCase() === plan.city.trim().toLowerCase()) }
         : await request<{ itens: Role[] }>('/roles?' + query, { token: session?.token });
       const options = candidates(data.itens, categories, isoDate(plan.date.trim())!, Number(plan.people), groupBudgetCents(plan)!);
-      if (version === generation.current) { setItems(options); setStops([]); setLimited(!demo && data.itens.length === 100); navigate(3); }
+      if (version === generation.current) { setItems(options); setStops([]); setSaved(null); setLimited(!demo && data.itens.length === 100); navigate(3); }
     } catch (e) { if (version === generation.current) setError(e instanceof Error ? e.message : 'Não foi possível buscar.'); }
     finally { if (version === generation.current) setBusy(false); }
   }
   function updateStops(nextStops: Stop[]) {
     const issue = planProblem(nextStops, Number(plan.people), groupBudgetCents(plan)!, Number(plan.hours) * 60);
-    if (issue) { setError(issue); scroll.current?.scrollTo({ y: 0, animated: true }); } else { setStops(nextStops); setError(''); }
+    if (issue) { setError(issue); scroll.current?.scrollTo({ y: 0, animated: true }); } else { invalidateSave(); setStops(nextStops); setError(''); }
+  }
+  async function save() {
+    if (!session || demo || saving || stops.length === 0) return;
+    const version = ++generation.current; setSaving(true); setError('');
+    try {
+      const data = await request<SavedItinerary>('/roteiros', { method: 'POST', token: session.token, body: {
+        nome: `Rolê em ${plan.city.trim()} — ${plan.date}`, cidade: plan.city.trim(), data: isoDate(plan.date.trim()), partida: plan.start.trim(),
+        duracaoMinutos: Number(plan.hours) * 60, pessoas: Number(plan.people), orcamentoCentavos: moneyCents(plan.budget),
+        modoOrcamento: plan.budgetMode ?? 'group', paradas: stops.map(stop => ({ roleId: stop.role.id, minutos: stop.minutes })),
+      } });
+      if (version === generation.current) setSaved(data.roteiro);
+    } catch (e) {
+      if (version !== generation.current) return;
+      if (e instanceof ApiError && e.status === 401) await expire();
+      else { setError((e instanceof Error ? e.message : 'Não foi possível salvar.') + (!(e instanceof ApiError) ? ' Confira Meus roteiros antes de tentar salvar novamente.' : '')); scroll.current?.scrollTo({ y: 0, animated: true }); }
+    } finally { if (version === generation.current) setSaving(false); }
   }
   function move(index: number, offset: number) {
     const result = [...stops]; const target = index + offset;
@@ -60,15 +78,15 @@ export function PersonalizeScreen() {
     {stage === 2 && <>
       <Field label="Número de pessoas" value={plan.people} setValue={value => field('people', value)} keyboardType="number-pad" />
       <Text style={s.label}>O que vocês querem fazer?</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {['Música', 'Festa', 'Gastronomia', 'Cultura', 'Esporte', 'Natureza', 'Cinema', 'Outros'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: categories.includes(value) }} style={[s.chip, categories.includes(value) && s.selected]} onPress={() => { generation.current++; setBusy(false); setError(''); setCategories(previous => previous.includes(value) ? previous.filter(c => c !== value) : [...previous, value]); }}><Text style={[s.chipText, categories.includes(value) && s.selectedText]}>{value}</Text></Pressable>)}
+        {['Música', 'Festa', 'Gastronomia', 'Cultura', 'Esporte', 'Natureza', 'Cinema', 'Outros'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: categories.includes(value) }} style={[s.chip, categories.includes(value) && s.selected]} onPress={() => { invalidateSave(); setBusy(false); setError(''); setCategories(previous => previous.includes(value) ? previous.filter(c => c !== value) : [...previous, value]); }}><Text style={[s.chipText, categories.includes(value) && s.selectedText]}>{value}</Text></Pressable>)}
       </View>
       <Text style={s.label}>Como deseja definir o orçamento?</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{([{ value: 'person', title: 'Por pessoa' }, { value: 'group', title: 'Total do grupo' }] as const).map(mode => <Pressable key={mode.value} accessibilityRole="button" accessibilityState={{ selected: plan.budgetMode === mode.value }} style={[s.chip, plan.budgetMode === mode.value && s.selected]} onPress={() => { generation.current++; setBusy(false); setError(''); setPlan(previous => ({ ...previous, budgetMode: mode.value })); }}><Text style={[s.chipText, plan.budgetMode === mode.value && s.selectedText]}>{mode.title}</Text></Pressable>)}</View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{([{ value: 'person', title: 'Por pessoa' }, { value: 'group', title: 'Total do grupo' }] as const).map(mode => <Pressable key={mode.value} accessibilityRole="button" accessibilityState={{ selected: plan.budgetMode === mode.value }} style={[s.chip, plan.budgetMode === mode.value && s.selected]} onPress={() => { invalidateSave(); setBusy(false); setError(''); setPlan(previous => ({ ...previous, budgetMode: mode.value })); }}><Text style={[s.chipText, plan.budgetMode === mode.value && s.selectedText]}>{mode.title}</Text></Pressable>)}</View>
       <Field label={plan.budgetMode === 'person' ? 'Quanto cada pessoa quer gastar (R$)' : 'Orçamento total do grupo (R$)'} value={plan.budget} setValue={value => field('budget', value)} keyboardType="decimal-pad" placeholder="Ex.: 50,00" />
       {groupBudgetCents(plan) !== null && <Text style={s.subtitle}>Limite total do grupo: {price(groupBudgetCents(plan)! / 100)}{plan.budgetMode === 'person' ? ` (${plan.people} pessoa(s) com o mesmo limite)` : ''}</Text>}
       <Text style={s.small}>O cálculo considera o preço cadastrado por pessoa. Alimentação extra e transporte não estão incluídos.</Text>
       <Text style={s.small}>{stops.length > 0 ? 'Uma nova busca substitui as paradas atuais.' : ''}</Text><Message text={error} /><Button title="Buscar opções" onPress={search} busy={busy} />
-      <Button title="Voltar" secondary onPress={() => { generation.current++; setBusy(false); setError(''); navigate(1); }} />
+      <Button title="Voltar" secondary onPress={() => { invalidateSave(); setBusy(false); setError(''); navigate(1); }} />
     </>}
     {stage === 3 && <>
       <Text style={s.subtitle}>{plan.city.trim()} • {plan.date} • {plan.people} pessoa(s)</Text>
@@ -81,6 +99,10 @@ export function PersonalizeScreen() {
         {stops.length === 0 && <Text style={s.small}>Adicione uma opção abaixo para começar.</Text>}
       </View>
       <Message text={error} />
+      {demo ? <Text style={s.small}>Roteiro temporário da demonstração. Entre na sua conta para salvar.</Text> : <>
+        {saved ? <><Text style={s.subtitle}>Salvo na conta com os preços atuais: {price(saved.totalCentavos / 100)} para o grupo.</Text><Button title="Abrir roteiro salvo" onPress={() => router.push({ pathname: '/itineraries/[id]', params: { id: saved.id } })} /></> : <Button title="Salvar roteiro na conta" onPress={save} busy={saving} disabled={stops.length === 0} />}
+        <Button title="Meus roteiros" secondary onPress={() => router.push('/itineraries')} />
+      </>}
       {schedule(stops, plan.start).map((stop, index) => <View key={stop.role.id} style={[s.secondary, { borderRadius: 14, padding: 16, gap: 10 }]}>
         <Text style={s.cardTitle}>{index + 1}. {stop.role.nome}</Text><Text style={s.subtitle}>{stop.from} → {stop.to} • {price(Math.round(stop.role.valor * 100) * Number(plan.people) / 100)} para o grupo</Text>
         <Text style={s.small}>{stop.minutes} min estimados • ajuste o tempo da visita</Text>
@@ -95,7 +117,7 @@ export function PersonalizeScreen() {
         <Button title={'Detalhes de ' + role.nome} secondary onPress={() => router.push({ pathname: '/roles/[id]', params: { id: role.id } })} />
       </View>)}
       <Button title="Revisar preferências" secondary onPress={() => { setError(''); navigate(2); }} />
-      <Text style={s.small}>O roteiro fica nesta sessão do app. Salvar na conta será a próxima etapa.</Text>
+      <Text style={s.small}>{demo ? 'A demonstração não grava dados na conta.' : 'As alterações ficam nesta sessão até você salvar. Alterar um roteiro salvo e salvar novamente cria outro registro.'}</Text>
     </>}
   </ScrollView>;
 }

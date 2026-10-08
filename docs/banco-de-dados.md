@@ -63,3 +63,5 @@ Para uso público, substituir credenciais de desenvolvimento e resolver as
 permissões e a exclusão via GET na versão web antes de expor a administração.
 
 Referência MySQL: https://dev.mysql.com/doc/refman/8.4/en/create-table.html
+
+V004 acrescenta roteiros privados e snapshots de paradas. Aplicação única e detalhes em roteiros-salvos.md; banco existente não recebe migrações automaticamente.

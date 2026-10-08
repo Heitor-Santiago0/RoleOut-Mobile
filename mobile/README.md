@@ -35,7 +35,7 @@ público no bundle e deve conter apenas a URL; não colocar senhas ou tokens nel
 - Produção: HTTPS obrigatório pelo cliente. HTTP é apenas para desenvolvimento
   local. Builds nativas também precisam permitir a rede de desenvolvimento.
 
-O servidor deve usar V001/V002/V003, MySQL e Tomcat. Criar conta no app e fazer
+O servidor deve usar V001/V002/V003/V004, MySQL e Tomcat. Criar conta no app e fazer
 login com os mesmos campos da API Java. Senha: 12 a 128 caracteres.
 
 Token guardado com Expo SecureStore no Android/iOS, nunca com senha.
@@ -91,7 +91,10 @@ embutida neste projeto. Testar no Expo Go compatível ou development build.
 
 A aba Criar rolê agora tem duas etapas e montagem manual de várias paradas.
 Data, participantes, orçamento total, ordem e duração estimada são considerados.
-O roteiro fica em memória nesta sessão. Consulte ../docs/roteiro-mobile.md.
+A montagem fica em memória até salvar; roteiros salvos podem ser recuperados em Conta -> Meus roteiros. Consulte ../docs/roteiro-mobile.md.
 
-Testes de regras: pnpm test (Node 24). Ainda pendente: salvar na conta, preferências
+Testes de regras: pnpm test (Node 24). Ainda pendente: preferências
 de ambientes, trajetos, horários reais e integração no aparelho.
+
+Persistência e contrato: ../docs/roteiros-salvos.md. Requer sessão real e V004.
+Demonstração não grava no servidor. A integração real no aparelho continua pendente.

@@ -24,7 +24,7 @@ modelo de preços por grupo; essa premissa precisa ser confirmada no cadastro re
 
 O roteiro é mantido em memória durante a sessão; voltar dos detalhes preserva
 as escolhas. Nova busca substitui a seleção, com aviso. Logout ou recarregamento
-descartam o roteiro. Salvar por usuário e recuperar da conta será outro incremento.
+descartam alterações não salvas. Salvar e recuperar por usuário foi acrescentado; consulte roteiros-salvos.md.
 Nenhuma tabela ou tela web foi alterada nesta etapa.
 
 Validação: seis testes de lógica (datas, centavos, candidatos, limites, ordem e

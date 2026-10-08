@@ -13,6 +13,7 @@ import java.util.Map;
 
 public abstract class JsonServlet extends HttpServlet {
     private final ObjectMapper json = new ObjectMapper()
+            .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
             .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
     protected final AuthService auth;
     protected JsonServlet(AuthService auth) { this.auth = auth; }

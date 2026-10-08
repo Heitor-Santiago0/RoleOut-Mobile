@@ -1,6 +1,8 @@
 export type Account = { id: number; nome: string; email: string; emailConfirmado: boolean; administrador: boolean };
 export type Role = { id: number; nome: string; descricao: string | null; local: string | null; cidade: string; data: string | null; categoria: string | null; valor: number };
 export type Session = { token: string; expiraEm: string; conta: Account };
+export type ItinerarySummary = { id: number; nome: string; cidade: string; data: string; partida: string; pessoas: number; duracaoMinutos: number; orcamentoCentavos: number; modoOrcamento: 'person' | 'group'; totalCentavos: number; criadoEm: string };
+export type SavedItinerary = { roteiro: ItinerarySummary; paradas: { roleId: number; nome: string; local: string | null; minutos: number; precoCentavos: number }[] };
 export const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }

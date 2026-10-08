@@ -24,5 +24,5 @@ export default function AccountRoute() {
     catch (e) { auth.setMessage(e instanceof Error ? e.message : 'Não foi possível sair.'); }
     finally { setBusy(false); }
   }
-  return <ScrollView contentContainerStyle={s.content}>{auth.demo && <DemoBanner />}<Text style={s.title}>Minha conta</Text><Text style={s.text}>{auth.demo ? 'Visitante da demonstração' : auth.session?.conta.nome}</Text>{auth.session && <Text style={s.subtitle}>{auth.session.conta.email}</Text>}<Message text={auth.message} /><Button title={auth.demo ? 'Voltar para a entrada' : 'Sair da conta'} onPress={exit} busy={busy} /></ScrollView>;
+  return <ScrollView contentContainerStyle={s.content}>{auth.demo && <DemoBanner />}<Text style={s.title}>Minha conta</Text><Text style={s.text}>{auth.demo ? 'Visitante da demonstração' : auth.session?.conta.nome}</Text>{auth.session && <Text style={s.subtitle}>{auth.session.conta.email}</Text>}<Message text={auth.message} />{auth.session && <Button title="Meus roteiros" secondary onPress={() => router.push('/itineraries')} />}<Button title={auth.demo ? 'Voltar para a entrada' : 'Sair da conta'} onPress={exit} busy={busy} /></ScrollView>;
 }
