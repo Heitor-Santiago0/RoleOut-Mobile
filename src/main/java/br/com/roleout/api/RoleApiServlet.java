@@ -30,6 +30,18 @@ public final class RoleApiServlet extends HttpServlet {
         try {
             String path = request.getPathInfo();
             boolean suggestions = "/api/v1/sugestoes".equals(request.getServletPath());
+            if (!suggestions && "/proximos".equals(path)) {
+                String latitude = request.getParameter("latitude");
+                String longitude = request.getParameter("longitude");
+                if (latitude == null || longitude == null) {
+                    throw new IllegalArgumentException("Informe latitude e longitude.");
+                }
+                String raio = request.getParameter("raioKm");
+                var pontos = service.buscarProximos(Double.parseDouble(latitude),
+                        Double.parseDouble(longitude), raio == null ? 5 : Double.parseDouble(raio));
+                write(response, 200, Map.of("itens", pontos, "limite", 100));
+                return;
+            }
             if (!suggestions && path != null && !path.equals("/")) {
                 if (!path.matches("/[1-9][0-9]*")) {
                     error(response, 400, "ID_INVALIDO", "Informe um ID inteiro positivo.");

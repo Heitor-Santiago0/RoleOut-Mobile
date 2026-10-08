@@ -27,10 +27,9 @@ campos claros e categorias em chips. Referência de composição: frames iPhone
 13/14. Cores implementadas são aproximações visuais: medidas, tokens exatos,
 fontes e assets não foram exportados em Dev Mode.
 
-O primeiro app terá introdução, login/cadastro, Explorar e detalhes. Usar a marca
-já presente no repositório web. Fotos do Figma não foram extraídas; não atribuir
+O primeiro app terá introdução, login/cadastro, Explorar e detalhes. Marca recriada em texto e SVG, sem imagem de tela. Fotos do Figma não foram extraídas; não atribuir
 imagens, avaliações, preços ou endereços do protótipo a locais reais.
-Mapa, avaliações, horários, onboarding persistido e roteiros virão depois.
+Mapa nativo de proximidade e aba Criar rolê com filtros da web acrescentados. Avaliações, horários, onboarding persistido e roteiros com múltiplas paradas seguem pendentes.
 
 O mock deve estar visivelmente identificado como demonstração e nunca servir
 como fallback silencioso quando a API falhar. Erros, carregamento, lista vazia e

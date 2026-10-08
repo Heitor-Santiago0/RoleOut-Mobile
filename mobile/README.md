@@ -4,7 +4,7 @@ App React Native + Expo + TypeScript, independente do WAR Java. Criado com o
 template oficial blank-typescript; Expo SDK 57 e dependências compatíveis,
 fixadas em `pnpm-lock.yaml`. Navegação por Expo Router em `src/app`. Referência visual: `../docs/referencia-figma.md`.
 
-Entregue: introdução, login/cadastro, Explorar com busca por cidade/categorias,
+Entregue: marca com texto e pino vetorial (sem screenshot), login/cadastro, aba Criar rolê com cidade/categoria/orçamento como na web, Explorar com busca por cidade/categorias,
 paginação, detalhes, conta e logout. Estados de carregamento, lista vazia,
 erro de conexão e sessão inválida são separados. Na API real, nenhum dado fictício
 é retornado como fallback de falha.
@@ -51,7 +51,7 @@ Em execução de desenvolvimento, “Conhecer a demonstração” abre quatro re
 fictícios, sem criar conta e sem chamar o banco. O aviso permanece visível na
 listagem e nos detalhes. O atalho não aparece em builds de produção.
 
-Fotos, mapa, avaliações e horários do Figma não foram simulados como informações
+Fotos, avaliações e horários do Figma não foram simulados como informações
 reais. Os cartões usam blocos de categoria até haver imagens disponíveis na API.
 O login complementa o design; não foi identificada tela de login na faixa
 principal inspecionada. As cores são aproximações visuais, não tokens exportados.
@@ -63,8 +63,32 @@ Navegação verificada no navegador a 390×844: introdução -> login -> demonst
 -> detalhes -> volta; filtros de música e cidade sem resultados; conta -> saída.
 
 Ainda pendentes: teste real API/Android/iOS, onboarding persistido, perfil completo,
-roteiros, painel dos responsáveis e aprovação administrativa. Backend e web
+roteiros com múltiplas paradas e persistência, painel dos responsáveis e aprovação administrativa. Backend e web
 continuam separados desta pasta; nenhum arquivo JSP foi substituído.
 
 Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
 e o Figma indicado em `../docs/referencia-figma.md`.
+
+## Mapa de proximidade (Android/iOS)
+
+Explorar permite ativar a localização em primeiro plano e ver o mapa nativo.
+A inscrição GPS é removida ao sair de Explorar; não há rastreamento em segundo
+plano. O mapa consulta `/roles/proximos` com posição e raio de 5 km; a lista
+por cidade é independente do mapa. A câmera pode ser centralizada manualmente.
+Permissão recusada e GPS indisponível exibem mensagem e mantêm a busca disponível.
+
+Somente rolês vinculados a locais PUBLICADO e organizações APROVADA, com latitude
+ e longitude cadastradas, aparecem como pontos. Os exemplos antigos sem local_id
+não ganham coordenadas inventadas. Máximo de 100 pontos por consulta.
+A API não persiste a posição; servidor/proxy devem evitar registrar coordenadas
+em logs de URLs antes da publicação. HTTPS continua obrigatório em produção.
+
+O mapa nativo ainda precisa de validação em aparelho, incluindo permissão, GPS,
+pontos e consumo de bateria. A prévia web não contém mapa; não representa teste
+nativo. Para distribuir Android, configurar chave Google Maps restrita ao app,
+conforme https://docs.expo.dev/versions/v57.0.0/sdk/map-view/ . Não há chave
+embutida neste projeto. Testar no Expo Go compatível ou development build.
+
+A aba Criar rolê consulta sugestões existentes pelo mesmo critério da web. Ainda
+não salva roteiros nem calcula sequência, duração ou custo total de múltiplas
+paradas. O formulário Figma mais completo será o próximo incremento desse fluxo.

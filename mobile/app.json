@@ -23,7 +23,15 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "isIosBackgroundLocationEnabled": false,
+          "locationWhenInUsePermission": "O RolêOut usa sua localização enquanto Explorar está aberto para mostrar rolês próximos.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ]
     ],
     "scheme": "roleout"
   }

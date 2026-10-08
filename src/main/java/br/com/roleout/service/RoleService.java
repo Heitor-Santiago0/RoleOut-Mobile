@@ -15,6 +15,15 @@ public class RoleService {
         this.roleDAO = java.util.Objects.requireNonNull(roleDAO);
     }
 
+    public List<RoleDAO.Ponto> buscarProximos(double latitude, double longitude, double raioKm) {
+        if (!Double.isFinite(latitude) || latitude < -90 || latitude > 90
+                || !Double.isFinite(longitude) || longitude < -180 || longitude > 180
+                || !Double.isFinite(raioKm) || raioKm < 0.1 || raioKm > 20) {
+            throw new IllegalArgumentException("Informe coordenadas válidas e raio entre 0,1 e 20 km.");
+        }
+        return roleDAO.buscarProximos(latitude, longitude, raioKm);
+    }
+
     public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
                                      int limite, int deslocamento) {
         if (limite < 1 || limite > 100 || deslocamento < 0 || deslocamento > 100000) {

@@ -6,6 +6,49 @@ info:
 servers:
   - url: http://localhost:8080/RoleOut/api/v1
 paths:
+  /roles/proximos:
+    get:
+      operationId: buscarRolesProximos
+      summary: Até 100 rolês próximos vinculados a locais e organizações aprovados
+      description: Sem coordenadas inventadas para registros legados. Distância geográfica em linha reta; não é distância de percurso.
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+        - name: longitude
+          in: query
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+        - name: raioKm
+          in: query
+          schema: { type: number, minimum: 0.1, maximum: 20, default: 5 }
+      responses:
+        '200':
+          description: Pontos ordenados por distância, limite 100
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  limite: { type: integer, example: 100 }
+                  itens:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        nome: { type: string }
+                        categoria: { type: string, nullable: true }
+                        latitude: { type: number }
+                        longitude: { type: number }
+                        distanciaKm: { type: number }
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '503':
+          $ref: '#/components/responses/BancoIndisponivel'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
   /roles:
     get:
       operationId: listarRoles

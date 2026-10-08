@@ -54,3 +54,13 @@ limpar/separar esses dados antes de disponibilizar o projeto ao público.
 
 Contrato: `docs/openapi.yaml`. Testes usam servlets com requisição/resposta
 simuladas e banco H2; teste HTTP real com Tomcat ainda está pendente.
+
+## Proximidade
+
+GET /api/v1/roles/proximos?latitude=-19.75&longitude=-47.93&raioKm=5
+Retorna itens com id, nome, categoria, latitude, longitude e distanciaKm.
+Raio permitido: 0,1 a 20 km; padrão 5. Limite fixo 100, ordenado pela distância
+geográfica (não distância de trajeto). Apenas locais publicados de organizações
+aprovadas com coordenadas cadastradas; registros legados sem local_id não aparecem.
+31 testes de backend passaram, incluindo distância, aprovação e parâmetros.
+Validação real MySQL/Tomcat e GPS no aparelho continuam pendentes.

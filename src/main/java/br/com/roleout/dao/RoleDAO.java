@@ -33,6 +33,45 @@ public class RoleDAO {
         return dataSource == null ? ConnectionFactory.getConnection() : dataSource.getConnection();
     }
 
+    public record Ponto(int id, String nome, String categoria, double latitude,
+                        double longitude, double distanciaKm) {}
+
+    public List<Ponto> buscarProximos(double latitude, double longitude, double raioKm) {
+        String sql = """
+                SELECT * FROM (
+                    SELECT r.id, r.nome, r.categoria, l.latitude, l.longitude,
+                      6371 * 2 * ASIN(SQRT(LEAST(1,
+                        POWER(SIN(RADIANS(l.latitude - ?) / 2), 2) +
+                        COS(RADIANS(?)) * COS(RADIANS(l.latitude)) *
+                        POWER(SIN(RADIANS(l.longitude - ?) / 2), 2)))) AS distancia_km
+                    FROM roles r JOIN locais l ON l.id = r.local_id
+                    JOIN organizacoes o ON o.id = l.organizacao_id
+                    WHERE l.status = 'PUBLICADO' AND o.status = 'APROVADA'
+                      AND l.latitude BETWEEN -90 AND 90
+                      AND l.longitude BETWEEN -180 AND 180
+                      AND l.latitude BETWEEN ? AND ?
+                ) pontos WHERE distancia_km <= ? ORDER BY distancia_km, id LIMIT 100
+                """;
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, latitude);
+            statement.setDouble(2, latitude);
+            statement.setDouble(3, longitude);
+            statement.setDouble(4, latitude - raioKm / 111.0);
+            statement.setDouble(5, latitude + raioKm / 111.0);
+            statement.setDouble(6, raioKm);
+            List<Ponto> pontos = new ArrayList<>();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) pontos.add(new Ponto(rs.getInt("id"), rs.getString("nome"),
+                        rs.getString("categoria"), rs.getDouble("latitude"),
+                        rs.getDouble("longitude"), rs.getDouble("distancia_km")));
+            }
+            return pontos;
+        } catch (SQLException exception) {
+            throw new RuntimeException("Erro ao consultar pontos próximos.", exception);
+        }
+    }
+
     public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
                                      int limite, int deslocamento) {
         StringBuilder sql = new StringBuilder("SELECT * FROM roles WHERE " + PUBLICATION_FILTER);

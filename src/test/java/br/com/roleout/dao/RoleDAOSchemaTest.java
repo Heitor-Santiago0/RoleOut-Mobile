@@ -96,6 +96,33 @@ class RoleDAOSchemaTest {
     }
 
     @Test
+    void nearbyQueryUsesDistanceAndBothApprovalsWithoutInventingCoordinates() throws Exception {
+        try (var connection = source.getConnection(); var sql = connection.createStatement()) {
+            sql.executeUpdate("INSERT INTO organizacoes (nome,tipo,contato_email,status) VALUES ('Museu','MUSEU','a@example.com','APROVADA')");
+            sql.executeUpdate("INSERT INTO locais (organizacao_id,nome,categoria,endereco,cidade,uf,status,latitude,longitude) VALUES (1,'Museu','Cultura','Rua','Uberaba','MG','PUBLICADO',-19.75,-47.93)");
+            dao.inserir(role("Perto", 10));
+            dao.inserir(role("Sem coordenadas", 20));
+            sql.executeUpdate("UPDATE roles SET local_id=1 WHERE nome='Perto'");
+            var points = new RoleService(dao).buscarProximos(-19.75, -47.93, 5);
+            assertEquals(1, points.size());
+            assertEquals("Perto", points.get(0).nome());
+            assertEquals(0, points.get(0).distanciaKm(), 0.001);
+            assertTrue(dao.buscarProximos(-19.85, -47.93, 5).isEmpty());
+            assertTrue(dao.buscarProximos(-19.75, -48.03, 5).isEmpty());
+            sql.executeUpdate("UPDATE locais SET status='RASCUNHO'");
+            assertTrue(dao.buscarProximos(-19.75, -47.93, 5).isEmpty());
+            sql.executeUpdate("UPDATE locais SET status='PUBLICADO'");
+            sql.executeUpdate("UPDATE organizacoes SET status='SUSPENSA'");
+            assertTrue(dao.buscarProximos(-19.75, -47.93, 5).isEmpty());
+        }
+        var service = new RoleService(dao);
+        assertThrows(IllegalArgumentException.class, () -> service.buscarProximos(Double.NaN, 0, 5));
+        assertThrows(IllegalArgumentException.class, () -> service.buscarProximos(0, 181, 5));
+        assertThrows(IllegalArgumentException.class, () -> service.buscarProximos(91, 0, 5));
+        assertThrows(IllegalArgumentException.class, () -> service.buscarProximos(0, 0, 21));
+    }
+
+    @Test
     void schemaRejectsInvalidOwnershipStatusAndMoney() throws Exception {
         try (var connection = source.getConnection(); var sql = connection.createStatement()) {
             assertThrows(SQLException.class, () -> sql.executeUpdate("INSERT INTO locais (organizacao_id,nome,categoria,endereco,cidade,uf) VALUES (999,'A','Cultura','Rua','Uberaba','MG')"));

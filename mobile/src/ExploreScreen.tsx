@@ -1,10 +1,11 @@
+import { NearbyMap } from './NearbyMap';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { roles, type Role } from './api';
 import { demoRoles } from './demo';
 import { Button, DemoBanner, Message, price } from './ui';
 import { colors, styles as s } from './theme';
-export function ExploreScreen({ demo, token, onSelect }: { demo: boolean; token?: string; onSelect: (role: Role) => void }) {
+export function ExploreScreen({ demo, token, onSelect }: { demo: boolean; token?: string; onSelect: (role: Role | { id: number }) => void }) {
   const [cidade, setCidade] = useState(''); const [filter, setFilter] = useState('');
   const [category, setCategory] = useState('Todos'); const [page, setPage] = useState(0);
   const [items, setItems] = useState<Role[]>([]); const [more, setMore] = useState(false);
@@ -18,7 +19,7 @@ export function ExploreScreen({ demo, token, onSelect }: { demo: boolean; token?
     return () => { active = false; };
   }, [demo, token, filter, category, page, retry]);
   return <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-    {demo && <DemoBanner />}<Text style={s.title}>Explorar</Text><Text style={s.subtitle}>Encontre seu próximo rolê.</Text>
+    {demo && <DemoBanner />}<Text style={s.title}>Explorar</Text><Text style={s.subtitle}>Encontre seu próximo rolê.</Text><NearbyMap demo={demo} token={token} onSelect={id => onSelect({ id })} />
     <TextInput accessibilityLabel="Buscar por cidade" placeholder="Buscar por cidade" placeholderTextColor="#667085" style={s.field} value={cidade} onChangeText={setCidade} onSubmitEditing={() => { setBusy(true); setError(''); setItems([]); setPage(0); setFilter(cidade.trim()); setRetry(v => v + 1); }} />
     <Button title="Buscar" secondary onPress={() => { setBusy(true); setError(''); setItems([]); setPage(0); setFilter(cidade.trim()); setRetry(v => v + 1); }} />
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>

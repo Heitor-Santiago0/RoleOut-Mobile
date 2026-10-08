@@ -35,6 +35,26 @@ class RoleApiServletTest {
     }
 
     @Test
+    void nearbyEndpointReturnsPointsWithDefaultRadius() throws Exception {
+        when(request.getPathInfo()).thenReturn("/proximos");
+        when(request.getParameter("latitude")).thenReturn("-19.75");
+        when(request.getParameter("longitude")).thenReturn("-47.93");
+        when(service.buscarProximos(-19.75, -47.93, 5)).thenReturn(List.of(
+                new br.com.roleout.dao.RoleDAO.Ponto(1, "Museu", "Cultura", -19.75, -47.93, 0)));
+        servlet.doGet(request, response);
+        verify(response).setStatus(200);
+        assertEquals(-19.75, json.readTree(body.toString()).at("/itens/0/latitude").asDouble());
+    }
+
+    @Test
+    void nearbyMissingPositionReturns400() throws Exception {
+        when(request.getPathInfo()).thenReturn("/proximos");
+        servlet.doGet(request, response);
+        verify(response).setStatus(400);
+        verifyNoInteractions(service);
+    }
+
+    @Test
     void listsJsonWithDefaultPagination() throws Exception {
         Role role = new Role(1, "Museu", "Arte", "Centro", "Uberaba",
                 LocalDate.of(2026, 10, 8), "Cultura", 12.5);
