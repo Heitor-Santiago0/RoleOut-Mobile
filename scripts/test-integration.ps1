@@ -40,6 +40,23 @@ try {
         $tokens += $session.token
         ExpectStatus 200 GET '/auth/me' $null $session.token
     }
+    $preferences = (Request GET '/preferencias' $null $tokens[0]).Content | ConvertFrom-Json
+    Assert ($preferences.perfil.status -eq 'PENDENTE') 'New preferences must be pending'
+    $choices = @{ pular = $false; musica = @('Rock'); comida = @(); atividades = @('Museus'); ambientes = @('Tranquilo') }
+    ExpectStatus 200 POST '/preferencias' $choices $tokens[0]
+    ExpectStatus 200 POST '/preferencias' $choices $tokens[0]
+    $loaded = (Request GET '/preferencias' $null $tokens[0]).Content | ConvertFrom-Json
+    Assert ($loaded.perfil.musica[0] -eq 'Rock') 'Preferences did not persist'
+    $otherPreferences = (Request GET '/preferencias' $null $tokens[1]).Content | ConvertFrom-Json
+    Assert ($otherPreferences.perfil.status -eq 'PENDENTE') 'Preferences leaked between accounts'
+    $choices.musica = @('not-in-catalog')
+    ExpectStatus 400 POST '/preferencias' $choices $tokens[0]
+    $skip = @{ pular = $true; musica = @(); comida = @(); atividades = @(); ambientes = @() }
+    ExpectStatus 200 POST '/preferencias' $skip $tokens[1]
+    $skipped = (Request GET '/preferencias' $null $tokens[1]).Content | ConvertFrom-Json
+    Assert ($skipped.perfil.status -eq 'PULADO') 'Skip was not persisted'
+    ExpectStatus 401 GET '/preferencias'
+    Write-Output 'PASS: preference persistence, repeated saves, catalog validation, skip and account isolation.'
     $sql = "INSERT INTO roles (nome, local, cidade, categoria, valor) VALUES ('Integration $suffix', 'Museu teste', 'Cidade Integracao', 'Cultura', 20.10); SELECT LAST_INSERT_ID();"
     $result = $sql | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
     Assert ($LASTEXITCODE -eq 0) 'Failed to create isolated fixture'

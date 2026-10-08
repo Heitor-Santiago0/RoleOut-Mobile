@@ -20,6 +20,7 @@ services:
       - ./src/main/resources/db/migration/V002__organizacoes_e_locais.sql:/docker-entrypoint-initdb.d/002-organizacoes-locais.sql:ro
       - ./src/main/resources/db/migration/V003__sessoes.sql:/docker-entrypoint-initdb.d/003-sessoes.sql:ro
       - ./src/main/resources/db/migration/V004__roteiros.sql:/docker-entrypoint-initdb.d/004-roteiros.sql:ro
+      - ./src/main/resources/db/migration/V005__preferencias.sql:/docker-entrypoint-initdb.d/005-preferencias.sql:ro
 
 
   tomcat:

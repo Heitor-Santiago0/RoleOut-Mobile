@@ -17,7 +17,7 @@ docker compose -f compose.integration.yml up -d
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-integration.ps1
 ```
 
-As migrações V001 a V004 são aplicadas pelo MySQL apenas ao inicializar um volume
+As migrações V001 a V005 são aplicadas pelo MySQL apenas ao inicializar um volume
 vazio. Um volume existente não é atualizado automaticamente. Depois de recompilar
 o WAR, reiniciar somente o Tomcat de integração:
 
@@ -66,7 +66,7 @@ Abrir http://localhost:8081 e usar cadastro/login, em vez do modo demonstração
 Os dados pertencem ao banco isolado; os exemplos do teste HTTP usam a cidade
 `Cidade Integracao`. A variável acima vale somente nesse terminal.
 
-45 testes Java aprovados, incluindo cinco testes CORS. O teste HTTP também
+50 testes Java aprovados, incluindo cinco testes CORS e cinco de preferências. O teste HTTP também
 passou com Origin da prévia e preflight de POST com Authorization/Content-Type.
 Isso ainda não é validação ponta a ponta pelas telas: a automação do navegador
 falhou ao iniciar por erro do ambiente restrito. Cadastro, login, criação,

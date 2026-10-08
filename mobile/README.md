@@ -36,7 +36,7 @@ público no bundle e deve conter apenas a URL; não colocar senhas ou tokens nel
 - Produção: HTTPS obrigatório pelo cliente. HTTP é apenas para desenvolvimento
   local. Builds nativas também precisam permitir a rede de desenvolvimento.
 
-O servidor deve usar V001/V002/V003/V004, MySQL e Tomcat. Criar conta no app e fazer
+O servidor deve usar V001/V002/V003/V004/V005, MySQL e Tomcat. Criar conta no app e fazer
 login com os mesmos campos da API Java. Senha: 12 a 128 caracteres.
 
 Token guardado com Expo SecureStore no Android/iOS, nunca com senha.
@@ -63,8 +63,10 @@ TypeScript e lint passaram (`pnpm typecheck`, `pnpm lint -- --max-warnings 0`). 
 Navegação verificada no navegador a 390×844: introdução -> login -> demonstração
 -> detalhes -> volta; filtros de música e cidade sem resultados; conta -> saída.
 
-Ainda pendentes: teste real API/Android/iOS, onboarding persistido, perfil completo,
-roteiros com múltiplas paradas e persistência, painel dos responsáveis e aprovação administrativa. Backend e web
+Preferências opcionais persistidas e editáveis na conta: `../docs/preferencias.md`.
+Roteiros com múltiplas paradas e persistência já estão implementados.
+Ainda pendentes: validação completa pelas telas e Android/iOS, perfil completo,
+uso das preferências nas recomendações, painel dos responsáveis e aprovação administrativa. Backend e web
 continuam separados desta pasta; nenhum arquivo JSP foi substituído.
 
 Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
