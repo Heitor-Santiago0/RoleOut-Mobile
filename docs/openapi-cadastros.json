@@ -1,0 +1,862 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "RolêOut login e rascunhos",
+    "version": "0.2.0",
+    "description": "Complementa openapi.yaml. Requer V003. Sem publicação ou confirmação de e-mail."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/RoleOut/api/v1"
+    }
+  ],
+  "paths": {
+    "/auth/cadastro": {
+      "post": {
+        "operationId": "cadastrarConta",
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conta"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cadastro"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "entrar",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sessao"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "minhaConta",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conta"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "sair",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Operação concluída"
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizacoes": {
+      "get": {
+        "operationId": "minhasOrganizacoes",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "itens"
+                  ],
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/components/schemas/Organizacao"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "criarOrganizacao",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organizacao"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizacaoEntrada"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizacoes/{id}": {
+      "get": {
+        "operationId": "consultarOrganizacao",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organizacao"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "editarOrganizacao",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organizacao"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizacaoEntrada"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizacoes/{id}/locais": {
+      "get": {
+        "operationId": "meusLocais",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "itens"
+                  ],
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/components/schemas/Local"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "criarLocal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Local"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalEntrada"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organizacoes/{id}/locais/{localId}": {
+      "get": {
+        "operationId": "consultarLocal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Local"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          {
+            "name": "localId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ]
+      },
+      "put": {
+        "operationId": "editarLocal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operação concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Local"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Erro JSON: 400, 401, 403, 404, 405, 409, 413, 415, 429, 500 ou 503.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          },
+          {
+            "name": "localId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocalEntrada"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Token opaco retornado no login, validade de 24 horas."
+      }
+    },
+    "schemas": {
+      "Cadastro": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nome",
+          "email",
+          "senha"
+        ],
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "senha": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "senha"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "senha": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          }
+        }
+      },
+      "Conta": {
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "emailConfirmado",
+          "administrador"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emailConfirmado": {
+            "type": "boolean"
+          },
+          "administrador": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Sessao": {
+        "type": "object",
+        "required": [
+          "token",
+          "expiraEm",
+          "conta"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "expiraEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "conta": {
+            "$ref": "#/components/schemas/Conta"
+          }
+        }
+      },
+      "OrganizacaoEntrada": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nome",
+          "tipo",
+          "contatoEmail"
+        ],
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "RESTAURANTE",
+              "BAR",
+              "MUSEU",
+              "PREFEITURA",
+              "OUTRO"
+            ]
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "contatoEmail": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "contatoTelefone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          }
+        }
+      },
+      "LocalEntrada": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nome",
+          "categoria",
+          "endereco",
+          "cidade",
+          "uf"
+        ],
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "categoria": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "endereco": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "cidade": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "uf": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 9
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "acessibilidade": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          }
+        }
+      },
+      "Erro": {
+        "type": "object",
+        "required": [
+          "codigo",
+          "mensagem"
+        ],
+        "properties": {
+          "codigo": {
+            "type": "string"
+          },
+          "mensagem": {
+            "type": "string"
+          }
+        }
+      },
+      "Organizacao": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "RESTAURANTE",
+              "BAR",
+              "MUSEU",
+              "PREFEITURA",
+              "OUTRO"
+            ]
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "contatoEmail": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "contatoTelefone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "papel": {
+            "type": "string"
+          }
+        }
+      },
+      "Local": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "categoria": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "endereco": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "cidade": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "uf": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 9
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 4000
+          },
+          "acessibilidade": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2000
+          },
+          "id": {
+            "type": "integer"
+          },
+          "organizacaoId": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,209 @@
+openapi: 3.0.3
+info:
+  title: RolêOut API de consulta
+  version: 0.1.0
+  description: API inicial de desenvolvimento. Apenas consultas; requer esquema V001 e V002.
+servers:
+  - url: http://localhost:8080/RoleOut/api/v1
+paths:
+  /roles:
+    get:
+      operationId: listarRoles
+      summary: Consultar rolês públicos com paginação
+      parameters:
+        - $ref: '#/components/parameters/CategoriaOpcional'
+        - $ref: '#/components/parameters/CidadeOpcional'
+        - $ref: '#/components/parameters/OrcamentoOpcional'
+        - $ref: '#/components/parameters/Limite'
+        - $ref: '#/components/parameters/Deslocamento'
+      responses:
+        '200':
+          $ref: '#/components/responses/Pagina'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '503':
+          $ref: '#/components/responses/BancoIndisponivel'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+  /roles/{id}:
+    get:
+      operationId: buscarRole
+      summary: Consultar detalhe de rolê público
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+      responses:
+        '200':
+          description: Detalhe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '404':
+          description: Rolê ausente ou não publicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Erro'
+        '503':
+          $ref: '#/components/responses/BancoIndisponivel'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+  /sugestoes:
+    get:
+      operationId: buscarSugestoes
+      summary: Consultar sugestões ordenadas por valor e ID
+      parameters:
+        - name: categoria
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - name: cidade
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 150
+        - name: valorMaximo
+          in: query
+          required: true
+          schema:
+            type: number
+            minimum: 0
+        - $ref: '#/components/parameters/Limite'
+        - $ref: '#/components/parameters/Deslocamento'
+      responses:
+        '200':
+          $ref: '#/components/responses/Pagina'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '503':
+          $ref: '#/components/responses/BancoIndisponivel'
+        '500':
+          $ref: '#/components/responses/ErroInterno'
+components:
+  parameters:
+    CategoriaOpcional:
+      name: categoria
+      in: query
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    CidadeOpcional:
+      name: cidade
+      in: query
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 150
+    OrcamentoOpcional:
+      name: valorMaximo
+      in: query
+      schema:
+        type: number
+        minimum: 0
+    Limite:
+      name: limite
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Deslocamento:
+      name: deslocamento
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 100000
+        default: 0
+  responses:
+    Pagina:
+      description: Lista paginada, sem contagem total
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Pagina'
+    ParametroInvalido:
+      description: Parâmetros inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+    BancoIndisponivel:
+      description: Falha de acesso ao banco
+      headers:
+        Retry-After:
+          schema:
+            type: string
+            example: '5'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+    ErroInterno:
+      description: Falha inesperada
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Erro'
+  schemas:
+    Role:
+      type: object
+      required: [id, nome, descricao, local, cidade, data, categoria, valor]
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        descricao:
+          type: string
+          nullable: true
+        local:
+          type: string
+          nullable: true
+        cidade:
+          type: string
+        data:
+          type: string
+          format: date
+          nullable: true
+        categoria:
+          type: string
+          nullable: true
+        valor:
+          type: number
+          minimum: 0
+    Pagina:
+      type: object
+      required: [itens, limite, deslocamento]
+      properties:
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+        limite:
+          type: integer
+        deslocamento:
+          type: integer
+    Erro:
+      type: object
+      required: [codigo, mensagem]
+      properties:
+        codigo:
+          type: string
+        mensagem:
+          type: string

@@ -1,5 +1,25 @@
 # RolêOut
 
+## Evolução em desenvolvimento
+
+A branch `develop/api-pool` preserva a aplicação web e acrescenta HikariCP,
+scripts SQL para banco novo e uma primeira API REST de consulta.
+O cadastro de organizações e locais terá aprovação administrativa antes da
+publicação. Login, permissões e endpoints de cadastro em rascunho estão
+implementados; telas, confirmação de e-mail e aprovação vêm nos próximos
+incrementos. Os rolês anteriores são dados de teste.
+
+- [Plano de evolução](docs/evolucao.md)
+- [Escopo e sequência do MVP acadêmico](docs/mvp-academico.md)
+- [Banco e aplicação dos scripts](docs/banco-de-dados.md)
+- [API de consulta](docs/api-rest.md) e [OpenAPI](docs/openapi.yaml)
+- [Cadastro de organizações e locais](docs/cadastro-de-locais.md)
+- [Login, permissões e rascunhos](docs/login-e-rascunhos.md)
+
+Em bancos/volumes novos, Docker inicializa o esquema com V001/V002/V003. Em volumes
+existentes, é necessário comparar e aplicar a evolução do banco explicitamente;
+os scripts não são reaplicados pelo WAR nem pelo Docker automaticamente.
+
 Aplicação web desenvolvida como projeto acadêmico para cadastro, gerenciamento e sugestão de rolês.
 
 O **RolêOut** permite que usuários cadastrem opções de lazer e utilizem filtros como categoria, cidade e orçamento máximo para encontrar sugestões compatíveis com suas preferências.

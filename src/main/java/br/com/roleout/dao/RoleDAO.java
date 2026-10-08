@@ -12,6 +12,81 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RoleDAO {
+    // Legacy test records have no local_id. Linked records require both approvals.
+    private static final String PUBLICATION_FILTER = """
+            (roles.local_id IS NULL OR EXISTS (
+                SELECT 1 FROM locais l JOIN organizacoes o ON o.id = l.organizacao_id
+                WHERE l.id = roles.local_id AND l.status = 'PUBLICADO' AND o.status = 'APROVADA'
+            ))
+            """;
+    private final javax.sql.DataSource dataSource;
+
+    public RoleDAO() {
+        this.dataSource = null;
+    }
+
+    public RoleDAO(javax.sql.DataSource dataSource) {
+        this.dataSource = java.util.Objects.requireNonNull(dataSource);
+    }
+
+    private Connection getConnection() throws SQLException {
+        return dataSource == null ? ConnectionFactory.getConnection() : dataSource.getConnection();
+    }
+
+    public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
+                                     int limite, int deslocamento) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM roles WHERE " + PUBLICATION_FILTER);
+        if (categoria != null) sql.append(" AND LOWER(categoria) = LOWER(?)");
+        if (cidade != null) sql.append(" AND LOWER(cidade) = LOWER(?)");
+        if (valorMaximo != null) sql.append(" AND valor <= ?");
+        sql.append(" ORDER BY ").append(valorMaximo == null ? "data, id" : "valor, id");
+        sql.append(" LIMIT ? OFFSET ?");
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (categoria != null) statement.setString(index++, categoria);
+            if (cidade != null) statement.setString(index++, cidade);
+            if (valorMaximo != null) statement.setDouble(index++, valorMaximo);
+            statement.setInt(index++, limite);
+            statement.setInt(index, deslocamento);
+            List<Role> roles = new ArrayList<>();
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    roles.add(mapear(rs));
+                }
+            }
+            return roles;
+        } catch (SQLException exception) {
+            throw new RuntimeException("Erro ao consultar rolês.", exception);
+        }
+    }
+
+    public Role buscarPublicadoPorId(int id) {
+        String sql = "SELECT * FROM roles WHERE id = ? AND " + PUBLICATION_FILTER;
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
+            }
+        } catch (SQLException exception) {
+            throw new RuntimeException("Erro ao consultar rolê publicado.", exception);
+        }
+    }
+
+    private Role mapear(ResultSet rs) throws SQLException {
+        Role role = new Role();
+        role.setId(rs.getInt("id"));
+        role.setNome(rs.getString("nome"));
+        role.setDescricao(rs.getString("descricao"));
+        role.setLocal(rs.getString("local"));
+        role.setCidade(rs.getString("cidade"));
+        var data = rs.getDate("data");
+        role.setData(data == null ? null : data.toLocalDate());
+        role.setCategoria(rs.getString("categoria"));
+        role.setValor(rs.getDouble("valor"));
+        return role;
+    }
 
     public void inserir(Role role) {
 
@@ -22,7 +97,7 @@ public class RoleDAO {
                 """;
 
         try (
-            Connection connection = ConnectionFactory.getConnection();
+            Connection connection = getConnection();
             PreparedStatement statement = connection.prepareStatement(sql)
         ) {
 
@@ -54,7 +129,7 @@ public class RoleDAO {
     String sql = "SELECT * FROM roles ORDER BY data";
 
     try (
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql);
         ResultSet resultSet = statement.executeQuery()
     ) {
@@ -102,7 +177,7 @@ public void atualizar(Role role) {
             """;
 
     try (
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)
     ) {
 
@@ -135,7 +210,7 @@ public void excluir(int id) {
     String sql = "DELETE FROM roles WHERE id = ?";
 
     try (
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)
     ) {
 
@@ -152,7 +227,7 @@ public Role buscarPorId(int id) {
     String sql = "SELECT * FROM roles WHERE id = ?";
 
     try (
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)
     ) {
 
@@ -201,7 +276,7 @@ public List<Role> buscarSugestoes(String categoria, String cidade, double valorM
             """;
 
     try (
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = getConnection();
         PreparedStatement statement = connection.prepareStatement(sql)
     ) {
 
