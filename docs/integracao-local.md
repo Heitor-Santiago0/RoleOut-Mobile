@@ -46,13 +46,33 @@ A integração revelou que o Tomcat não descobria automaticamente o driver
 MySQL do WAR. O gerenciador agora carrega explicitamente esse driver usando
 o classloader da aplicação, mantendo H2 nos testes e o pool de conexões.
 
-## Próximo passo: interface conectada
+## Prévia conectada
 
-Esta validação é HTTP/backend, ainda não é um teste ponta a ponta do app.
-A prévia Expo em outra porta precisa de uma política CORS restrita no servidor.
-O backend ainda não a oferece. Não basta alterar a URL da prévia para afirmar
-que o fluxo no navegador funciona. O teste em Android/iOS também está pendente;
-a porta está restrita ao computador e não está publicada na rede Wi-Fi.
+O servidor permite origens exatas configuradas em `API_CORS_ORIGINS`, somente
+na API. O Compose de integração libera `http://localhost:8081` e
+`http://127.0.0.1:8081`, sem cookies/credenciais CORS e sem wildcard. Os endpoints
+privados continuam exigindo token. Sem configuração, requisições com Origin
+são recusadas; clientes nativos sem Origin seguem normalmente.
+
+Em outro terminal PowerShell, a partir da raiz:
+
+```powershell
+cd mobile
+$env:EXPO_PUBLIC_API_URL='http://127.0.0.1:8082/RoleOut/api/v1'
+node node_modules/expo/bin/cli start --web --localhost --port 8081
+```
+
+Abrir http://localhost:8081 e usar cadastro/login, em vez do modo demonstração.
+Os dados pertencem ao banco isolado; os exemplos do teste HTTP usam a cidade
+`Cidade Integracao`. A variável acima vale somente nesse terminal.
+
+45 testes Java aprovados, incluindo cinco testes CORS. O teste HTTP também
+passou com Origin da prévia e preflight de POST com Authorization/Content-Type.
+Isso ainda não é validação ponta a ponta pelas telas: a automação do navegador
+falhou ao iniciar por erro do ambiente restrito. Cadastro, login, criação,
+salvamento e recuperação devem ser conferidos visualmente quando o acesso
+voltar. Android/iOS também permanecem pendentes; a API está restrita ao computador
+e não está publicada na rede Wi-Fi.
 
 Para parar os serviços sem apagar os dados:
 

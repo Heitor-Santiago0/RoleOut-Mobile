@@ -22,8 +22,9 @@ pnpm start
 Abrir no Expo Go compatível com SDK 57 ou numa development build correspondente.
 O projeto ainda não foi testado num aparelho/emulador nem empacotado em APK/IPA.
 Para preview de interface no navegador: `pnpm web`. A prévia web não representa
-validação Android/iOS; API de outra origem exige CORS configurado no servidor.
-O backend atual não oferece CORS para essa prévia e não foi alterado para isso.
+validação Android/iOS. O ambiente `compose.integration.yml` permite explicitamente
+as origens `http://localhost:8081` e `http://127.0.0.1:8081`. Ver
+`../docs/integracao-local.md` para iniciar a prévia conectada.
 
 ## API real
 

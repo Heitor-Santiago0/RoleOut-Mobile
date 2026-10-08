@@ -3,13 +3,15 @@ $ErrorActionPreference = 'Stop'
 $base = 'http://127.0.0.1:8082/RoleOut/api/v1'
 $compose = Join-Path $PSScriptRoot '../compose.integration.yml'
 function Request($method, $path, $body = $null, $token = $null) {
-    $requestOptions = @{ Uri = "$base$path"; Method = $method; UseBasicParsing = $true; TimeoutSec = 20 }
-    if ($token) { $requestOptions.Headers = @{ Authorization = "Bearer $token" } }
+    $requestOptions = @{ Uri = "$base$path"; Method = $method; UseBasicParsing = $true; TimeoutSec = 20; Headers = @{ Origin = 'http://localhost:8081' } }
+    if ($token) { $requestOptions.Headers.Authorization = "Bearer $token" }
     if ($null -ne $body) {
         $requestOptions.ContentType = 'application/json; charset=utf-8'
         $requestOptions.Body = [Text.Encoding]::UTF8.GetBytes(($body | ConvertTo-Json -Depth 8 -Compress))
     }
-    Invoke-WebRequest @requestOptions
+    $response = Invoke-WebRequest @requestOptions
+    if ($response.Headers['Access-Control-Allow-Origin'] -ne 'http://localhost:8081') { throw 'Missing explicit CORS origin' }
+    $response
 }
 function Assert($condition, $message) { if (-not $condition) { throw $message } }
 function ExpectStatus($status, $method, $path, $body = $null, $token = $null) {
@@ -23,6 +25,13 @@ function ExpectStatus($status, $method, $path, $body = $null, $token = $null) {
 $suffix = [Guid]::NewGuid().ToString('N')
 $password = [Guid]::NewGuid().ToString('N')
 $tokens = @()
+$preflight = Invoke-WebRequest "$base/roteiros" -Method OPTIONS -UseBasicParsing -Headers @{
+    Origin = 'http://localhost:8081'
+    'Access-Control-Request-Method' = 'POST'
+    'Access-Control-Request-Headers' = 'authorization,content-type'
+}
+Assert ($preflight.StatusCode -eq 204) 'Browser preflight failed'
+Assert ($preflight.Headers['Access-Control-Allow-Origin'] -eq 'http://localhost:8081') 'Preflight origin failed'
 try {
     foreach ($owner in @('a', 'b')) {
         $email = "integration-$suffix-$owner@example.invalid"
