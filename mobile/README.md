@@ -71,6 +71,10 @@ Ainda pendentes: validação completa pelas telas e Android/iOS, perfil completo
 recomendações precisas com metadados dos locais, painel dos responsáveis e aprovação administrativa. Backend e web
 continuam separados desta pasta; nenhum arquivo JSP foi substituído.
 
+Área inicial dos responsáveis: `Conta > Meus locais`, com cadastro/edição de
+organizações e rascunhos de locais. Detalhes e limites em `../docs/area-responsaveis.md`.
+O envio para análise e o painel administrativo são a próxima etapa desse fluxo.
+
 Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
 e o Figma indicado em `../docs/referencia-figma.md`.
 

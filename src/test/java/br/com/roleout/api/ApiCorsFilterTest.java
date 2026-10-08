@@ -35,6 +35,15 @@ class ApiCorsFilterTest {
         new ApiCorsFilter("http://localhost:8081").doFilter(req, res, chain);
         verify(chain).doFilter(req, res);
     }
+    @Test void explicitOriginCanPreflightPutForDraftEditing() throws Exception {
+        var req = mock(HttpServletRequest.class); var res = mock(HttpServletResponse.class); var chain = mock(FilterChain.class);
+        when(req.getHeader("Origin")).thenReturn("http://localhost:8081");
+        when(req.getMethod()).thenReturn("OPTIONS");
+        when(req.getHeader("Access-Control-Request-Method")).thenReturn("PUT");
+        new ApiCorsFilter("http://localhost:8081").doFilter(req, res, chain);
+        verify(res).setStatus(204); verifyNoInteractions(chain);
+        verify(res).setHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
+    }
     @Test void unexpectedPreflightHeadersAreRejected() throws Exception {
         var req = mock(HttpServletRequest.class); var res = mock(HttpServletResponse.class); var chain = mock(FilterChain.class);
         when(req.getHeader("Origin")).thenReturn("http://localhost:8081"); when(req.getMethod()).thenReturn("OPTIONS");

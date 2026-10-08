@@ -33,10 +33,10 @@ public final class ApiCorsFilter implements Filter {
             String headers = request.getHeader("Access-Control-Request-Headers");
             boolean validHeaders = headers == null || Arrays.stream(headers.split(","))
                     .allMatch(h -> Set.of("authorization", "content-type", "accept").contains(h.trim().toLowerCase(java.util.Locale.ROOT)));
-            if (!Set.of("GET", "POST").contains(method == null ? "" : method) || !validHeaders) {
+            if (!Set.of("GET", "POST", "PUT").contains(method == null ? "" : method) || !validHeaders) {
                 response.setStatus(403); return;
             }
-            response.setHeader("Access-Control-Allow-Methods", "GET, POST");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
             response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept");
             response.setStatus(204);
             return;

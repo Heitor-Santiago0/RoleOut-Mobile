@@ -57,6 +57,26 @@ try {
     Assert ($skipped.perfil.status -eq 'PULADO') 'Skip was not persisted'
     ExpectStatus 401 GET '/preferencias'
     Write-Output 'PASS: preference persistence, repeated saves, catalog validation, skip and account isolation.'
+    $orgInput = @{ nome = "Organization $suffix"; tipo = 'MUSEU'; contatoEmail = "org-$suffix@example.invalid"; descricao = 'Integration fixture'; contatoTelefone = '' }
+    $orgResponse = Request POST '/organizacoes' $orgInput $tokens[0]
+    Assert ($orgResponse.StatusCode -eq 201) 'Organization creation failed'
+    $org = $orgResponse.Content | ConvertFrom-Json
+    Assert ($org.status -eq 'PENDENTE') 'Organization must require approval'
+    $orgInput.nome = "Updated $suffix"
+    ExpectStatus 200 PUT "/organizacoes/$($org.id)" $orgInput $tokens[0]
+    ExpectStatus 404 GET "/organizacoes/$($org.id)" $null $tokens[1]
+    ExpectStatus 404 PUT "/organizacoes/$($org.id)" $orgInput $tokens[1]
+    $venueInput = @{ nome = 'Integration venue'; categoria = 'Cultura'; endereco = 'Test street 1'; cidade = 'Cidade Integracao'; uf = 'MG'; cep = '38000-000'; descricao = ''; acessibilidade = '' }
+    $venue = (Request POST "/organizacoes/$($org.id)/locais" $venueInput $tokens[0]).Content | ConvertFrom-Json
+    Assert ($venue.status -eq 'RASCUNHO') 'Venue must remain a draft'
+    $venueInput.nome = 'Updated venue'
+    ExpectStatus 200 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
+    $venueRead = (Request GET "/organizacoes/$($org.id)/locais/$($venue.id)" $null $tokens[0]).Content | ConvertFrom-Json
+    Assert ($venueRead.nome -eq 'Updated venue') 'Venue edit was not saved'
+    ExpectStatus 404 GET "/organizacoes/$($org.id)/locais" $null $tokens[1]
+    $venueInput.status = 'PUBLICADO'
+    ExpectStatus 400 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
+    Write-Output 'PASS: organization and venue create/edit/read, private ownership and draft status.'
     $sql = "INSERT INTO roles (nome, local, cidade, categoria, valor) VALUES ('Integration $suffix', 'Museu teste', 'Cidade Integracao', 'Cultura', 20.10); SELECT LAST_INSERT_ID();"
     $result = $sql | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
     Assert ($LASTEXITCODE -eq 0) 'Failed to create isolated fixture'
