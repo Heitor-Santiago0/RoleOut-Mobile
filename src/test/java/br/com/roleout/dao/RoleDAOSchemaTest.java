@@ -81,7 +81,9 @@ class RoleDAOSchemaTest {
             dao.inserir(role("Exposição", 10));
             int roleId = dao.listarTodos().get(0).getId();
             sql.executeUpdate("UPDATE roles SET local_id=1 WHERE id=" + roleId);
-            assertNotNull(dao.buscarPorId(roleId)); // Original web management still works.
+            assertNull(dao.buscarPorId(roleId)); // Legacy management must not bypass mobile review.
+            assertTrue(dao.listarTodos().isEmpty());
+            assertTrue(dao.buscarSugestoes("Cultura", "Uberaba", 20).isEmpty());
             assertNull(dao.buscarPublicadoPorId(roleId));
             assertTrue(dao.consultarPagina(null, null, null, 20, 0).isEmpty());
             sql.executeUpdate("UPDATE locais SET status='PUBLICADO' WHERE id=1");

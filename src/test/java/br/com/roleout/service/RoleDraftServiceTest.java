@@ -18,7 +18,7 @@ class RoleDraftServiceTest {
     @BeforeEach void setup() throws Exception {
         source = new JdbcDataSource(); source.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
         try (var c = source.getConnection()) {
-            for (var file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V006__rascunhos_roles.sql")) {
+            for (var file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V006__rascunhos_roles.sql", "V007__revisao_roles.sql")) {
                 try (var r = new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/db/migration/" + file)), StandardCharsets.UTF_8)) { RunScript.execute(c, r); }
             }
             try (var s = c.createStatement()) { s.executeUpdate("INSERT INTO contas(nome,email,senha_hash) VALUES ('Owner','owner@example.invalid','x'),('Other','other@example.invalid','x')"); }

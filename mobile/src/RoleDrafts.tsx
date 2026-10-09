@@ -6,7 +6,9 @@ import { formatDateInput, isoDate, moneyCents } from './itinerary';
 import { Button, Field, Message, price } from './ui';
 import { colors, styles as s } from './theme';
 
-type Draft = { id: number; localId: number; nome: string; descricao: string | null; categoria: string; data: string | null; valor: number; versao: number };
+type Draft = { id: number; localId: number; nome: string; descricao: string | null; categoria: string; data: string | null; valor: number; versao: number; status: string; roleId: number | null };
+type Review = { id: number; versao: number; decisao: string; justificativa: string; criadoEm: string };
+const statuses: Record<string, string> = { RASCUNHO: 'Rascunho', PENDENTE: 'Aguardando análise', REJEITADO: 'Correção solicitada', PUBLICADO: 'Publicado' };
 const blank = { nome: '', descricao: '', categoria: '', data: '', valor: '' };
 export function RoleDrafts({ token, venue, canEdit, onBack }: { token: string; venue: { id: number; nome: string }; canEdit: boolean; onBack: () => void }) {
   const { expire } = useAuth(); const active = useRef(true); const pending = useRef(false);
@@ -15,6 +17,7 @@ export function RoleDrafts({ token, venue, canEdit, onBack }: { token: string; v
   const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   const [form, setForm] = useState<typeof blank | null>(null); const [editing, setEditing] = useState<Draft | null>(null);
   const [uncertain, setUncertain] = useState(false);
+  const [history, setHistory] = useState<{ name: string; items: Review[] } | null>(null);
   useEffect(() => {
     active.current = true;
     request<{ itens: Draft[] }>(`/rascunhos-roles/${venue.id}`, { token }).then(data => {
@@ -66,10 +69,26 @@ export function RoleDrafts({ token, venue, canEdit, onBack }: { token: string; v
     } finally { pending.current = false; if (active.current) setBusy(false); }
     if (savedSuccessfully && active.current) await load(editing ? offset : 0);
   }
+  async function submit(item: Draft) {
+    if (pending.current) return; pending.current = true; setBusy(true); setError(''); setNotice(''); setHistory(null);
+    try {
+      const saved = await request<Draft>(`/rascunhos-roles/${venue.id}/${item.id}/enviar`, { token, method: 'POST', body: { versao: item.versao } });
+      if (active.current) { setItems(previous => previous.map(value => value.id === saved.id ? saved : value)); setNotice('Rolê enviado para análise. Aguarde a decisão antes de editar.'); }
+    } catch (e) { await fail(e); }
+    finally { pending.current = false; if (active.current) setBusy(false); }
+  }
+  async function showHistory(item: Draft) {
+    if (pending.current) return; pending.current = true; setBusy(true); setError(''); setHistory(null);
+    try {
+      const data = await request<{ itens: Review[] }>(`/rascunhos-roles/${venue.id}/${item.id}/revisoes`, { token });
+      if (active.current) setHistory({ name: item.nome, items: data.itens });
+    } catch (e) { await fail(e); }
+    finally { pending.current = false; if (active.current) setBusy(false); }
+  }
   return <View style={{ gap: 14 }}>
     <Button title="← Voltar aos locais" secondary disabled={busy} onPress={onBack} />
     <Text style={s.cardTitle}>Rolês de {venue.nome}</Text>
-    <Text style={s.subtitle}>Prepare os passeios, eventos e experiências oferecidos neste local. Nesta etapa, eles ficam salvos como rascunhos privados.</Text>
+    <Text style={s.subtitle}>Prepare os passeios, eventos e experiências oferecidos neste local. Confira o rascunho e envie para análise. O rolê só aparece no Explorar após aprovação.</Text>
     <Message text={error} />{!!notice && <Text accessibilityRole="alert" style={s.text}>{notice}</Text>}
     {busy && <ActivityIndicator color={colors.blue} accessibilityLabel="Carregando rolês do local" />}
     {!canEdit && <Text style={s.small}>Para criar ou editar rolês, a organização e o local precisam estar aprovados.</Text>}
@@ -87,11 +106,13 @@ export function RoleDrafts({ token, venue, canEdit, onBack }: { token: string; v
       <Button title="Atualizar rascunhos" secondary disabled={busy} onPress={() => { void load(offset); }} />
       {!busy && !error && items.length === 0 && <Text style={s.subtitle}>Nenhum rascunho nesta página.</Text>}
       {items.map(item => <View key={item.id} style={[s.secondary, { padding: 16, borderRadius: 14, gap: 8 }]}>
-        <Text style={s.cardTitle}>{item.nome}</Text><Text style={s.subtitle}>Rascunho • {item.categoria}</Text>
+        <Text style={s.cardTitle}>{item.nome}</Text><Text style={s.subtitle}>{statuses[item.status] ?? item.status} • {item.categoria}</Text>
         <Text style={s.text}>{price(item.valor)}{item.valor > 0 ? ' por pessoa' : ''} • {item.data ? item.data.split('-').reverse().join('/') : 'Sem data específica'}</Text>
         {!!item.descricao && <Text style={s.text}>{item.descricao}</Text>}
-        {canEdit && <Button title={`Editar ${item.nome}`} secondary disabled={busy} onPress={() => open(item)} />}
+        {canEdit && ['RASCUNHO', 'REJEITADO'].includes(item.status) && <><Button title={`Editar ${item.nome}`} secondary disabled={busy} onPress={() => open(item)} /><Button title={`Enviar ${item.nome} para análise`} disabled={busy} onPress={() => { void submit(item); }} /></>}
+        <Button title={`Histórico de ${item.nome}`} secondary disabled={busy} onPress={() => { void showHistory(item); }} />
       </View>)}
+      {history && <View style={{ gap: 8 }}><Text style={s.cardTitle}>Histórico: {history.name}</Text>{history.items.length === 0 && <Text style={s.small}>Nenhuma decisão registrada.</Text>}{history.items.map(review => <View key={review.id} style={[s.secondary, { padding: 14, borderRadius: 12, gap: 6 }]}><Text style={s.text}>{review.decisao === 'APROVAR' ? 'Aprovado' : 'Correção solicitada'}</Text><Text style={s.text}>{review.justificativa}</Text><Text style={s.small}>{new Date(review.criadoEm).toLocaleString('pt-BR')}</Text></View>)}{history.items.length === 100 && <Text style={s.small}>Exibindo as 100 decisões mais recentes.</Text>}</View>}
       {offset > 0 && <Button title="Página anterior" secondary disabled={busy} onPress={() => { void load(Math.max(0, offset - 20)); }} />}
       {more && <Button title="Próxima página" secondary disabled={busy} onPress={() => { void load(offset + 20); }} />}
     </>}

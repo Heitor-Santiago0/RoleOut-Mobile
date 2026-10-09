@@ -15,7 +15,9 @@ public class RoleDraftService {
     public record Input(String nome, String descricao, String categoria, String data,
                         BigDecimal valor, Integer versao) {}
     public record Draft(int id, int localId, String nome, String descricao, String categoria,
-                        String data, BigDecimal valor, int versao) {}
+                        String data, BigDecimal valor, int versao, String status, Integer roleId) {}
+    public record Submission(Integer versao) {}
+    public record Review(int id, int versao, String decisao, String justificativa, String criadoEm) {}
     private final SqlAccess sql;
     public RoleDraftService() { this(new SqlAccess()); }
     public RoleDraftService(SqlAccess sql) { this.sql = sql; }
@@ -40,12 +42,13 @@ public class RoleDraftService {
             try {
                 authorize(c, account, venue, true);
                 if (id != null) {
-                    var current = find(c, venue, id);
+                    var current = find(c, venue, id, true);
+                    editable(current);
                     if (current.versao() != v.versao()) throw conflict("O rascunho mudou. Recarregue antes de salvar.");
                 }
                 String query = id == null
                         ? "INSERT INTO rascunhos_roles(nome,descricao,categoria,data,valor,local_id) VALUES (?,?,?,?,?,?)"
-                        : "UPDATE rascunhos_roles SET nome=?,descricao=?,categoria=?,data=?,valor=?,versao=versao+1 WHERE local_id=? AND id=? AND versao=?";
+                        : "UPDATE rascunhos_roles SET nome=?,descricao=?,categoria=?,data=?,valor=?,versao=versao+1,status='RASCUNHO' WHERE local_id=? AND id=? AND versao=?";
                 try (var s = c.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                     s.setString(1, v.nome()); s.setString(2, v.descricao()); s.setString(3, v.categoria());
                     if (v.data() == null) s.setNull(4, Types.DATE); else s.setDate(4, Date.valueOf(v.data()));
@@ -59,11 +62,40 @@ public class RoleDraftService {
                         }
                     }
                 }
-                var saved = find(c, venue, id); c.commit(); return saved;
+                var saved = find(c, venue, id, true); c.commit(); return saved;
             } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
         } catch (SQLException e) { throw new RuntimeException("Draft save failed.", e); }
     }
 
+    public Draft submit(int account, int venue, int id, Submission input) {
+        if (input == null || input.versao() == null || input.versao() < 1) throw new IllegalArgumentException("Versão inválida.");
+        try (var c = sql.connection()) {
+            c.setAutoCommit(false);
+            try {
+                authorize(c, account, venue, true);
+                var current = find(c, venue, id, true); editable(current);
+                if (current.versao() != input.versao()) throw conflict("O rascunho mudou. Recarregue antes de enviar.");
+                try (var s = c.prepareStatement("UPDATE rascunhos_roles SET status='PENDENTE',versao=versao+1 WHERE id=?")) {
+                    s.setInt(1, id); s.executeUpdate();
+                }
+                var saved = find(c, venue, id, true); c.commit(); return saved;
+            } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
+        } catch (SQLException e) { throw new RuntimeException("Draft submission failed.", e); }
+    }
+    public List<Review> reviews(int account, int venue, int id) {
+        try (var c = sql.connection()) {
+            authorize(c, account, venue, false); find(c, venue, id, false);
+            try (var s = c.prepareStatement("SELECT * FROM revisoes_roles WHERE rascunho_id=? ORDER BY id DESC LIMIT 100")) {
+                s.setInt(1, id); var result = new ArrayList<Review>();
+                try (var rs = s.executeQuery()) { while (rs.next()) result.add(new Review(rs.getInt("id"), rs.getInt("versao"), rs.getString("decisao"), rs.getString("justificativa"), rs.getTimestamp("criado_em").toInstant().toString())); }
+                return result;
+            }
+        } catch (SQLException e) { throw new RuntimeException("Draft review history failed.", e); }
+    }
+    private void editable(Draft draft) {
+        if (!draft.status().equals("RASCUNHO") && !draft.status().equals("REJEITADO"))
+            throw conflict("O rolê não pode ser alterado enquanto aguarda análise ou após publicação.");
+    }
     private void authorize(Connection c, int account, int venue, boolean write) throws SQLException {
         // Lock in the same organization -> venue order used by administrative review.
         try (var s = c.prepareStatement("SELECT o.status FROM organizacoes o JOIN membros_organizacao m ON m.organizacao_id=o.id WHERE m.conta_id=? AND o.id=(SELECT organizacao_id FROM locais WHERE id=?)" + (write ? " FOR UPDATE" : ""))) {
@@ -83,17 +115,18 @@ public class RoleDraftService {
             }
         }
     }
-    private Draft find(Connection c, int venue, int id) throws SQLException {
-        try (var s = c.prepareStatement("SELECT * FROM rascunhos_roles WHERE id=? AND local_id=?")) {
+    private Draft find(Connection c, int venue, int id, boolean lock) throws SQLException {
+        try (var s = c.prepareStatement("SELECT * FROM rascunhos_roles WHERE id=? AND local_id=?" + (lock ? " FOR UPDATE" : ""))) {
             s.setInt(1, id); s.setInt(2, venue);
             try (var rs = s.executeQuery()) { if (!rs.next()) throw missing(); return map(rs); }
         }
     }
-    private Draft map(ResultSet rs) throws SQLException {
+    static Draft map(ResultSet rs) throws SQLException {
         var date = rs.getDate("data");
+        int role = rs.getInt("role_id"); Integer roleId = rs.wasNull() ? null : role;
         return new Draft(rs.getInt("id"), rs.getInt("local_id"), rs.getString("nome"),
                 rs.getString("descricao"), rs.getString("categoria"), date == null ? null : date.toLocalDate().toString(),
-                rs.getBigDecimal("valor"), rs.getInt("versao"));
+                rs.getBigDecimal("valor"), rs.getInt("versao"), rs.getString("status"), roleId);
     }
     private Input validate(Input v, boolean edit) {
         if (v == null || v.valor() == null || v.valor().signum() < 0 || v.valor().compareTo(new BigDecimal("99999999.99")) > 0)

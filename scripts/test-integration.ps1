@@ -128,6 +128,32 @@ try {
     $publicCount = "SELECT COUNT(*) FROM roles WHERE nome='Draft $suffix';" | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
     Assert ($LASTEXITCODE -eq 0 -and [int]($publicCount | Select-Object -Last 1) -eq 0) 'Draft leaked into public roles'
     Write-Output 'PASS: private role drafts, price per person, optional date, stale edits, strict JSON and account isolation.'
+    ExpectStatus 403 GET '/revisoes-roles' $null $tokens[0]
+    ExpectStatus 404 POST "$draftPath/$($draft.id)/enviar" @{ versao = 2 } $tokens[1]
+    ExpectStatus 200 POST "$draftPath/$($draft.id)/enviar" @{ versao = 2 } $tokens[0]
+    ExpectStatus 409 POST "$draftPath/$($draft.id)/enviar" @{ versao = 2 } $tokens[0]
+    $draftInput.Remove('status')
+    $draftInput.versao = 3
+    ExpectStatus 409 PUT "$draftPath/$($draft.id)" $draftInput $tokens[0]
+    $roleDecision = @{ rascunhoId = $draft.id; versao = 3; decisao = 'REJEITAR'; justificativa = 'Please clarify the activity' }
+    ExpectStatus 403 POST '/revisoes-roles' $roleDecision $tokens[0]
+    ExpectStatus 200 POST '/revisoes-roles' $roleDecision $tokens[2]
+    $draftInput.versao = 4; $draftInput.descricao = 'Clarified activity'
+    ExpectStatus 200 PUT "$draftPath/$($draft.id)" $draftInput $tokens[0]
+    ExpectStatus 200 POST "$draftPath/$($draft.id)/enviar" @{ versao = 5 } $tokens[0]
+    ExpectStatus 409 POST '/revisoes-roles' $roleDecision $tokens[2]
+    $roleDecision.versao = 6; $roleDecision.decisao = 'APROVAR'; $roleDecision.justificativa = 'Activity verified'
+    $approvedRole = (Request POST '/revisoes-roles' $roleDecision $tokens[2]).Content | ConvertFrom-Json
+    ExpectStatus 409 POST '/revisoes-roles' $roleDecision $tokens[2]
+    $publicRole = (Request GET "/roles/$($approvedRole.role.roleId)").Content | ConvertFrom-Json
+    Assert ($publicRole.nome -eq $draftInput.nome -and $publicRole.valor -eq 0) 'Approved role not public'
+    $roleHistory = (Request GET "$draftPath/$($draft.id)/revisoes" $null $tokens[0]).Content | ConvertFrom-Json
+    Assert (@($roleHistory.itens).Count -eq 2) 'Role review audit failed'
+    ExpectStatus 404 GET "$draftPath/$($draft.id)/revisoes" $null $tokens[1]
+    $legacy = Invoke-WebRequest "http://127.0.0.1:8082/RoleOut/roles?acao=excluir&id=$($approvedRole.role.roleId)" -UseBasicParsing
+    Assert ($legacy.StatusCode -eq 200) 'Legacy page unavailable'
+    ExpectStatus 200 GET "/roles/$($approvedRole.role.roleId)"
+    Write-Output 'PASS: role submission, rejection/correction, audited approval, public detail and protection from legacy deletion.'
     $sql = "INSERT INTO roles (nome, local, cidade, categoria, valor) VALUES ('Integration $suffix', 'Museu teste', 'Cidade Integracao', 'Cultura', 20.10); SELECT LAST_INSERT_ID();"
     $result = $sql | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
     Assert ($LASTEXITCODE -eq 0) 'Failed to create isolated fixture'

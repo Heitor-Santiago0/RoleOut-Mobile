@@ -1,9 +1,10 @@
 # Rascunhos de rolês dos locais
 
-Primeira etapa do fluxo editorial: API privada de criação, consulta e edição.
-O formulário mobile está em Minha conta → Meus locais → organização → Rolês do local. Ainda não há envio para revisão ou publicação destes rascunhos.
+Fluxo editorial: criação, edição, envio, revisão auditada e publicação.
+O formulário mobile está em Minha conta → Meus locais → organização → Rolês do local.
+O administrador encontra a fila em Analisar cadastros → Rolês para análise.
 
-Aplicar V006 após as migrações anteriores. A nova tabela não altera os rolês de teste
+Aplicar V006 e V007 após as migrações anteriores. As novas tabelas não alteram os rolês de teste
 do site. Nenhuma consulta pública ou consulta do site lê `rascunhos_roles`.
 
 Todas as operações exigem Bearer token e vínculo da conta com a organização do local.
@@ -16,6 +17,10 @@ endereço, organização ou estado de publicação pelo cliente.
 | GET | `/api/v1/rascunhos-roles/{localId}?deslocamento=0` | `{ "itens": [...] }`, até 20 por página |
 | POST | `/api/v1/rascunhos-roles/{localId}` | Rascunho criado, HTTP 201 |
 | PUT | `/api/v1/rascunhos-roles/{localId}/{rascunhoId}` | Rascunho atualizado, HTTP 200 |
+| POST | `/api/v1/rascunhos-roles/{localId}/{rascunhoId}/enviar` | Corpo `{"versao":1}`, transição para PENDENTE |
+| GET | `/api/v1/rascunhos-roles/{localId}/{rascunhoId}/revisoes` | Até 100 decisões mais recentes, somente membros |
+| GET | `/api/v1/revisoes-roles?deslocamento=0` | Até 20 rolês pendentes, somente administradores |
+| POST | `/api/v1/revisoes-roles` | Decisão administrativa, HTTP 200 |
 
 Corpo de criação:
 
@@ -33,7 +38,24 @@ Dados fora da organização recebem 404; estado incompatível recebe 409; JSON/c
 inválidos recebem 400. O cliente não deve repetir automaticamente um POST após falha
 de rede: deve consultar os rascunhos antes de tentar novamente.
 
-Próximas etapas: envio para revisão, decisão administrativa
-auditada e criação do rolê público apenas após aprovação. A aprovação do local
-não publica automaticamente as novas ofertas.
+Decisão: `{"rascunhoId":1,"versao":2,"decisao":"APROVAR","justificativa":"Dados conferidos"}`.
+Também aceita REJEITAR. A justificativa é obrigatória, até 2000 caracteres. O
+administrador não pode ter vínculo com a organização. O servidor consulta a permissão
+atual a cada operação; nenhum campo do cadastro público permite criar administradores.
+
+Estados: RASCUNHO → PENDENTE → PUBLICADO ou REJEITADO. Rejeitados podem ser corrigidos
+e reenviados. Edição, envio e decisão incrementam a versão; revisão desatualizada e
+envio repetido retornam 409. Pendentes e publicados não podem ser editados nesta etapa.
+
+A aprovação exige local PUBLICADO e organização APROVADA no instante da decisão.
+Publicação, vínculo `roleId`, mudança de estado e histórico são gravados em uma
+transação. A cidade e o endereço vêm do local aprovado; o preço vem do rascunho
+revisado. O novo rolê fica disponível nas consultas públicas da API. Se o local ou
+a organização forem suspensos, as consultas públicas deixam de exibi-lo.
+
+O CRUD e as sugestões da versão web original continuam atendendo os registros sem
+`local_id` (cadastros de teste). Não podem ler, editar ou excluir as novas publicações
+vinculadas a locais, evitando contornar a revisão pela interface antiga. Os dados
+antigos não foram removidos. Não há edição pós-publicação ou suspensão de rolê
+individual neste incremento; esses fluxos exigem revisão própria.
 

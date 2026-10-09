@@ -165,7 +165,7 @@ public class RoleDAO {
 
     List<Role> roles = new ArrayList<>();
 
-    String sql = "SELECT * FROM roles ORDER BY data";
+    String sql = "SELECT * FROM roles WHERE local_id IS NULL ORDER BY data";
 
     try (
         Connection connection = getConnection();
@@ -212,7 +212,7 @@ public void atualizar(Role role) {
                 data = ?,
                 categoria = ?,
                 valor = ?
-            WHERE id = ?
+            WHERE id = ? AND local_id IS NULL
             """;
 
     try (
@@ -246,7 +246,7 @@ public void atualizar(Role role) {
 
 public void excluir(int id) {
 
-    String sql = "DELETE FROM roles WHERE id = ?";
+    String sql = "DELETE FROM roles WHERE id = ? AND local_id IS NULL";
 
     try (
         Connection connection = getConnection();
@@ -263,7 +263,7 @@ public void excluir(int id) {
 }
 public Role buscarPorId(int id) {
 
-    String sql = "SELECT * FROM roles WHERE id = ?";
+    String sql = "SELECT * FROM roles WHERE id = ? AND local_id IS NULL";
 
     try (
         Connection connection = getConnection();
@@ -308,7 +308,7 @@ public List<Role> buscarSugestoes(String categoria, String cidade, double valorM
     String sql = """
             SELECT *
             FROM roles
-            WHERE LOWER(categoria) = LOWER(?)
+            WHERE local_id IS NULL AND LOWER(categoria) = LOWER(?)
               AND LOWER(cidade) = LOWER(?)
               AND valor <= ?
             ORDER BY valor ASC
