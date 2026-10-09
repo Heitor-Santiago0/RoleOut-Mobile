@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
 import { useAuth } from './AuthContext';
+import { RoleDrafts } from './RoleDrafts';
 import { ApiError, request } from './api';
 import { Button, Field, Message } from './ui';
 import { colors, styles as s } from './theme';
@@ -25,6 +26,7 @@ function Manager({ token, email }: { token: string; email: string }) {
   const { expire } = useAuth(); const active = useRef(true);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [draftVenue, setDraftVenue] = useState<Venue | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [mode, setMode] = useState<'list' | 'organization' | 'orgForm' | 'venueForm'>('list');
@@ -95,6 +97,7 @@ function Manager({ token, email }: { token: string; email: string }) {
       if (active.current) { setVenues(previous => previous.map(item => item.id === id ? saved : item)); setNotice('Local enviado para análise. A edição fica bloqueada enquanto aguarda a decisão.'); }
     } catch (e) { await failure(e); } finally { if (active.current) setBusy(false); }
   }
+  if (draftVenue && organization) return <ScrollView contentContainerStyle={[s.content, { maxWidth: 680, width: '100%', alignSelf: 'center' }]} keyboardShouldPersistTaps="handled"><RoleDrafts key={draftVenue.id} token={token} venue={draftVenue} canEdit={organization.status === 'APROVADA' && draftVenue.status === 'PUBLICADO'} onBack={() => { setDraftVenue(null); void refresh(organization); }} /></ScrollView>;
   const editableOrg = organization?.papel === 'RESPONSAVEL' && ['PENDENTE', 'REJEITADA'].includes(organization.status);
   return <ScrollView contentContainerStyle={[s.content, { maxWidth: 680, width: '100%', alignSelf: 'center' }]} keyboardShouldPersistTaps="handled">
     <Button title={mode === 'list' ? '← Minha conta' : '← Voltar'} secondary disabled={busy} onPress={() => { setError(''); setNotice(''); if (mode === 'list') router.replace('/account'); else if (mode === 'venueForm' || (mode === 'orgForm' && organization)) setMode('organization'); else void refresh(); }} />
@@ -116,7 +119,7 @@ function Manager({ token, email }: { token: string; email: string }) {
       {organization.status !== 'SUSPENSA' && <Button title="Cadastrar local" disabled={busy} onPress={() => openVenueForm()} />}
       <Button title="Atualizar locais e status" secondary disabled={busy} onPress={() => { void refresh(organization); }} />
       {!busy && !error && venues.length === 0 && <Text style={s.subtitle}>Nenhum local cadastrado nesta organização.</Text>}
-      {venues.map(venue => <View key={venue.id} style={[s.secondary, { padding: 16, borderRadius: 14, gap: 10 }]}><Text style={s.cardTitle}>{venue.nome}</Text><Text style={s.subtitle}>{venue.cidade}/{venue.uf} • {statusLabels[venue.status] ?? venue.status}</Text><Text style={s.text}>{venue.endereco}</Text>{organization.status !== 'SUSPENSA' && ['RASCUNHO', 'REJEITADO'].includes(venue.status) && <><Button title={`Editar ${venue.nome}`} secondary disabled={busy} onPress={() => openVenueForm(venue)} /><Button title={`Enviar ${venue.nome} para análise`} disabled={busy} onPress={() => { void submitVenue(venue.id); }} /></>}</View>)}
+      {venues.map(venue => <View key={venue.id} style={[s.secondary, { padding: 16, borderRadius: 14, gap: 10 }]}><Text style={s.cardTitle}>{venue.nome}</Text><Text style={s.subtitle}>{venue.cidade}/{venue.uf} • {statusLabels[venue.status] ?? venue.status}</Text><Text style={s.text}>{venue.endereco}</Text><Button title={`Rolês de ${venue.nome}`} secondary disabled={busy} onPress={() => setDraftVenue(venue)} />{organization.status !== 'SUSPENSA' && ['RASCUNHO', 'REJEITADO'].includes(venue.status) && <><Button title={`Editar ${venue.nome}`} secondary disabled={busy} onPress={() => openVenueForm(venue)} /><Button title={`Enviar ${venue.nome} para análise`} disabled={busy} onPress={() => { void submitVenue(venue.id); }} /></>}</View>)}
       {venues.length === 100 && <Text style={s.small}>Exibindo os primeiros 100 locais.</Text>}
       <Text style={s.cardTitle}>Histórico de análise</Text>
       {reviews.length === 0 && <Text style={s.small}>Nenhuma decisão registrada.</Text>}

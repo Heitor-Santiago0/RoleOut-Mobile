@@ -111,6 +111,23 @@ try {
     Assert (@($history.itens).Count -eq 2) 'Review audit history failed'
     ExpectStatus 404 GET "/organizacoes/$($org.id)/revisoes" $null $tokens[1]
     Write-Output 'PASS: submit, admin authorization, organization-before-venue approval, duplicate decision conflict and owner history.'
+    $draftPath = "/rascunhos-roles/$($venue.id)"
+    $draftInput = @{ nome = "Draft $suffix"; descricao = 'Private draft'; categoria = 'Cultura'; data = '2027-02-28'; valor = 12.35 }
+    ExpectStatus 401 GET $draftPath
+    ExpectStatus 404 POST $draftPath $draftInput $tokens[1]
+    $draft = (Request POST $draftPath $draftInput $tokens[0]).Content | ConvertFrom-Json
+    Assert ($draft.versao -eq 1 -and $draft.valor -eq 12.35) 'Draft creation failed'
+    ExpectStatus 404 GET $draftPath $null $tokens[1]
+    $draftInput.versao = 1; $draftInput.valor = 0; $draftInput.data = $null
+    ExpectStatus 200 PUT "$draftPath/$($draft.id)" $draftInput $tokens[0]
+    ExpectStatus 409 PUT "$draftPath/$($draft.id)" $draftInput $tokens[0]
+    $drafts = (Request GET $draftPath $null $tokens[0]).Content | ConvertFrom-Json
+    Assert ($drafts.itens[0].versao -eq 2 -and $drafts.itens[0].valor -eq 0 -and $null -eq $drafts.itens[0].data) 'Draft edit failed'
+    $draftInput.versao = 2; $draftInput.status = 'PUBLICADO'
+    ExpectStatus 400 PUT "$draftPath/$($draft.id)" $draftInput $tokens[0]
+    $publicCount = "SELECT COUNT(*) FROM roles WHERE nome='Draft $suffix';" | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
+    Assert ($LASTEXITCODE -eq 0 -and [int]($publicCount | Select-Object -Last 1) -eq 0) 'Draft leaked into public roles'
+    Write-Output 'PASS: private role drafts, price per person, optional date, stale edits, strict JSON and account isolation.'
     $sql = "INSERT INTO roles (nome, local, cidade, categoria, valor) VALUES ('Integration $suffix', 'Museu teste', 'Cidade Integracao', 'Cultura', 20.10); SELECT LAST_INSERT_ID();"
     $result = $sql | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
     Assert ($LASTEXITCODE -eq 0) 'Failed to create isolated fixture'
