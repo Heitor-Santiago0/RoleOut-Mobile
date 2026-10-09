@@ -15,10 +15,14 @@ Fluxo implementado:
 Organizações nascem PENDENTE. Apenas RESPONSAVEL edita organizações PENDENTE
 ou REJEITADA. Membros podem cadastrar/editar locais RASCUNHO ou REJEITADO,
 desde que a organização não esteja SUSPENSA. O token determina a conta;
-nenhuma tela pode atribuir status de aprovação ou publicação.
+nenhuma tela do responsável pode atribuir status de aprovação ou publicação.
 
-Esta etapa permite preparar rascunhos. O envio de locais à análise, revisão
-administrativa, justificativas e publicação ainda não estão implementados.
+O responsável envia locais RASCUNHO/REJEITADO para análise. Enquanto PENDENTE,
+o local não pode ser editado. Administradores conferem a fila em Conta → Analisar
+cadastros e aprovam/rejeitam com justificativa obrigatória. Organizações nascem
+PENDENTE e entram automaticamente na fila; uma organização rejeitada retorna
+à fila quando o responsável salva a correção. Aprovar o local exige organização
+APROVADA. Rejeição permite corrigir e reenviar. O histórico fica em Meus locais.
 Salvar local não cria automaticamente um evento/rolê, nem fornece coordenadas.
 Cadastro de ofertas/eventos e localização do local serão etapas posteriores.
 
@@ -32,5 +36,37 @@ nova ou alteração no banco da instalação antiga foi necessária.
 
 Validação: teste automatizado de preflight PUT e teste HTTP de criação, edição,
 leitura, isolamento entre contas e rejeição de status fornecido pelo cliente.
-Tipos, lint e bundles mobile também são verificados. A conferência visual das
-novas telas e a execução em aparelho continuam pendentes.
+Tipos, lint e bundles mobile também são verificados.
+
+## Revisão administrativa (09/10/2026)
+
+`POST /organizacoes/{org}/locais/{id}/enviar` envia para análise.
+`GET /organizacoes/{org}/revisoes` retorna as últimas 100 decisões aos membros.
+`GET /revisoes?deslocamento=0` retorna até 20 itens pendentes para administradores.
+`POST /revisoes` recebe organizacaoId, localId (null para organização), versao,
+decisao (APROVAR/REJEITAR) e justificativa de até 2.000 caracteres.
+
+O servidor autentica e confere o papel atual no banco. Membros de uma organização
+não podem revisá-la, mesmo se administradores. Cada item carrega um hash dos dados
+exibidos; mudanças exigem atualização da revisão. Decisão, mudança de status e
+histórico são gravados na mesma transação, com bloqueio da organização e local.
+Repetir uma decisão ou usar dados desatualizados retorna 409, sem duplicar histórico.
+
+A conta pública nunca recebe administrador pelo cadastro. O operador deve provisionar
+uma conta administrativa específica fora da API, após conferir sua identidade.
+Nenhuma conta do usuário foi promovida. O teste HTTP cria sua própria conta
+temporária no banco isolado e revoga o privilégio ao terminar.
+
+Validação: 56 testes Java, incluindo isolamento, vínculo do revisor, concorrência,
+dados desatualizados, rejeição/reenvio e visibilidade de rolês vinculados somente
+depois das duas aprovações. Integração MySQL/Tomcat aprovada para envio, revisão,
+histórico e conflitos. Tipos, lint e bundles web/Android/iOS aprovados.
+No navegador, foram verificados cadastro/login, pular preferências (inclusive
+persistência no próximo login), criação de organização/local, envio e logout.
+Após envio, o status mudou para Aguardando análise e a edição foi ocultada.
+Todos esses registros são fictícios do volume de integração.
+
+Ainda pendentes: suspensão/reativação pela interface, cadastro dos rolês/ofertas
+pelos responsáveis, coordenadas, execução em aparelho e revisão visual da fila
+administrativa. O teste HTTP cobre o fluxo administrativo, mas não substitui
+a inspeção visual dessa tela.

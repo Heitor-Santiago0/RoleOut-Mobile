@@ -10,6 +10,7 @@ type OrganizationInput = { nome: string; tipo: string; descricao: string; contat
 type Organization = OrganizationInput & { id: number; status: string; papel: string };
 type VenueInput = { nome: string; categoria: string; endereco: string; cidade: string; uf: string; cep: string; descricao: string; acessibilidade: string };
 type Venue = VenueInput & { id: number; status: string };
+type Review = { id: number; localId: number | null; decisao: string; justificativa: string; criadoEm: string };
 const types = [{ id: 'RESTAURANTE', label: 'Restaurante' }, { id: 'BAR', label: 'Bar' }, { id: 'MUSEU', label: 'Museu' }, { id: 'PREFEITURA', label: 'Prefeitura' }, { id: 'OUTRO', label: 'Outro' }];
 const states = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 const statusLabels: Record<string, string> = { PENDENTE: 'Aguardando análise', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada', SUSPENSA: 'Suspensa', RASCUNHO: 'Rascunho', PUBLICADO: 'Publicado', REJEITADO: 'Rejeitado', SUSPENSO: 'Suspenso' };
@@ -25,6 +26,7 @@ function Manager({ token, email }: { token: string; email: string }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [mode, setMode] = useState<'list' | 'organization' | 'orgForm' | 'venueForm'>('list');
   const [orgInput, setOrgInput] = useState<OrganizationInput>({ nome: '', tipo: 'RESTAURANTE', descricao: '', contatoEmail: email, contatoTelefone: '' });
   const [venueInput, setVenueInput] = useState<VenueInput>(emptyVenue);
@@ -46,8 +48,8 @@ function Manager({ token, email }: { token: string; email: string }) {
     setBusy(true); setError('');
     try {
       if (org) {
-        const [current, data] = await Promise.all([request<Organization>(`/organizacoes/${org.id}`, { token }), request<{ itens: Venue[] }>(`/organizacoes/${org.id}/locais`, { token })]);
-        if (active.current) { setOrganization(current); setVenues(data.itens); setMode('organization'); }
+        const [current, data, history] = await Promise.all([request<Organization>(`/organizacoes/${org.id}`, { token }), request<{ itens: Venue[] }>(`/organizacoes/${org.id}/locais`, { token }), request<{ itens: Review[] }>(`/organizacoes/${org.id}/revisoes`, { token })]);
+        if (active.current) { setOrganization(current); setVenues(data.itens); setReviews(history.itens); setMode('organization'); }
       } else {
         const data = await request<{ itens: Organization[] }>('/organizacoes', { token });
         if (active.current) { setOrganizations(data.itens); setOrganization(null); setMode('list'); }
@@ -71,7 +73,7 @@ function Manager({ token, email }: { token: string; email: string }) {
       if (mode === 'orgForm') {
         const saved = await request<Organization>(`/organizacoes${editing ? `/${editing}` : ''}`, { token, method: editing ? 'PUT' : 'POST', body: orgInput });
         if (!active.current) return;
-        setOrganization(saved); setVenues([]); setMode('organization');
+        setOrganization(saved); setVenues([]); setReviews([]); setMode('organization');
         setNotice('Organização salva. A publicação depende de aprovação.');
         await refresh(saved);
       } else if (organization) {
@@ -84,6 +86,14 @@ function Manager({ token, email }: { token: string; email: string }) {
       await failure(e);
       if (active.current && !(e instanceof ApiError)) setError('Não foi possível confirmar a gravação. Volte à lista e atualize antes de tentar novamente.');
     } finally { if (active.current) setBusy(false); }
+  }
+  async function submitVenue(id: number) {
+    if (!organization) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const saved = await request<Venue>(`/organizacoes/${organization.id}/locais/${id}/enviar`, { token, method: 'POST' });
+      if (active.current) { setVenues(previous => previous.map(item => item.id === id ? saved : item)); setNotice('Local enviado para análise. A edição fica bloqueada enquanto aguarda a decisão.'); }
+    } catch (e) { await failure(e); } finally { if (active.current) setBusy(false); }
   }
   const editableOrg = organization?.papel === 'RESPONSAVEL' && ['PENDENTE', 'REJEITADA'].includes(organization.status);
   return <ScrollView contentContainerStyle={[s.content, { maxWidth: 680, width: '100%', alignSelf: 'center' }]} keyboardShouldPersistTaps="handled">
@@ -101,13 +111,17 @@ function Manager({ token, email }: { token: string; email: string }) {
     </>}
     {mode === 'organization' && organization && <>
       <Text style={s.subtitle}>Organização: {statusLabels[organization.status] ?? organization.status}</Text>
-      <Text style={s.small}>Nesta etapa, você pode preparar os cadastros. O envio para análise e o painel de aprovação ainda serão disponibilizados.</Text>
+      <Text style={s.small}>Após conferir o rascunho, envie o local para análise. A publicação exige a aprovação da organização e do local.</Text>
       {editableOrg && <Button title="Editar organização" secondary disabled={busy} onPress={() => openOrgForm(organization)} />}
       {organization.status !== 'SUSPENSA' && <Button title="Cadastrar local" disabled={busy} onPress={() => openVenueForm()} />}
       <Button title="Atualizar locais e status" secondary disabled={busy} onPress={() => { void refresh(organization); }} />
       {!busy && !error && venues.length === 0 && <Text style={s.subtitle}>Nenhum local cadastrado nesta organização.</Text>}
-      {venues.map(venue => <View key={venue.id} style={[s.secondary, { padding: 16, borderRadius: 14, gap: 10 }]}><Text style={s.cardTitle}>{venue.nome}</Text><Text style={s.subtitle}>{venue.cidade}/{venue.uf} • {statusLabels[venue.status] ?? venue.status}</Text><Text style={s.text}>{venue.endereco}</Text>{organization.status !== 'SUSPENSA' && ['RASCUNHO', 'REJEITADO'].includes(venue.status) && <Button title={`Editar ${venue.nome}`} secondary disabled={busy} onPress={() => openVenueForm(venue)} />}</View>)}
+      {venues.map(venue => <View key={venue.id} style={[s.secondary, { padding: 16, borderRadius: 14, gap: 10 }]}><Text style={s.cardTitle}>{venue.nome}</Text><Text style={s.subtitle}>{venue.cidade}/{venue.uf} • {statusLabels[venue.status] ?? venue.status}</Text><Text style={s.text}>{venue.endereco}</Text>{organization.status !== 'SUSPENSA' && ['RASCUNHO', 'REJEITADO'].includes(venue.status) && <><Button title={`Editar ${venue.nome}`} secondary disabled={busy} onPress={() => openVenueForm(venue)} /><Button title={`Enviar ${venue.nome} para análise`} disabled={busy} onPress={() => { void submitVenue(venue.id); }} /></>}</View>)}
       {venues.length === 100 && <Text style={s.small}>Exibindo os primeiros 100 locais.</Text>}
+      <Text style={s.cardTitle}>Histórico de análise</Text>
+      {reviews.length === 0 && <Text style={s.small}>Nenhuma decisão registrada.</Text>}
+      {reviews.map(review => <View key={review.id} style={[s.secondary, { padding: 14, borderRadius: 10, gap: 6 }]}><Text style={s.text}>{review.localId === null ? 'Organização' : venues.find(v => v.id === review.localId)?.nome ?? `Local ${review.localId}`} • {review.decisao === 'APROVAR' ? 'Aprovado' : review.decisao === 'REJEITAR' ? 'Rejeitado' : 'Suspenso'}</Text><Text style={s.subtitle}>{review.justificativa}</Text><Text style={s.small}>{new Date(review.criadoEm).toLocaleString('pt-BR')}</Text></View>)}
+      {reviews.length === 100 && <Text style={s.small}>Exibindo as 100 decisões mais recentes.</Text>}
     </>}
     {mode === 'orgForm' && <>
       <Field label="Nome da organização" value={orgInput.nome} setValue={nome => setOrgInput(v => ({ ...v, nome }))} />

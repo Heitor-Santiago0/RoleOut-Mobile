@@ -25,6 +25,16 @@ function ExpectStatus($status, $method, $path, $body = $null, $token = $null) {
 $suffix = [Guid]::NewGuid().ToString('N')
 $password = [Guid]::NewGuid().ToString('N')
 $tokens = @()
+$adminId = $null
+function PendingReview($orgId, $venueId, $token) {
+    for ($offset = 0; $offset -le 100000; $offset += 20) {
+        $page = (Request GET "/revisoes?deslocamento=$offset" $null $token).Content | ConvertFrom-Json
+        $match = @($page.itens | Where-Object { $_.organizacaoId -eq $orgId -and $_.localId -eq $venueId })
+        if ($match.Count -gt 0) { return $match[0] }
+        if (@($page.itens).Count -lt 20) { break }
+    }
+    throw 'Review fixture not found'
+}
 $preflight = Invoke-WebRequest "$base/roteiros" -Method OPTIONS -UseBasicParsing -Headers @{
     Origin = 'http://localhost:8081'
     'Access-Control-Request-Method' = 'POST'
@@ -33,11 +43,12 @@ $preflight = Invoke-WebRequest "$base/roteiros" -Method OPTIONS -UseBasicParsing
 Assert ($preflight.StatusCode -eq 204) 'Browser preflight failed'
 Assert ($preflight.Headers['Access-Control-Allow-Origin'] -eq 'http://localhost:8081') 'Preflight origin failed'
 try {
-    foreach ($owner in @('a', 'b')) {
+    foreach ($owner in @('a', 'b', 'reviewer')) {
         $email = "integration-$suffix-$owner@example.invalid"
         ExpectStatus 201 POST '/auth/cadastro' @{ nome = "Integration $owner"; email = $email; senha = $password }
         $session = (Request POST '/auth/login' @{ email = $email; senha = $password }).Content | ConvertFrom-Json
         $tokens += $session.token
+        if ($owner -eq 'reviewer') { $adminId = [int]$session.conta.id }
         ExpectStatus 200 GET '/auth/me' $null $session.token
     }
     $preferences = (Request GET '/preferencias' $null $tokens[0]).Content | ConvertFrom-Json
@@ -77,6 +88,29 @@ try {
     $venueInput.status = 'PUBLICADO'
     ExpectStatus 400 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
     Write-Output 'PASS: organization and venue create/edit/read, private ownership and draft status.'
+    ExpectStatus 403 GET '/revisoes' $null $tokens[0]
+    ExpectStatus 404 POST "/organizacoes/$($org.id)/locais/$($venue.id)/enviar" $null $tokens[1]
+    ExpectStatus 200 POST "/organizacoes/$($org.id)/locais/$($venue.id)/enviar" $null $tokens[0]
+    # Provision only the fresh, uniquely named test account in the isolated compose project.
+    "UPDATE contas SET administrador=true WHERE id=$adminId AND email='integration-$suffix-reviewer@example.invalid';" | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout
+    Assert ($LASTEXITCODE -eq 0) 'Test admin provisioning failed'
+    $pending = PendingReview $org.id $venue.id $tokens[2]
+    $decision = @{ organizacaoId = $org.id; localId = $venue.id; versao = $pending.versao; decisao = 'APROVAR'; justificativa = 'Integration review' }
+    ExpectStatus 409 POST '/revisoes' $decision $tokens[2]
+    $pending = PendingReview $org.id $null $tokens[2]
+    $decision.localId = $null; $decision.versao = $pending.versao
+    ExpectStatus 403 POST '/revisoes' $decision $tokens[0]
+    ExpectStatus 200 POST '/revisoes' $decision $tokens[2]
+    ExpectStatus 409 POST '/revisoes' $decision $tokens[2]
+    $pending = PendingReview $org.id $venue.id $tokens[2]
+    $decision.localId = $venue.id; $decision.versao = $pending.versao
+    ExpectStatus 200 POST '/revisoes' $decision $tokens[2]
+    $published = (Request GET "/organizacoes/$($org.id)/locais/$($venue.id)" $null $tokens[0]).Content | ConvertFrom-Json
+    Assert ($published.status -eq 'PUBLICADO') 'Venue approval failed'
+    $history = (Request GET "/organizacoes/$($org.id)/revisoes" $null $tokens[0]).Content | ConvertFrom-Json
+    Assert (@($history.itens).Count -eq 2) 'Review audit history failed'
+    ExpectStatus 404 GET "/organizacoes/$($org.id)/revisoes" $null $tokens[1]
+    Write-Output 'PASS: submit, admin authorization, organization-before-venue approval, duplicate decision conflict and owner history.'
     $sql = "INSERT INTO roles (nome, local, cidade, categoria, valor) VALUES ('Integration $suffix', 'Museu teste', 'Cidade Integracao', 'Cultura', 20.10); SELECT LAST_INSERT_ID();"
     $result = $sql | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout -N
     Assert ($LASTEXITCODE -eq 0) 'Failed to create isolated fixture'
@@ -108,6 +142,10 @@ try {
     }
     Write-Output 'PASS: signup, login, identity, role detail, save/read/list, UTF-8, per-person budget, server prices, account isolation, budget rollback and JSP pages.'
 } finally {
+    if ($null -ne $adminId) {
+        "UPDATE contas SET administrador=false WHERE id=$adminId AND email='integration-$suffix-reviewer@example.invalid';" | docker compose -f $compose exec -T mysql mysql -uroleout -pintegration-local-only -D roleout
+        Assert ($LASTEXITCODE -eq 0) 'Failed to revoke test admin rights'
+    }
     foreach ($token in $tokens) {
         ExpectStatus 204 POST '/auth/logout' $null $token
         ExpectStatus 401 GET '/auth/me' $null $token

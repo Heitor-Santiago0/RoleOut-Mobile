@@ -73,7 +73,9 @@ continuam separados desta pasta; nenhum arquivo JSP foi substituído.
 
 Área inicial dos responsáveis: `Conta > Meus locais`, com cadastro/edição de
 organizações e rascunhos de locais. Detalhes e limites em `../docs/area-responsaveis.md`.
-O envio para análise e o painel administrativo são a próxima etapa desse fluxo.
+Envio para análise, histórico de justificativas e fila administrativa de aprovação/
+rejeição implementados. O acesso administrativo depende de papel provisionado fora
+do cadastro público; detalhes em `../docs/area-responsaveis.md`.
 
 Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
 e o Figma indicado em `../docs/referencia-figma.md`.

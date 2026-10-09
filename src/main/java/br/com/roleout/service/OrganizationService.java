@@ -133,6 +133,35 @@ public class OrganizationService {
         } catch (SQLException e) { throw new RuntimeException("Venue lookup failed.", e); }
     }
 
+    public Venue submitVenue(int account, int org, int id) {
+        try (var c = sql.connection()) {
+            c.setAutoCommit(false);
+            try {
+                var organization = member(c, account, org, true);
+                if (organization.status().equals("SUSPENSA")) throw conflict();
+                var current = venue(c, org, id);
+                if (!Set.of("RASCUNHO", "REJEITADO").contains(current.status())) throw conflict();
+                try (var s = c.prepareStatement("UPDATE locais SET status='PENDENTE' WHERE id=? AND organizacao_id=?")) {
+                    s.setInt(1, id); s.setInt(2, org); s.executeUpdate();
+                }
+                var saved = venue(c, org, id); c.commit(); return saved;
+            } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
+        } catch (SQLException e) { throw new RuntimeException("Venue submission failed.", e); }
+    }
+    public record Review(int id, Integer localId, String decisao, String justificativa, String criadoEm) {}
+    public List<Review> reviews(int account, int org) {
+        try (var c = sql.connection()) {
+            member(c, account, org, false);
+            try (var s = c.prepareStatement("SELECT * FROM revisoes_cadastro WHERE organizacao_id=? ORDER BY id DESC LIMIT 100")) {
+                s.setInt(1, org); var items = new ArrayList<Review>();
+                try (var rs = s.executeQuery()) {
+                    while (rs.next()) { int local = rs.getInt("local_id"); Integer localId = rs.wasNull() ? null : local;
+                        items.add(new Review(rs.getInt("id"), localId, rs.getString("decisao"), rs.getString("justificativa"), rs.getTimestamp("criado_em").toInstant().toString())); }
+                }
+                return items;
+            }
+        } catch (SQLException e) { throw new RuntimeException("Review history failed.", e); }
+    }
     private Organization member(Connection c, int account, int organization, boolean lock) throws SQLException {
         try (var s = c.prepareStatement("SELECT o.*,m.papel FROM organizacoes o JOIN membros_organizacao m ON m.organizacao_id=o.id WHERE o.id=? AND m.conta_id=?" + (lock ? " FOR UPDATE" : ""))) {
             s.setInt(1, organization); s.setInt(2, account);
@@ -151,12 +180,12 @@ public class OrganizationService {
             }
         }
     }
-    private Organization organization(ResultSet rs) throws SQLException {
+    static Organization organization(ResultSet rs) throws SQLException {
         return new Organization(rs.getInt("id"), rs.getString("nome"), rs.getString("tipo"),
                 rs.getString("descricao"), rs.getString("contato_email"), rs.getString("contato_telefone"),
                 rs.getString("status"), rs.getString("papel"));
     }
-    private Venue venue(ResultSet rs) throws SQLException {
+    static Venue venue(ResultSet rs) throws SQLException {
         return new Venue(rs.getInt("id"), rs.getInt("organizacao_id"), rs.getString("nome"),
                 rs.getString("categoria"), rs.getString("endereco"), rs.getString("cidade"), rs.getString("uf"),
                 rs.getString("cep"), rs.getString("descricao"), rs.getString("acessibilidade"), rs.getString("status"));
