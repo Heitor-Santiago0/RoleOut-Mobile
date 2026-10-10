@@ -44,6 +44,24 @@ class RegistrationSecurityTest {
         return new OrganizationService.VenueInput(name, "Cultura", "Rua teste 10", "Uberaba", "MG", "38000-000", null, "Rampa");
     }
     @Test
+    void profileNamePersistsAcrossLoginAndOnlyChangesAuthenticatedAccount() {
+        var first = account("first@example.com");
+        var other = account("other@example.com");
+        var session = auth.login(new AuthService.Login(first.email(), PASSWORD));
+        var updated = auth.updateProfile(session.token(), new AuthService.ProfileInput("  Novo nome  "));
+        assertEquals(new AuthService.Account(first.id(), "Novo nome", first.email(), false, false), updated);
+        assertEquals(updated, auth.authenticate(session.token()));
+        assertEquals(updated, auth.login(new AuthService.Login(first.email(), PASSWORD)).conta());
+        assertEquals(other, auth.login(new AuthService.Login(other.email(), PASSWORD)).conta());
+        for (String invalid : new String[]{null, " ", "x".repeat(201)}) {
+            assertThrows(IllegalArgumentException.class, () -> auth.updateProfile(session.token(), new AuthService.ProfileInput(invalid)));
+        }
+        assertEquals(updated, auth.authenticate(session.token()));
+        auth.logout(session.token());
+        assertEquals(401, assertThrows(ApiException.class, () -> auth.updateProfile(session.token(), new AuthService.ProfileInput("Negado"))).status());
+        assertEquals(updated, auth.login(new AuthService.Login(first.email(), PASSWORD)).conta());
+    }
+    @Test
     void signupHashesPasswordAndLoginRevocationWorks() throws Exception {
         var account = account(" USER@EXAMPLE.COM ");
         assertEquals("user@example.com", account.email());

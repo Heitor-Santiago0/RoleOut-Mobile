@@ -14,6 +14,7 @@ import java.util.concurrent.Semaphore;
 public class AuthService {
     public record Signup(String nome, String email, String senha) { }
     public record Login(String email, String senha) { }
+    public record ProfileInput(String nome) { }
     public record Account(int id, String nome, String email, boolean emailConfirmado, boolean administrador) { }
     public record Session(String token, String expiraEm, Account conta) { }
     private final SqlAccess sql;
@@ -105,6 +106,16 @@ public class AuthService {
                 return account(rs);
             }
         } catch (SQLException e) { throw new RuntimeException("Session validation failed.", e); }
+    }
+
+    public Account updateProfile(String token, ProfileInput input) {
+        Account current = authenticate(token);
+        String name = Inputs.required(input.nome(), 200);
+        try (var c = sql.connection(); var s = c.prepareStatement("UPDATE contas SET nome=? WHERE id=?")) {
+            s.setString(1, name); s.setInt(2, current.id());
+            if (s.executeUpdate() != 1) throw unauthorized();
+        } catch (SQLException e) { throw new RuntimeException("Profile update failed.", e); }
+        return new Account(current.id(), name, current.email(), current.emailConfirmado(), current.administrador());
     }
 
     public void logout(String token) {

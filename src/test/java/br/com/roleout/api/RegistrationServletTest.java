@@ -32,6 +32,35 @@ class RegistrationServletTest {
         when(request.getReader()).thenReturn(new BufferedReader(new StringReader(text)));
     }
     @Test
+    void profileRejectsClientChosenAccountAndPrivileges() throws Exception {
+        when(request.getMethod()).thenReturn("PUT");
+        when(request.getPathInfo()).thenReturn("/me");
+        when(request.getHeader("Authorization")).thenReturn("Bearer test-token");
+        for (String extra : new String[]{"\"id\":99", "\"administrador\":true", "\"email\":\"other@example.com\""}) {
+            body("{\"nome\":\"Novo nome\"," + extra + "}");
+            new AuthServlet(auth).service(request, response);
+        }
+        verify(response, times(3)).setStatus(400);
+        verifyNoInteractions(auth);
+    }
+    @Test
+    void profileRequiresTokenAndReturnsUpdatedAccount() throws Exception {
+        when(request.getMethod()).thenReturn("PUT");
+        when(request.getPathInfo()).thenReturn("/me");
+        body("{\"nome\":\"Novo nome\"}");
+        new AuthServlet(auth).service(request, response);
+        verify(response).setStatus(401);
+        verifyNoInteractions(auth);
+        when(request.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(auth.updateProfile("test-token", new AuthService.ProfileInput("Novo nome")))
+                .thenReturn(new AuthService.Account(17, "Novo nome", "a@example.com", false, false));
+        body("{\"nome\":\"Novo nome\"}");
+        new AuthServlet(auth).service(request, response);
+        verify(response).setStatus(200);
+        verify(auth).updateProfile("test-token", new AuthService.ProfileInput("Novo nome"));
+        assertTrue(output.toString().contains("Novo nome"));
+    }
+    @Test
     void signupRejectsAdminMassAssignment() throws Exception {
         body("{\"nome\":\"A\",\"email\":\"a@example.com\",\"senha\":\"uma senha longa\",\"administrador\":true}");
         new AuthServlet(auth).service(request, response);

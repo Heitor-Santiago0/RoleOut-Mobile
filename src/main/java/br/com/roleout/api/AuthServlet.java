@@ -15,6 +15,7 @@ public final class AuthServlet extends JsonServlet {
     protected Reply handle(HttpServletRequest request) throws IOException {
         String path = request.getPathInfo();
         if ("/me".equals(path)) {
+            if ("PUT".equals(request.getMethod())) return new Reply(200, auth.updateProfile(token(request), body(request, AuthService.ProfileInput.class)));
             if (!"GET".equals(request.getMethod())) throw method();
             return new Reply(200, auth.authenticate(token(request)));
         }

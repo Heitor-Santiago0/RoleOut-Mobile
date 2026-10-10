@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { apiUrl, ApiError, request, type Account, type Session } from './api';
 import { clearToken, readToken } from './session';
 import { colors, styles as s } from './theme';
-type AuthState = { session: Session | null; demo: boolean; message: string; setMessage: (message: string) => void; login: (session: Session) => void; startDemo: () => void; exit: () => Promise<void>; expire: () => Promise<void> };
+type AuthState = { session: Session | null; demo: boolean; message: string; setMessage: (message: string) => void; login: (session: Session) => void; updateAccount: (token: string, account: Account) => void; startDemo: () => void; exit: () => Promise<void>; expire: () => Promise<void> };
 const Context = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null); const [demo, setDemo] = useState(false);
@@ -34,8 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const expire = useCallback(async () => {
     await clearToken().catch(() => {}); setSession(null); setDemo(false); setMessage('Sua sessão expirou. Entre novamente.');
   }, []);
+  const updateAccount = useCallback((token: string, account: Account) => {
+    setSession(current => current?.token === token && current.conta.id === account.id ? { ...current, conta: account } : current);
+  }, []);
   if (loading) return <View style={s.root}><ActivityIndicator color={colors.blue} /></View>;
-  return <Context.Provider value={{ session, demo, message, setMessage, exit, expire,
+  return <Context.Provider value={{ session, demo, message, setMessage, exit, expire, updateAccount,
     login: value => { setSession(value); setDemo(false); setMessage(''); },
     startDemo: () => { if (__DEV__) { setSession(null); setDemo(true); setMessage(''); } },
   }}>{children}</Context.Provider>;

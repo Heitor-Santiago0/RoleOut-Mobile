@@ -51,6 +51,18 @@ try {
         if ($owner -eq 'reviewer') { $adminId = [int]$session.conta.id }
         ExpectStatus 200 GET '/auth/me' $null $session.token
     }
+    ExpectStatus 401 PUT '/auth/me' @{ nome = 'Sem acesso' }
+    ExpectStatus 400 PUT '/auth/me' @{ nome = ' ' } $tokens[0]
+    ExpectStatus 400 PUT '/auth/me' @{ nome = 'Tentativa'; administrador = $true } $tokens[0]
+    ExpectStatus 200 PUT '/auth/me' @{ nome = 'Nome atualizado de teste' } $tokens[0]
+    $profile = (Request GET '/auth/me' $null $tokens[0]).Content | ConvertFrom-Json
+    Assert ($profile.nome -eq 'Nome atualizado de teste' -and -not $profile.administrador) 'Profile update or privileges incorrect'
+    $otherProfile = (Request GET '/auth/me' $null $tokens[1]).Content | ConvertFrom-Json
+    Assert ($otherProfile.nome -eq 'Integration b') 'Profile update changed another account'
+    $relogin = (Request POST '/auth/login' @{ email = "integration-$suffix-a@example.invalid"; senha = $password }).Content | ConvertFrom-Json
+    $tokens += $relogin.token
+    Assert ($relogin.conta.nome -eq $profile.nome) 'Profile did not persist across login'
+    Write-Output 'PASS: profile update, account isolation, validation and persistence across login.'
     $preferences = (Request GET '/preferencias' $null $tokens[0]).Content | ConvertFrom-Json
     Assert ($preferences.perfil.status -eq 'PENDENTE') 'New preferences must be pending'
     $choices = @{ pular = $false; musica = @('Rock'); comida = @(); atividades = @('Museus'); ambientes = @('Tranquilo') }
