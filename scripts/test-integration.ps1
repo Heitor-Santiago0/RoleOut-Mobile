@@ -199,6 +199,20 @@ try {
     ExpectStatus 409 POST '/roteiros' $plan $tokens[0]
     $after = (Request GET '/roteiros' $null $tokens[0]).Content | ConvertFrom-Json
     Assert (@($after.itens).Count -eq 1) 'Rejected save left partial data'
+    $deletePreflight = Invoke-WebRequest "$base/roteiros/$id" -Method OPTIONS -UseBasicParsing -Headers @{
+        Origin = 'http://localhost:8081'; 'Access-Control-Request-Method' = 'DELETE'; 'Access-Control-Request-Headers' = 'authorization'
+    }
+    Assert ($deletePreflight.StatusCode -eq 204) 'Delete preflight failed'
+    ExpectStatus 401 DELETE "/roteiros/$id"
+    ExpectStatus 404 DELETE "/roteiros/$id" $null $tokens[1]
+    ExpectStatus 200 GET "/roteiros/$id" $null $tokens[0]
+    ExpectStatus 204 DELETE "/roteiros/$id" $null $tokens[0]
+    ExpectStatus 404 GET "/roteiros/$id" $null $tokens[0]
+    ExpectStatus 404 DELETE "/roteiros/$id" $null $tokens[0]
+    $afterDelete = (Request GET '/roteiros' $null $tokens[0]).Content | ConvertFrom-Json
+    Assert (@($afterDelete.itens).Count -eq 0) 'Deleted itinerary still listed'
+    ExpectStatus 200 GET "/roles/$roleId"
+    Write-Output 'PASS: authenticated itinerary deletion, cross-account protection, refreshed listing and catalog preservation.'
     foreach ($path in @('/', '/roles', '/sugestoes')) {
         $web = Invoke-WebRequest "http://127.0.0.1:8082/RoleOut$path" -UseBasicParsing -TimeoutSec 20
         Assert ($web.StatusCode -eq 200) "Web page failed: $path"

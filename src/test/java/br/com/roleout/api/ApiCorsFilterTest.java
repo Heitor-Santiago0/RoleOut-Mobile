@@ -42,7 +42,16 @@ class ApiCorsFilterTest {
         when(req.getHeader("Access-Control-Request-Method")).thenReturn("PUT");
         new ApiCorsFilter("http://localhost:8081").doFilter(req, res, chain);
         verify(res).setStatus(204); verifyNoInteractions(chain);
-        verify(res).setHeader("Access-Control-Allow-Methods", "GET, POST, PUT");
+        verify(res).setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+    }
+    @Test void explicitOriginCanPreflightAuthenticatedDeletion() throws Exception {
+        var req = mock(HttpServletRequest.class); var res = mock(HttpServletResponse.class); var chain = mock(FilterChain.class);
+        when(req.getHeader("Origin")).thenReturn("http://localhost:8081");
+        when(req.getMethod()).thenReturn("OPTIONS");
+        when(req.getHeader("Access-Control-Request-Method")).thenReturn("DELETE");
+        when(req.getHeader("Access-Control-Request-Headers")).thenReturn("authorization");
+        new ApiCorsFilter("http://localhost:8081").doFilter(req, res, chain);
+        verify(res).setStatus(204); verifyNoInteractions(chain);
     }
     @Test void unexpectedPreflightHeadersAreRejected() throws Exception {
         var req = mock(HttpServletRequest.class); var res = mock(HttpServletResponse.class); var chain = mock(FilterChain.class);

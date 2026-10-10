@@ -24,6 +24,16 @@ class ItineraryServletTest {
         when(request.getMethod()).thenReturn("GET"); when(plans.list(7,0)).thenReturn(List.of());
         servlet.service(request,response); verify(plans).list(7,0); verify(response).setStatus(200);
     }
+    @Test void deletionUsesAuthenticatedOwnerAndRequiresSession() throws Exception {
+        when(request.getPathInfo()).thenReturn("/12"); when(request.getMethod()).thenReturn("DELETE");
+        servlet.service(request,response); verify(plans).delete(7,12); verify(response).setStatus(204);
+        reset(plans); clearInvocations(response); when(request.getHeader("Authorization")).thenReturn(null);
+        servlet.service(request,response); verify(response).setStatus(401); verifyNoInteractions(plans);
+    }
+    @Test void deletionCannotTargetTheWholeCollection() throws Exception {
+        when(request.getMethod()).thenReturn("DELETE");
+        servlet.service(request,response); verify(response).setStatus(405); verifyNoInteractions(plans);
+    }
     @Test void detailIsScopedAndUnauthenticatedRequestsNeverReachPlans() throws Exception {
         when(request.getPathInfo()).thenReturn("/12"); when(request.getMethod()).thenReturn("GET");
         servlet.service(request,response); verify(plans).find(7,12);

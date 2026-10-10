@@ -45,6 +45,23 @@ class ItineraryServiceTest {
         assertEquals(404, assertThrows(ApiException.class, () -> service.find(2, saved.roteiro().id())).status());
         assertEquals(saved, service.find(1, saved.roteiro().id()));
     }
+    @Test void deletionIsPrivateCascadesSnapshotsAndPreservesOtherPlansAndCatalog() throws Exception {
+        var first = service.create(1, input(3000, "person", stops()));
+        var second = service.create(1, input(3000, "person", stops()));
+        var other = service.create(2, input(3000, "person", stops()));
+        int id = first.roteiro().id();
+        assertEquals(404, assertThrows(ApiException.class, () -> service.delete(2, id)).status());
+        assertEquals(first, service.find(1, id));
+        service.delete(1, id);
+        assertEquals(404, assertThrows(ApiException.class, () -> service.find(1, id)).status());
+        assertEquals(404, assertThrows(ApiException.class, () -> service.delete(1, id)).status());
+        assertEquals(List.of(second.roteiro()), service.list(1, 0));
+        assertEquals(other, service.find(2, other.roteiro().id()));
+        try (var c = source.getConnection(); var s = c.createStatement()) {
+            try (var rs = s.executeQuery("SELECT COUNT(*) FROM roteiro_paradas WHERE roteiro_id=" + id)) { rs.next(); assertEquals(0, rs.getInt(1)); }
+            try (var rs = s.executeQuery("SELECT COUNT(*) FROM roles")) { rs.next(); assertEquals(2, rs.getInt(1)); }
+        }
+    }
     @Test void saveUsesOnePooledConnectionWithoutNestedBorrowing() {
         var config = new com.zaxxer.hikari.HikariConfig();
         config.setDataSource(source); config.setMaximumPoolSize(1); config.setMinimumIdle(0); config.setConnectionTimeout(1000);

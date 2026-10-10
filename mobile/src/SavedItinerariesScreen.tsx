@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import { Button, Message, price } from './ui';
 import { colors, styles as s } from './theme';
 import { schedule } from './itinerary';
+import { DeleteItinerary } from './DeleteItinerary';
 
 export function SavedItinerariesScreen({ id }: { id?: number }) {
   const { session, demo, expire } = useAuth(); const token = session?.token;
@@ -52,6 +53,7 @@ export function SavedItinerariesScreen({ id }: { id?: number }) {
       <Text style={s.text}>Total registrado: {price(header.totalCentavos / 100)}</Text><Text style={s.subtitle}>Por pessoa: {price(header.totalCentavos / header.pessoas / 100)} • Limite do grupo: {price(header.orcamentoCentavos / 100)}</Text>
       <Text style={s.small}>Valores registrados ao salvar. Confirme preços, funcionamento e disponibilidade antes de sair. Os horários são estimativas, sem deslocamento.</Text>
       {timeline?.map((stop, index) => <View key={stop.role.id} style={[s.secondary, { borderRadius: 14, padding: 16, gap: 10 }]}><Text style={s.cardTitle}>{index + 1}. {stop.role.nome}</Text><Text style={s.subtitle}>{stop.from} → {stop.to} • {stop.minutes} min</Text><Text style={s.text}>{stop.role.local ?? 'Local não informado'}</Text><Text style={s.small}>{price(stop.role.valor)} por pessoa no momento do salvamento</Text><Button title={`Consultar ${stop.role.nome}`} secondary onPress={() => router.push({ pathname: '/roles/[id]', params: { id: stop.role.id } })} /></View>)}
+      {token && !busy && <DeleteItinerary key={`${token}:${header.id}`} id={header.id} name={header.nome} token={token} />}
     </>}
   </ScrollView>;
 }

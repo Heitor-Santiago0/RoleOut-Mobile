@@ -25,6 +25,10 @@ public final class ItineraryServlet extends JsonServlet {
             throw method();
         }
         if (!path.matches("/[1-9][0-9]*")) throw missing();
+        if (method.equals("DELETE")) {
+            itineraries.delete(account, Integer.parseInt(path.substring(1)));
+            return new Reply(204, null);
+        }
         if (!method.equals("GET")) throw method();
         return new Reply(200, itineraries.find(account, Integer.parseInt(path.substring(1))));
     }

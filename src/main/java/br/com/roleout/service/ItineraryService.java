@@ -111,6 +111,13 @@ public class ItineraryService {
             return items;
         } catch (SQLException e) { throw new RuntimeException("Itinerary list failed.", e); }
     }
+    public void delete(int account, int id) {
+        // The foreign key removes only this plan's snapshots in the same statement.
+        try (var c = sql.connection(); var s = c.prepareStatement("DELETE FROM roteiros WHERE conta_id=? AND id=?")) {
+            s.setInt(1, account); s.setInt(2, id);
+            if (s.executeUpdate() != 1) throw missing();
+        } catch (SQLException e) { throw new RuntimeException("Itinerary deletion failed.", e); }
+    }
     public Detail find(int account, int id) {
         try (var c = sql.connection()) { return find(c, account, id); }
         catch (SQLException e) { throw new RuntimeException("Itinerary lookup failed.", e); }
