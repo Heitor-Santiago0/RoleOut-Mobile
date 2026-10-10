@@ -179,6 +179,9 @@ try {
     Assert ($LASTEXITCODE -eq 0) 'Failed to create isolated fixture'
     $roleId = [int]($result | Select-Object -Last 1)
     ExpectStatus 200 GET "/roles/$roleId"
+    ExpectStatus 400 GET '/roles?data=2026-02-30'
+    $datePage = (Request GET '/roles?cidade=Cidade%20Integracao&data=2026-10-15&limite=100&valorMaximo=30').Content | ConvertFrom-Json
+    Assert (@($datePage.itens | Where-Object { $_.data -and $_.data -ne '2026-10-15' }).Count -eq 0) 'Date filter returned a different day'
     $accentedName = 'Roteiro de integra' + [char]0x00e7 + [char]0x00e3 + 'o'
     $plan = @{ nome = $accentedName; cidade = 'Cidade Integracao'; data = '2026-10-15'; partida = '14:00'; duracaoMinutos = 120; pessoas = 3; orcamentoCentavos = 3000; modoOrcamento = 'person'; paradas = @(@{ roleId = $roleId; minutos = 60 }) }
     $created = Request POST '/roteiros' $plan $tokens[0]

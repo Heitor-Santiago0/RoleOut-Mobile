@@ -64,7 +64,10 @@ public final class RoleApiServlet extends HttpServlet {
             Double valorMaximo = budget == null ? null : Double.valueOf(budget);
             int limite = integer(request, "limite", 20);
             int deslocamento = integer(request, "deslocamento", 0);
-            var items = service.consultarPagina(categoria, cidade, valorMaximo, limite, deslocamento)
+            String data = request.getParameter("data");
+            var page = data == null ? service.consultarPagina(categoria, cidade, valorMaximo, limite, deslocamento)
+                    : service.consultarPagina(categoria, cidade, valorMaximo, limite, deslocamento, data);
+            var items = page
                     .stream().map(RoleDto::from).toList();
             write(response, 200, Map.of("itens", items, "limite", limite, "deslocamento", deslocamento));
         } catch (NumberFormatException exception) {

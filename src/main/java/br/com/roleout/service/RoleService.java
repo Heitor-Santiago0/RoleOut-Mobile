@@ -26,6 +26,18 @@ public class RoleService {
 
     public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
                                      int limite, int deslocamento) {
+        return consultarPagina(categoria, cidade, valorMaximo, limite, deslocamento, null);
+    }
+    public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
+                                     int limite, int deslocamento, String data) {
+        java.time.LocalDate date = null;
+        if (data != null) {
+            try {
+                if (!data.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) throw new IllegalArgumentException("Data inválida.");
+                date = java.time.LocalDate.parse(data);
+                if (date.getYear() < 2000 || date.getYear() > 2100) throw new IllegalArgumentException("Data inválida.");
+            } catch (java.time.DateTimeException e) { throw new IllegalArgumentException("Informe uma data válida no formato AAAA-MM-DD."); }
+        }
         if (limite < 1 || limite > 100 || deslocamento < 0 || deslocamento > 100000) {
             throw new IllegalArgumentException("Use limite entre 1 e 100 e deslocamento entre 0 e 100000.");
         }
@@ -33,7 +45,7 @@ public class RoleService {
             throw new IllegalArgumentException("O orçamento deve ser um número finito e não negativo.");
         }
         return roleDAO.consultarPagina(filtro(categoria, 100), filtro(cidade, 150),
-                valorMaximo, limite, deslocamento);
+                valorMaximo, limite, deslocamento, date);
     }
 
     private String filtro(String valor, int tamanhoMaximo) {

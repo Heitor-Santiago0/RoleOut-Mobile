@@ -69,6 +69,15 @@ class RoleApiServletTest {
         assertFalse(payload.at("/itens/0").has("dataFormatada"));
         assertEquals(20, payload.get("limite").asInt());
     }
+    @Test
+    void forwardsPlannedDateAndOffsetToFilteredQuery() throws Exception {
+        when(request.getParameter("data")).thenReturn("2026-10-15");
+        when(request.getParameter("deslocamento")).thenReturn("100");
+        when(service.consultarPagina(null, null, null, 20, 100, "2026-10-15")).thenReturn(List.of());
+        servlet.doGet(request, response);
+        verify(service).consultarPagina(null, null, null, 20, 100, "2026-10-15");
+        verify(response).setStatus(200);
+    }
 
     @Test
     void detailNotFoundReturns404() throws Exception {

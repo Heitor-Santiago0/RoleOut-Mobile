@@ -16,28 +16,39 @@ export function PersonalizeScreen() {
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Role[]>([]); const [stops, setStops] = useState<Stop[]>([]);
   const [limited, setLimited] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const searching = useRef(false); const searchGeneration = useRef(0);
   const [saving, setSaving] = useState(false); const [saved, setSaved] = useState<ItinerarySummary | null>(null);
   const generation = useRef(0); const scroll = useRef<ScrollView>(null);
-  useEffect(() => () => { generation.current++; }, []);
+  useEffect(() => () => { generation.current++; searchGeneration.current++; }, []);
+  function cancelSearch() { searchGeneration.current++; searching.current = false; setBusy(false); }
   function invalidateSave() { generation.current++; setSaving(false); setSaved(null); }
   function field(name: keyof Plan, value: string) {
-    invalidateSave(); setBusy(false); setError(''); setPlan(previous => ({ ...previous, [name]: value }));
+    invalidateSave(); cancelSearch(); setError(''); setPlan(previous => ({ ...previous, [name]: value }));
   }
   function navigate(next: 1 | 2 | 3) { setStage(next); scroll.current?.scrollTo({ y: 0, animated: false }); }
   function next() { const issue = validatePlan(plan, 1); if (issue) setError(issue); else { setError(''); navigate(2); } }
-  async function search() {
+  async function search(append = false) {
+    if (searching.current) return;
     const issue = validatePlan(plan, 1) || validatePlan(plan, 2);
     if (issue) { setError(issue); return; }
     if (categories.length === 0) { setError('Escolha pelo menos uma categoria.'); return; }
-    const version = ++generation.current; setBusy(true); setError('');
+    if (!append) invalidateSave();
+    const version = ++searchGeneration.current; searching.current = true; setBusy(true); setError('');
     try {
-      const query = new URLSearchParams({ cidade: plan.city.trim(), valorMaximo: String(Math.floor(groupBudgetCents(plan)! / Number(plan.people)) / 100), limite: '100' });
+      const pageOffset = append ? offset : 0;
+      const query = new URLSearchParams({ cidade: plan.city.trim(), data: isoDate(plan.date.trim())!, valorMaximo: String(Math.floor(groupBudgetCents(plan)! / Number(plan.people)) / 100), limite: '100', deslocamento: String(pageOffset) });
       const data = demo ? { itens: demoRoles.filter(role => role.cidade.toLowerCase() === plan.city.trim().toLowerCase()) }
         : await request<{ itens: Role[] }>('/roles?' + query, { token: session?.token });
       const options = candidates(data.itens, categories, isoDate(plan.date.trim())!, Number(plan.people), groupBudgetCents(plan)!);
-      if (version === generation.current) { setItems(options); setStops([]); setSaved(null); setLimited(!demo && data.itens.length === 100); navigate(3); }
-    } catch (e) { if (version === generation.current) setError(e instanceof Error ? e.message : 'Não foi possível buscar.'); }
-    finally { if (version === generation.current) setBusy(false); }
+      if (version === searchGeneration.current) {
+        setItems(previous => append ? [...previous, ...options.filter(option => !previous.some(item => item.id === option.id))] : options);
+        if (!append) { setStops([]); setSaved(null); navigate(3); }
+        setOffset(pageOffset + data.itens.length);
+        setLimited(!demo && data.itens.length === 100 && pageOffset < 100000);
+      }
+    } catch (e) { if (version === searchGeneration.current) setError(e instanceof Error ? e.message : 'Não foi possível buscar.'); }
+    finally { if (version === searchGeneration.current) { searching.current = false; setBusy(false); } }
   }
   function updateStops(nextStops: Stop[]) {
     const issue = planProblem(nextStops, Number(plan.people), groupBudgetCents(plan)!, Number(plan.hours) * 60);
@@ -78,15 +89,15 @@ export function PersonalizeScreen() {
     {stage === 2 && <>
       <Field label="Número de pessoas" value={plan.people} setValue={value => field('people', value)} keyboardType="number-pad" />
       <Text style={s.label}>O que vocês querem fazer?</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {['Música', 'Festa', 'Gastronomia', 'Cultura', 'Esporte', 'Natureza', 'Cinema', 'Outros'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: categories.includes(value) }} style={[s.chip, categories.includes(value) && s.selected]} onPress={() => { invalidateSave(); setBusy(false); setError(''); setCategories(previous => previous.includes(value) ? previous.filter(c => c !== value) : [...previous, value]); }}><Text style={[s.chipText, categories.includes(value) && s.selectedText]}>{value}</Text></Pressable>)}
+        {['Música', 'Festa', 'Gastronomia', 'Cultura', 'Esporte', 'Natureza', 'Cinema', 'Outros'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: categories.includes(value) }} style={[s.chip, categories.includes(value) && s.selected]} onPress={() => { invalidateSave(); cancelSearch(); setError(''); setCategories(previous => previous.includes(value) ? previous.filter(c => c !== value) : [...previous, value]); }}><Text style={[s.chipText, categories.includes(value) && s.selectedText]}>{value}</Text></Pressable>)}
       </View>
       <Text style={s.label}>Como deseja definir o orçamento?</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{([{ value: 'person', title: 'Por pessoa' }, { value: 'group', title: 'Total do grupo' }] as const).map(mode => <Pressable key={mode.value} accessibilityRole="button" accessibilityState={{ selected: plan.budgetMode === mode.value }} style={[s.chip, plan.budgetMode === mode.value && s.selected]} onPress={() => { invalidateSave(); setBusy(false); setError(''); setPlan(previous => ({ ...previous, budgetMode: mode.value })); }}><Text style={[s.chipText, plan.budgetMode === mode.value && s.selectedText]}>{mode.title}</Text></Pressable>)}</View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{([{ value: 'person', title: 'Por pessoa' }, { value: 'group', title: 'Total do grupo' }] as const).map(mode => <Pressable key={mode.value} accessibilityRole="button" accessibilityState={{ selected: plan.budgetMode === mode.value }} style={[s.chip, plan.budgetMode === mode.value && s.selected]} onPress={() => { invalidateSave(); cancelSearch(); setError(''); setPlan(previous => ({ ...previous, budgetMode: mode.value })); }}><Text style={[s.chipText, plan.budgetMode === mode.value && s.selectedText]}>{mode.title}</Text></Pressable>)}</View>
       <Field label={plan.budgetMode === 'person' ? 'Quanto cada pessoa quer gastar (R$)' : 'Orçamento total do grupo (R$)'} value={plan.budget} setValue={value => field('budget', value)} keyboardType="decimal-pad" placeholder="Ex.: 50,00" />
       {groupBudgetCents(plan) !== null && <Text style={s.subtitle}>Limite total do grupo: {price(groupBudgetCents(plan)! / 100)}{plan.budgetMode === 'person' ? ` (${plan.people} pessoa(s) com o mesmo limite)` : ''}</Text>}
       <Text style={s.small}>O cálculo considera o preço cadastrado por pessoa. Alimentação extra e transporte não estão incluídos.</Text>
-      <Text style={s.small}>{stops.length > 0 ? 'Uma nova busca substitui as paradas atuais.' : ''}</Text><Message text={error} /><Button title="Buscar opções" onPress={search} busy={busy} />
-      <Button title="Voltar" secondary onPress={() => { invalidateSave(); setBusy(false); setError(''); navigate(1); }} />
+      <Text style={s.small}>{stops.length > 0 ? 'Uma nova busca substitui as paradas atuais.' : ''}</Text><Message text={error} /><Button title="Buscar opções" onPress={() => { void search(); }} busy={busy} />
+      <Button title="Voltar" secondary onPress={() => { invalidateSave(); cancelSearch(); setError(''); navigate(1); }} />
     </>}
     {stage === 3 && <>
       <Text style={s.subtitle}>{plan.city.trim()} • {plan.date} • {plan.people} pessoa(s)</Text>
@@ -110,13 +121,14 @@ export function PersonalizeScreen() {
         <View style={s.row}>{index > 0 && <Button title="Subir" secondary onPress={() => move(index, -1)} />}{index < stops.length - 1 && <Button title="Descer" secondary onPress={() => move(index, 1)} />}</View>
         <Button title={'Remover ' + stop.role.nome} secondary onPress={() => updateStops(stops.filter(value => value.role.id !== stop.role.id))} />
       </View>)}
-      <Text style={s.label}>Opções para adicionar</Text>{limited && <Text style={s.small}>A busca considera as primeiras 100 opções da cidade. Uma lista vazia pode exigir revisar as preferências.</Text>}
-      {items.length === 0 && <Text style={s.subtitle}>Nenhuma opção encontrada para a data, categorias e orçamento escolhidos.</Text>}
+      <Text style={s.label}>Opções para adicionar</Text>{limited && <Text style={s.small}>Há mais opções para consultar. Carregá-las mantém as paradas que você já escolheu.</Text>}
+      {items.length === 0 && <Text style={s.subtitle}>{limited ? 'Nenhuma opção das categorias escolhidas nesta página. Carregue mais opções para continuar a busca.' : 'Nenhuma opção encontrada para a data, categorias e orçamento escolhidos.'}</Text>}
       {items.map(role => <View key={role.id} style={[s.secondary, { borderRadius: 14, padding: 16, gap: 10 }]}><Text style={s.cardTitle}>{role.nome}</Text><Text style={s.subtitle}>{role.categoria} • {price(role.valor)} por pessoa</Text>{!role.data && <Text style={s.small}>Data e disponibilidade a confirmar com o local.</Text>}
         {stops.some(stop => stop.role.id === role.id) ? <Text style={s.small}>Adicionado ao roteiro</Text> : <Button title={'Adicionar ' + role.nome} onPress={() => updateStops([...stops, { role, minutes: 60 }])} />}
         <Button title={'Detalhes de ' + role.nome} secondary onPress={() => router.push({ pathname: '/roles/[id]', params: { id: role.id } })} />
       </View>)}
-      <Button title="Revisar preferências" secondary onPress={() => { setError(''); navigate(2); }} />
+      {limited && <Button title="Carregar mais opções" busy={busy} disabled={saving} onPress={() => { void search(true); }} />}
+      <Button title="Revisar preferências" secondary onPress={() => { cancelSearch(); setError(''); navigate(2); }} />
       <Text style={s.small}>{demo ? 'A demonstração não grava dados na conta.' : 'As alterações ficam nesta sessão até você salvar. Alterar um roteiro salvo e salvar novamente cria outro registro.'}</Text>
     </>}
   </ScrollView>;

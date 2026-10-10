@@ -74,10 +74,15 @@ public class RoleDAO {
 
     public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
                                      int limite, int deslocamento) {
+        return consultarPagina(categoria, cidade, valorMaximo, limite, deslocamento, null);
+    }
+    public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
+                                     int limite, int deslocamento, java.time.LocalDate data) {
         StringBuilder sql = new StringBuilder("SELECT * FROM roles WHERE " + PUBLICATION_FILTER);
         if (categoria != null) sql.append(" AND LOWER(categoria) = LOWER(?)");
         if (cidade != null) sql.append(" AND LOWER(cidade) = LOWER(?)");
         if (valorMaximo != null) sql.append(" AND valor <= ?");
+        if (data != null) sql.append(" AND (data IS NULL OR data = ?)");
         sql.append(" ORDER BY ").append(valorMaximo == null ? "data, id" : "valor, id");
         sql.append(" LIMIT ? OFFSET ?");
         try (Connection connection = getConnection();
@@ -86,6 +91,7 @@ public class RoleDAO {
             if (categoria != null) statement.setString(index++, categoria);
             if (cidade != null) statement.setString(index++, cidade);
             if (valorMaximo != null) statement.setDouble(index++, valorMaximo);
+            if (data != null) statement.setDate(index++, java.sql.Date.valueOf(data));
             statement.setInt(index++, limite);
             statement.setInt(index, deslocamento);
             List<Role> roles = new ArrayList<>();

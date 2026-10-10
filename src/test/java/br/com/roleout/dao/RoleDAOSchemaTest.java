@@ -58,6 +58,22 @@ class RoleDAOSchemaTest {
         assertTrue(dao.listarTodos().isEmpty());
         assertNull(dao.buscarPorId(saved.getId()));
     }
+    @Test
+    void plannedDateFiltersBeforePaginationAndKeepsUndatedPlaces() {
+        for (int i = 0; i < 101; i++) dao.inserir(role("Outra data " + i, 0));
+        Role dated = role("Data escolhida", 10); dated.setData(LocalDate.of(2026, 10, 15)); dao.inserir(dated);
+        Role undated = role("Sem data", 20); undated.setData(null); dao.inserir(undated);
+        var service = new RoleService(dao);
+        var first = service.consultarPagina("Cultura", "Uberaba", 30.0, 1, 0, "2026-10-15");
+        var second = service.consultarPagina("Cultura", "Uberaba", 30.0, 1, 1, "2026-10-15");
+        assertEquals("Data escolhida", first.get(0).getNome());
+        assertEquals("Sem data", second.get(0).getNome());
+        assertTrue(service.consultarPagina("Cultura", "Uberaba", 30.0, 1, 2, "2026-10-15").isEmpty());
+        assertEquals(100, service.consultarPagina(null, null, null, 100, 0).size());
+        for (String invalid : new String[]{"2026-02-30", "2026-2-03", "", "1999-01-01", "2101-01-01"}) {
+            assertThrows(IllegalArgumentException.class, () -> service.consultarPagina(null, null, null, 20, 0, invalid));
+        }
+    }
 
     @Test
     void paginationAndPreparedFiltersDoNotLeakOtherRows() {
