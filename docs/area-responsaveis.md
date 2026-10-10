@@ -66,7 +66,31 @@ persistência no próximo login), criação de organização/local, envio e logo
 Após envio, o status mudou para Aguardando análise e a edição foi ocultada.
 Todos esses registros são fictícios do volume de integração.
 
-Ainda pendentes: suspensão/reativação pela interface, cadastro dos rolês/ofertas
-pelos responsáveis, coordenadas, execução em aparelho e revisão visual da fila
+Ainda pendentes: suspensão/reativação pela interface, edição de locais após publicação,
+execução em aparelho e revisão visual da fila
 administrativa. O teste HTTP cobre o fluxo administrativo, mas não substitui
 a inspeção visual dessa tela.
+
+## Posição do local
+
+O cadastro de locais aceita `latitude` e `longitude` opcionais. As duas devem ser
+informadas juntas ou ambas nulas, com até seis casas decimais; latitude entre -90 e
+90, longitude entre -180 e 180. Zero é uma coordenada válida. São utilizadas as
+colunas existentes em V002; não é necessária uma nova migração.
+
+O formulário aceita ponto ou vírgula decimal. Também permite solicitar a posição
+atual do aparelho, em primeiro plano e somente após o toque do responsável. O
+resultado exige precisão conhecida de até 100 metros e confirmação de que o
+responsável está no estabelecimento. A posição só é enviada ao salvar o local.
+Não há geocodificação automática, coordenadas inventadas ou coleta em segundo plano.
+
+As coordenadas aparecem para o administrador e integram a versão dos dados
+revisados. Continuam sujeitas ao mesmo bloqueio de edição dos locais pendentes e
+publicados. Locais sem posição continuam disponíveis na busca por cidade após a
+publicação de seus rolês, mas não na consulta de proximidade. A busca próxima usa
+a posição aprovada do local e exige organização e local aprovados.
+
+O fluxo de criação, revisão e publicação dos rolês está descrito em
+[Rascunhos e publicação de rolês](rascunhos-roles.md). A captura por GPS e o mapa
+nativo ainda precisam de validação em aparelho real; exportar os bundles não
+substitui esse teste.

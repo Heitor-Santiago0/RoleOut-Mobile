@@ -3,19 +3,21 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { Redirect, router } from 'expo-router';
 import { useAuth } from './AuthContext';
 import { RoleDrafts } from './RoleDrafts';
+import { VenuePosition } from './VenuePosition';
+import { coordinates } from './coordinates';
 import { ApiError, request } from './api';
 import { Button, Field, Message } from './ui';
 import { colors, styles as s } from './theme';
 
 type OrganizationInput = { nome: string; tipo: string; descricao: string; contatoEmail: string; contatoTelefone: string };
 type Organization = OrganizationInput & { id: number; status: string; papel: string };
-type VenueInput = { nome: string; categoria: string; endereco: string; cidade: string; uf: string; cep: string; descricao: string; acessibilidade: string };
-type Venue = VenueInput & { id: number; status: string };
+type VenueInput = { nome: string; categoria: string; endereco: string; cidade: string; uf: string; cep: string; descricao: string; acessibilidade: string; latitude: string; longitude: string };
+type Venue = Omit<VenueInput, 'latitude' | 'longitude'> & { id: number; status: string; latitude: number | null; longitude: number | null };
 type Review = { id: number; localId: number | null; decisao: string; justificativa: string; criadoEm: string };
 const types = [{ id: 'RESTAURANTE', label: 'Restaurante' }, { id: 'BAR', label: 'Bar' }, { id: 'MUSEU', label: 'Museu' }, { id: 'PREFEITURA', label: 'Prefeitura' }, { id: 'OUTRO', label: 'Outro' }];
 const states = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ');
 const statusLabels: Record<string, string> = { PENDENTE: 'Aguardando análise', APROVADA: 'Aprovada', REJEITADA: 'Rejeitada', SUSPENSA: 'Suspensa', RASCUNHO: 'Rascunho', PUBLICADO: 'Publicado', REJEITADO: 'Rejeitado', SUSPENSO: 'Suspenso' };
-const emptyVenue: VenueInput = { nome: '', categoria: '', endereco: '', cidade: '', uf: '', cep: '', descricao: '', acessibilidade: '' };
+const emptyVenue: VenueInput = { nome: '', categoria: '', endereco: '', cidade: '', uf: '', cep: '', descricao: '', acessibilidade: '', latitude: '', longitude: '' };
 
 export function OrganizationsScreen() {
   const { session } = useAuth();
@@ -64,10 +66,11 @@ function Manager({ token, email }: { token: string; email: string }) {
   }
   function openVenueForm(venue?: Venue) {
     setEditing(venue?.id ?? null); setError(''); setNotice('');
-    setVenueInput(venue ? { nome: venue.nome, categoria: venue.categoria, endereco: venue.endereco, cidade: venue.cidade, uf: venue.uf, cep: venue.cep ?? '', descricao: venue.descricao ?? '', acessibilidade: venue.acessibilidade ?? '' } : { ...emptyVenue }); setMode('venueForm');
+    setVenueInput(venue ? { nome: venue.nome, categoria: venue.categoria, endereco: venue.endereco, cidade: venue.cidade, uf: venue.uf, cep: venue.cep ?? '', descricao: venue.descricao ?? '', acessibilidade: venue.acessibilidade ?? '', latitude: venue.latitude?.toString() ?? '', longitude: venue.longitude?.toString() ?? '' } : { ...emptyVenue }); setMode('venueForm');
   }
   async function save() {
     setError(''); setNotice('');
+    if (mode === 'venueForm' && !coordinates(venueInput.latitude, venueInput.longitude)) { setError('Informe latitude entre -90 e 90 e longitude entre -180 e 180, juntas e com até seis casas decimais, ou deixe ambas vazias.'); return; }
     if (mode === 'orgForm' && (!orgInput.nome.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orgInput.contatoEmail.trim()))) { setError('Informe o nome e um e-mail de contato válido.'); return; }
     if (mode === 'venueForm' && (!venueInput.nome.trim() || !venueInput.categoria.trim() || !venueInput.endereco.trim() || !venueInput.cidade.trim() || !states.includes(venueInput.uf) || (venueInput.cep && !/^\d{5}-?\d{3}$/.test(venueInput.cep)))) { setError('Preencha nome, categoria, endereço, cidade e UF. Se informar CEP, use oito números.'); return; }
     setBusy(true);
@@ -79,7 +82,7 @@ function Manager({ token, email }: { token: string; email: string }) {
         setNotice('Organização salva. A publicação depende de aprovação.');
         await refresh(saved);
       } else if (organization) {
-        const saved = await request<Venue>(`/organizacoes/${organization.id}/locais${editing ? `/${editing}` : ''}`, { token, method: editing ? 'PUT' : 'POST', body: venueInput });
+        const saved = await request<Venue>(`/organizacoes/${organization.id}/locais${editing ? `/${editing}` : ''}`, { token, method: editing ? 'PUT' : 'POST', body: { ...venueInput, ...coordinates(venueInput.latitude, venueInput.longitude) } });
         if (!active.current) return;
         setVenues(previous => [...previous.filter(v => v.id !== saved.id), saved]); setMode('organization');
         setNotice('Local salvo como rascunho. Ainda não está publicado.');
@@ -138,6 +141,7 @@ function Manager({ token, email }: { token: string; email: string }) {
       {([{ key: 'nome', label: 'Nome do local' }, { key: 'categoria', label: 'Categoria (ex.: Cultura, Música, Gastronomia)' }, { key: 'endereco', label: 'Endereço completo' }, { key: 'cidade', label: 'Cidade' }, { key: 'descricao', label: 'Descrição (opcional)' }, { key: 'acessibilidade', label: 'Acessibilidade (opcional)' }] as const).map(field => <Field key={field.key} label={field.label} value={venueInput[field.key]} setValue={value => setVenueInput(v => ({ ...v, [field.key]: value }))} />)}
       <Field label="UF (ex.: MG)" value={venueInput.uf} setValue={uf => setVenueInput(v => ({ ...v, uf: uf.replace(/[^a-z]/gi, '').slice(0, 2).toUpperCase() }))} />
       <Field label="CEP (opcional)" keyboardType="number-pad" value={venueInput.cep} setValue={value => { const digits = value.replace(/\D/g, '').slice(0, 8); setVenueInput(v => ({ ...v, cep: digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits })); }} />
+      <VenuePosition latitude={venueInput.latitude} longitude={venueInput.longitude} disabled={busy} onChange={(latitude, longitude) => setVenueInput(v => ({ ...v, latitude, longitude }))} />
       <Text style={s.small}>Informe somente recursos de acessibilidade existentes. O local será salvo como rascunho.</Text>
       <Button title="Salvar rascunho do local" busy={busy} onPress={() => { void save(); }} />
     </>}

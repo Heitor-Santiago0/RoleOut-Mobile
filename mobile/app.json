@@ -28,7 +28,7 @@
         "expo-location",
         {
           "isIosBackgroundLocationEnabled": false,
-          "locationWhenInUsePermission": "O RolêOut usa sua localização enquanto Explorar está aberto para mostrar rolês próximos.",
+          "locationWhenInUsePermission": "O RolêOut usa sua localização quando você solicita rolês próximos ou a posição de um local que está cadastrando.",
           "isAndroidBackgroundLocationEnabled": false
         }
       ]

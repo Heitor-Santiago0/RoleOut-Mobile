@@ -77,13 +77,19 @@ try {
     ExpectStatus 200 PUT "/organizacoes/$($org.id)" $orgInput $tokens[0]
     ExpectStatus 404 GET "/organizacoes/$($org.id)" $null $tokens[1]
     ExpectStatus 404 PUT "/organizacoes/$($org.id)" $orgInput $tokens[1]
-    $venueInput = @{ nome = 'Integration venue'; categoria = 'Cultura'; endereco = 'Test street 1'; cidade = 'Cidade Integracao'; uf = 'MG'; cep = '38000-000'; descricao = ''; acessibilidade = '' }
+    $venueInput = @{ nome = 'Integration venue'; categoria = 'Cultura'; endereco = 'Test street 1'; cidade = 'Cidade Integracao'; uf = 'MG'; cep = '38000-000'; descricao = ''; acessibilidade = ''; latitude = -19.750001; longitude = -47.930001 }
     $venue = (Request POST "/organizacoes/$($org.id)/locais" $venueInput $tokens[0]).Content | ConvertFrom-Json
     Assert ($venue.status -eq 'RASCUNHO') 'Venue must remain a draft'
     $venueInput.nome = 'Updated venue'
     ExpectStatus 200 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
     $venueRead = (Request GET "/organizacoes/$($org.id)/locais/$($venue.id)" $null $tokens[0]).Content | ConvertFrom-Json
     Assert ($venueRead.nome -eq 'Updated venue') 'Venue edit was not saved'
+    Assert ($venueRead.latitude -eq -19.750001 -and $venueRead.longitude -eq -47.930001) 'Venue coordinates did not persist'
+    $venueInput.latitude = 91
+    ExpectStatus 400 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
+    $venueInput.latitude = $null
+    ExpectStatus 400 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
+    $venueInput.latitude = -19.750001
     ExpectStatus 404 GET "/organizacoes/$($org.id)/locais" $null $tokens[1]
     $venueInput.status = 'PUBLICADO'
     ExpectStatus 400 PUT "/organizacoes/$($org.id)/locais/$($venue.id)" $venueInput $tokens[0]
@@ -147,6 +153,8 @@ try {
     ExpectStatus 409 POST '/revisoes-roles' $roleDecision $tokens[2]
     $publicRole = (Request GET "/roles/$($approvedRole.role.roleId)").Content | ConvertFrom-Json
     Assert ($publicRole.nome -eq $draftInput.nome -and $publicRole.valor -eq 0) 'Approved role not public'
+    $nearby = (Request GET '/roles/proximos?latitude=-19.750001&longitude=-47.930001&raioKm=5').Content | ConvertFrom-Json
+    Assert (@($nearby.itens | Where-Object { $_.id -eq $approvedRole.role.roleId }).Count -eq 1) 'Approved venue position missing from nearby map'
     $roleHistory = (Request GET "$draftPath/$($draft.id)/revisoes" $null $tokens[0]).Content | ConvertFrom-Json
     Assert (@($roleHistory.itens).Count -eq 2) 'Role review audit failed'
     ExpectStatus 404 GET "$draftPath/$($draft.id)/revisoes" $null $tokens[1]

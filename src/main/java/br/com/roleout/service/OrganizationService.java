@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class OrganizationService {
     public record OrganizationInput(String nome, String tipo, String descricao,
@@ -17,9 +19,16 @@ public class OrganizationService {
     public record Organization(int id, String nome, String tipo, String descricao,
                                String contatoEmail, String contatoTelefone, String status, String papel) { }
     public record VenueInput(String nome, String categoria, String endereco, String cidade,
-                             String uf, String cep, String descricao, String acessibilidade) { }
+                             String uf, String cep, String descricao, String acessibilidade,
+                             BigDecimal latitude, BigDecimal longitude) {
+        public VenueInput(String nome, String categoria, String endereco, String cidade,
+                          String uf, String cep, String descricao, String acessibilidade) {
+            this(nome, categoria, endereco, cidade, uf, cep, descricao, acessibilidade, null, null);
+        }
+    }
     public record Venue(int id, int organizacaoId, String nome, String categoria, String endereco,
-                        String cidade, String uf, String cep, String descricao, String acessibilidade, String status) { }
+                        String cidade, String uf, String cep, String descricao, String acessibilidade, String status,
+                        BigDecimal latitude, BigDecimal longitude) { }
     private final SqlAccess sql;
     public OrganizationService() { this(new SqlAccess()); }
     public OrganizationService(SqlAccess sql) { this.sql = sql; }
@@ -91,14 +100,15 @@ public class OrganizationService {
                     if (!Set.of("RASCUNHO", "REJEITADO").contains(current.status())) throw conflict();
                 }
                 String query = venueId == null
-                        ? "INSERT INTO locais (nome,categoria,endereco,cidade,uf,cep,descricao,acessibilidade,organizacao_id) VALUES (?,?,?,?,?,?,?,?,?)"
-                        : "UPDATE locais SET nome=?,categoria=?,endereco=?,cidade=?,uf=?,cep=?,descricao=?,acessibilidade=?,status='RASCUNHO' WHERE organizacao_id=? AND id=?";
+                        ? "INSERT INTO locais (nome,categoria,endereco,cidade,uf,cep,descricao,acessibilidade,latitude,longitude,organizacao_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                        : "UPDATE locais SET nome=?,categoria=?,endereco=?,cidade=?,uf=?,cep=?,descricao=?,acessibilidade=?,latitude=?,longitude=?,status='RASCUNHO' WHERE organizacao_id=? AND id=?";
                 int id;
                 try (var s = c.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                     s.setString(1, v.nome()); s.setString(2, v.categoria()); s.setString(3, v.endereco());
                     s.setString(4, v.cidade()); s.setString(5, v.uf()); s.setString(6, v.cep());
-                    s.setString(7, v.descricao()); s.setString(8, v.acessibilidade()); s.setInt(9, organizationId);
-                    if (venueId != null) s.setInt(10, venueId);
+                    s.setString(7, v.descricao()); s.setString(8, v.acessibilidade());
+                    s.setBigDecimal(9, v.latitude()); s.setBigDecimal(10, v.longitude()); s.setInt(11, organizationId);
+                    if (venueId != null) s.setInt(12, venueId);
                     if (s.executeUpdate() != 1) throw notFound();
                     if (venueId == null) {
                         try (var keys = s.getGeneratedKeys()) {
@@ -109,7 +119,7 @@ public class OrganizationService {
                 }
                 c.commit();
                 return new Venue(id, organizationId, v.nome(), v.categoria(), v.endereco(), v.cidade(),
-                        v.uf(), v.cep(), v.descricao(), v.acessibilidade(), "RASCUNHO");
+                        v.uf(), v.cep(), v.descricao(), v.acessibilidade(), "RASCUNHO", v.latitude(), v.longitude());
             } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
         } catch (SQLException e) { throw new RuntimeException("Venue save failed.", e); }
     }
@@ -188,7 +198,8 @@ public class OrganizationService {
     static Venue venue(ResultSet rs) throws SQLException {
         return new Venue(rs.getInt("id"), rs.getInt("organizacao_id"), rs.getString("nome"),
                 rs.getString("categoria"), rs.getString("endereco"), rs.getString("cidade"), rs.getString("uf"),
-                rs.getString("cep"), rs.getString("descricao"), rs.getString("acessibilidade"), rs.getString("status"));
+                rs.getString("cep"), rs.getString("descricao"), rs.getString("acessibilidade"), rs.getString("status"),
+                rs.getBigDecimal("latitude"), rs.getBigDecimal("longitude"));
     }
     private OrganizationInput validate(OrganizationInput v) {
         String type = Inputs.required(v.tipo(), 30).toUpperCase(Locale.ROOT);
@@ -205,9 +216,17 @@ public class OrganizationService {
         }
         String cep = Inputs.optional(v.cep(), 9);
         if (cep != null && !cep.matches("[0-9]{5}-?[0-9]{3}")) throw new IllegalArgumentException("CEP inválido.");
+        if ((v.latitude() == null) != (v.longitude() == null)) throw new IllegalArgumentException("Informe latitude e longitude juntas.");
+        BigDecimal latitude = coordinate(v.latitude(), 90), longitude = coordinate(v.longitude(), 180);
         return new VenueInput(Inputs.required(v.nome(), 200), Inputs.required(v.categoria(), 100),
                 Inputs.required(v.endereco(), 255), Inputs.required(v.cidade(), 150), state, cep,
-                Inputs.optional(v.descricao(), 4000), Inputs.optional(v.acessibilidade(), 2000));
+                Inputs.optional(v.descricao(), 4000), Inputs.optional(v.acessibilidade(), 2000), latitude, longitude);
+    }
+    private BigDecimal coordinate(BigDecimal value, int limit) {
+        if (value == null) return null;
+        if (value.abs().compareTo(BigDecimal.valueOf(limit)) > 0) throw new IllegalArgumentException("Coordenada fora do intervalo permitido.");
+        try { return value.setScale(6, RoundingMode.UNNECESSARY); }
+        catch (ArithmeticException e) { throw new IllegalArgumentException("Use até seis casas decimais nas coordenadas."); }
     }
     private void bindOrganization(java.sql.PreparedStatement s, OrganizationInput v) throws SQLException {
         s.setString(1, v.nome()); s.setString(2, v.tipo()); s.setString(3, v.descricao());

@@ -8,7 +8,7 @@ import { colors, styles as s } from './theme';
 
 type Details = { nome: string; status: string } & Record<string, string | number | null>;
 type Item = { organizacaoId: number; localId: number | null; organizacao: Details; local: Details | null; versao: string; role?: Details & { id: number; versao: number; valor: number; data: string | null } };
-const labels: Record<string, string> = { nome: 'Nome', tipo: 'Tipo', descricao: 'Descrição', contatoEmail: 'E-mail de contato', contatoTelefone: 'Telefone', status: 'Status', categoria: 'Categoria', endereco: 'Endereço', cidade: 'Cidade', uf: 'UF', cep: 'CEP', acessibilidade: 'Acessibilidade', valor: 'Preço por pessoa', data: 'Data' };
+const labels: Record<string, string> = { nome: 'Nome', tipo: 'Tipo', descricao: 'Descrição', contatoEmail: 'E-mail de contato', contatoTelefone: 'Telefone', status: 'Status', categoria: 'Categoria', endereco: 'Endereço', cidade: 'Cidade', uf: 'UF', cep: 'CEP', acessibilidade: 'Acessibilidade', valor: 'Preço por pessoa', data: 'Data', latitude: 'Latitude do local', longitude: 'Longitude do local' };
 export function ReviewScreen() {
   const { session } = useAuth();
   const [kind, setKind] = useState<'cadastros' | 'roles'>('cadastros');
