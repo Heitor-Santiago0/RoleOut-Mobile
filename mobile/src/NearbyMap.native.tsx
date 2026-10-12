@@ -8,7 +8,7 @@ import { Button, Message } from './ui';
 import { styles as s } from './theme';
 import type { NearbyMapProps, Point } from './NearbyMap.types';
 
-const NEIGHBORHOOD_DELTA = 0.018;
+const NEIGHBORHOOD_DELTA = 0.004;
 
 export function NearbyMap({ demo, token, onSelect }: NearbyMapProps) {
   const [enabled, setEnabled] = useState(0);
