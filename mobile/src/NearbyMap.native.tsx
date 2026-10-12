@@ -58,10 +58,10 @@ export function NearbyMap({ demo, token, onSelect }: NearbyMapProps) {
       {position && <><View style={{ height: 340, width: '100%' }}><MapView key={mapAttempt} ref={map} provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined} style={{ width: '100%', height: '100%' }} mapType="standard" userInterfaceStyle="light" zoomControlEnabled onMapLoaded={() => { setMapLoaded(true); setMapDelayed(false); }} initialRegion={{ latitude: position.coords.latitude, longitude: position.coords.longitude, latitudeDelta: NEIGHBORHOOD_DELTA, longitudeDelta: NEIGHBORHOOD_DELTA }}>
         <Marker coordinate={{ latitude: position.coords.latitude, longitude: position.coords.longitude }} title="Você está aqui" pinColor="#397FF5" />{points.map(point => <Marker key={point.id} coordinate={{ latitude: point.latitude, longitude: point.longitude }} title={point.nome} description={`${point.distanciaKm.toFixed(1)} km • Toque para ver detalhes`} onCalloutPress={() => onSelect(point.id)} />)}
       </MapView></View><Button title="Centralizar em mim" secondary onPress={() => map.current?.animateToRegion({ latitude: position.coords.latitude, longitude: position.coords.longitude, latitudeDelta: NEIGHBORHOOD_DELTA, longitudeDelta: NEIGHBORHOOD_DELTA }, 350)} />
-        {points.length > 0 && <Button title="Ver todos os rolês próximos" secondary onPress={() => map.current?.fitToCoordinates([
-          { latitude: position.coords.latitude, longitude: position.coords.longitude },
-          ...points.map(point => ({ latitude: point.latitude, longitude: point.longitude })),
-        ], { edgePadding: { top: 50, right: 50, bottom: 50, left: 50 }, animated: true })} />}
+        {points.length > 0 && <Button title="Ver rolê mais próximo no mapa" secondary onPress={() => {
+          const nearest = points.reduce((best, point) => point.distanciaKm < best.distanciaKm ? point : best);
+          map.current?.animateToRegion({ latitude: nearest.latitude, longitude: nearest.longitude, latitudeDelta: NEIGHBORHOOD_DELTA, longitudeDelta: NEIGHBORHOOD_DELTA }, 350);
+        }} />}
         <Text style={s.small}>Azul: sua posição. Vermelho: rolês cadastrados. A busca considera até 5 km, mesmo quando você aproxima o mapa.</Text>
         {!mapLoaded && <Text style={s.small}>{mapDelayed ? 'O mapa não concluiu o carregamento. A causa ainda não foi identificada. Você pode consultar os rolês próximos na lista abaixo.' : 'Carregando mapa…'}</Text>}
         <Button title="Recarregar mapa" secondary onPress={() => { setMapLoaded(false); setMapDelayed(false); setMapAttempt(value => value + 1); }} />
