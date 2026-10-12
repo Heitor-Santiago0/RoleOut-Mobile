@@ -8,6 +8,8 @@ import { Button, Message } from './ui';
 import { styles as s } from './theme';
 import type { NearbyMapProps, Point } from './NearbyMap.types';
 
+const NEIGHBORHOOD_DELTA = 0.018;
+
 export function NearbyMap({ demo, token, onSelect }: NearbyMapProps) {
   const [enabled, setEnabled] = useState(0);
   const [position, setPosition] = useState<Location.LocationObject | null>(null);
@@ -53,9 +55,14 @@ export function NearbyMap({ demo, token, onSelect }: NearbyMapProps) {
       {!enabled && <><Text style={s.subtitle}>Ative para ver sua posição e rolês publicados em até 5 km. Sua posição será usada na consulta de proximidade.</Text><Button title="Ativar minha localização" onPress={() => { setError(''); setEnabled(1); }} /></>}
       {enabled > 0 && !position && !error && <Text style={s.subtitle}>Aguardando a localização do aparelho…</Text>}
       <Message text={error} />{!!error && <Button title="Tentar localização novamente" secondary onPress={() => { setError(''); setEnabled(v => v + 1); }} />}
-      {position && <><View style={{ height: 260, width: '100%' }}><MapView key={mapAttempt} ref={map} provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined} style={{ width: '100%', height: '100%' }} mapType="standard" userInterfaceStyle="light" onMapLoaded={() => { setMapLoaded(true); setMapDelayed(false); }} initialRegion={{ latitude: position.coords.latitude, longitude: position.coords.longitude, latitudeDelta: 0.09, longitudeDelta: 0.09 }}>
+      {position && <><View style={{ height: 340, width: '100%' }}><MapView key={mapAttempt} ref={map} provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined} style={{ width: '100%', height: '100%' }} mapType="standard" userInterfaceStyle="light" zoomControlEnabled onMapLoaded={() => { setMapLoaded(true); setMapDelayed(false); }} initialRegion={{ latitude: position.coords.latitude, longitude: position.coords.longitude, latitudeDelta: NEIGHBORHOOD_DELTA, longitudeDelta: NEIGHBORHOOD_DELTA }}>
         <Marker coordinate={{ latitude: position.coords.latitude, longitude: position.coords.longitude }} title="Você está aqui" pinColor="#397FF5" />{points.map(point => <Marker key={point.id} coordinate={{ latitude: point.latitude, longitude: point.longitude }} title={point.nome} description={`${point.distanciaKm.toFixed(1)} km • Toque para ver detalhes`} onCalloutPress={() => onSelect(point.id)} />)}
-      </MapView></View><Button title="Centralizar em mim" secondary onPress={() => map.current?.animateToRegion({ latitude: position.coords.latitude, longitude: position.coords.longitude, latitudeDelta: 0.09, longitudeDelta: 0.09 }, 350)} />
+      </MapView></View><Button title="Centralizar em mim" secondary onPress={() => map.current?.animateToRegion({ latitude: position.coords.latitude, longitude: position.coords.longitude, latitudeDelta: NEIGHBORHOOD_DELTA, longitudeDelta: NEIGHBORHOOD_DELTA }, 350)} />
+        {points.length > 0 && <Button title="Ver todos os rolês próximos" secondary onPress={() => map.current?.fitToCoordinates([
+          { latitude: position.coords.latitude, longitude: position.coords.longitude },
+          ...points.map(point => ({ latitude: point.latitude, longitude: point.longitude })),
+        ], { edgePadding: { top: 50, right: 50, bottom: 50, left: 50 }, animated: true })} />}
+        <Text style={s.small}>Azul: sua posição. Vermelho: rolês cadastrados. A busca considera até 5 km, mesmo quando você aproxima o mapa.</Text>
         {!mapLoaded && <Text style={s.small}>{mapDelayed ? 'O mapa não concluiu o carregamento. A causa ainda não foi identificada. Você pode consultar os rolês próximos na lista abaixo.' : 'Carregando mapa…'}</Text>}
         <Button title="Recarregar mapa" secondary onPress={() => { setMapLoaded(false); setMapDelayed(false); setMapAttempt(value => value + 1); }} />
         {loaded && <Text style={s.small}>{points.length === 0 ? 'Nenhum rolê publicado com coordenadas encontrado em até 5 km.' : `${points.length} rolê(s) próximo(s). Toque em um ponto para ver detalhes.${points.length === 100 ? ' Mostrando os 100 mais próximos.' : ''}`}</Text>}
