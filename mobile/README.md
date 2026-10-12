@@ -1,111 +1,115 @@
-# RolêOut Mobile — primeiro fluxo
+# RolêOut · Aplicativo
 
-App React Native + Expo + TypeScript, independente do WAR Java. Criado com o
-template oficial blank-typescript; Expo SDK 57 e dependências compatíveis,
-fixadas em `pnpm-lock.yaml`. Navegação por Expo Router em `src/app`. Referência visual: `../docs/referencia-figma.md`.
+[← Projeto](../README.md) · [Funcionalidades](../docs/funcionalidades.md) · [Etapas](../docs/etapas.md)
 
-Entregue: marca com texto e pino vetorial (sem screenshot), login/cadastro, aba Criar rolê com cidade/categoria/orçamento como na web, Explorar com busca por cidade/categorias,
-paginação, detalhes, conta e logout. Estados de carregamento, lista vazia,
-erro de conexão e sessão inválida são separados. Na API real, nenhum dado fictício
-é retornado como fallback de falha.
+Aplicativo React Native, Expo SDK 57 e TypeScript, com navegação por Expo Router. A implementação atual está na branch `develop/api-pool`. Android é a plataforma em validação; a prévia web auxilia a revisão visual e não substitui o teste nativo.
 
-## Executar
+## Preparar o ambiente
 
-Com Node e pnpm disponíveis:
+Use Node.js 24 e pnpm. Com a API iniciada conforme o README principal, execute na pasta `mobile`:
 
-```text
-cd mobile
+```bash
 pnpm install --frozen-lockfile
-pnpm start
 ```
 
-Abrir no Expo Go compatível com SDK 57 ou numa development build correspondente.
-O projeto ainda não foi testado num aparelho/emulador nem empacotado em APK/IPA.
-Para preview de interface no navegador: `pnpm web`. A prévia web não representa
-validação Android/iOS. O ambiente `compose.integration.yml` permite explicitamente
-as origens `http://localhost:8081` e `http://127.0.0.1:8081`. Ver
-`../docs/integracao-local.md` para iniciar a prévia conectada.
+Crie ou edite `.env.local`, sem sobrescrever configurações existentes:
 
-## API real
+```dotenv
+EXPO_PUBLIC_API_URL=http://127.0.0.1:8082/RoleOut/api/v1
+# Necessária para gerar a versão Android própria com Google Maps:
+GOOGLE_MAPS_ANDROID_API_KEY=SUA_CHAVE_RESTRITA
+```
 
-Copiar `.env.example` para `.env` e ajustar `EXPO_PUBLIC_API_URL`. Esse valor é
-público no bundle e deve conter apenas a URL; não colocar senhas ou tokens nele.
+Substitua o marcador pela chave real somente no arquivo local. Não envie arquivos de ambiente ou certificados ao Git. O endereço da API é público no aplicativo e não deve conter senhas ou tokens.
 
-- Emulador Android: `http://10.0.2.2:8080/RoleOut/api/v1`.
-- Aparelho: endereço acessível do servidor na mesma rede, não localhost do aparelho.
-- Produção: HTTPS obrigatório pelo cliente. HTTP é apenas para desenvolvimento
-  local. Builds nativas também precisam permitir a rede de desenvolvimento.
+| Onde executar | Endereço da API |
+| :--- | :--- |
+| Navegador do notebook | `http://127.0.0.1:8082/RoleOut/api/v1` |
+| Emulador Android padrão | `http://10.0.2.2:8082/RoleOut/api/v1` |
+| Celular físico | IP de rede do notebook e uma porta publicada nessa interface |
+| Ambiente remoto | URL HTTPS do servidor hospedado |
 
-O servidor deve usar V001/V002/V003/V004/V005, MySQL e Tomcat. Criar conta no app e fazer
-login com os mesmos campos da API Java. Senha: 12 a 128 caracteres.
+O Compose de integração publica apenas `127.0.0.1:8082`. Para acesso físico pelo Wi-Fi, configure uma publicação de porta na interface de rede do notebook e a regra de firewall correspondente. Não use `localhost` no celular para acessar o notebook. Mudanças de rede podem alterar o IP.
 
-Token guardado com Expo SecureStore no Android/iOS, nunca com senha.
-Na prévia web, token fica somente em memória e some ao recarregar. Token é
-validado ao restaurar o app e ao abrir Conta. Logout revoga a sessão no servidor
-e remove o token local; em falha de rede, informa erro para permitir nova tentativa.
-Se o servidor já considera a sessão inválida, a saída remove o token local.
-Persistência segura no aparelho ainda precisa de teste real.
+## Prévia no navegador
 
-## Demonstração
+```bash
+pnpm exec expo start --web --localhost --port 8081
+```
 
-Em execução de desenvolvimento, “Conhecer a demonstração” abre quatro registros
-fictícios, sem criar conta e sem chamar o banco. O aviso permanece visível na
-listagem e nos detalhes. O atalho não aparece em builds de produção.
+Abra `http://localhost:8081`. As origens dessa prévia estão configuradas no Compose de integração. O token web fica em memória; atualizar a página encerra essa persistência local. O mapa nativo não é exibido na prévia.
 
-Fotos, avaliações e horários do Figma não foram simulados como informações
-reais. Os cartões usam blocos de categoria até haver imagens disponíveis na API.
-O login complementa o design; não foi identificada tela de login na faixa
-principal inspecionada. As cores são aproximações visuais, não tokens exportados.
+## Android: desenvolvimento
 
-## Validação e próximos passos
+O perfil `development` em `eas.json` gera APK com Expo Dev Client. Ele permite usar a configuração nativa própria do Google Maps.
 
-TypeScript e lint passaram (`pnpm typecheck`, `pnpm lint -- --max-warnings 0`). Exportação Android/iOS/web passou: `pnpm exec expo export --platform all` (bundles, não APK/IPA).
-Navegação verificada no navegador a 390×844: introdução -> login -> demonstração
--> detalhes -> volta; filtros de música e cidade sem resultados; conta -> saída.
+1. Instale o APK gerado no aparelho Android.
+2. Ajuste a URL da API para um endereço alcançável pelo aparelho.
+3. Inicie o servidor de desenvolvimento na pasta `mobile`:
 
-Preferências opcionais persistidas e editáveis na conta: `../docs/preferencias.md`.
-Explorar destaca até três afinidades por categoria nos resultados carregados e
-explica cada relação, mantendo filtros e a listagem completa.
-Roteiros com múltiplas paradas e persistência já estão implementados.
-Ainda pendentes: validação completa pelas telas e Android/iOS, perfil completo,
-recomendações precisas com metadados dos locais, painel dos responsáveis e aprovação administrativa. Backend e web
-continuam separados desta pasta; nenhum arquivo JSP foi substituído.
+```bash
+pnpm exec expo start --dev-client --lan
+```
 
-Área inicial dos responsáveis: `Conta > Meus locais`, com cadastro/edição de
-organizações e rascunhos de locais. Detalhes e limites em `../docs/area-responsaveis.md`.
-Envio para análise, histórico de justificativas e fila administrativa de aprovação/
-rejeição implementados. O acesso administrativo depende de papel provisionado fora
-do cadastro público; detalhes em `../docs/area-responsaveis.md`.
+4. Abra o RolêOut instalado e conecte-o ao servidor indicado pelo Expo.
 
-Referências: https://docs.expo.dev/versions/latest/sdk/securestore/
-e o Figma indicado em `../docs/referencia-figma.md`.
+No teste por LAN, mantenha celular e notebook na mesma rede e confira o acesso à API. O APK de desenvolvimento depende desse servidor para carregar o código; ele não é a versão independente prevista para convidados à distância.
 
-## Mapa de proximidade (Android/iOS)
+### Google Maps e assinatura
 
-Explorar permite ativar a localização em primeiro plano e ver o mapa nativo.
-A inscrição GPS é removida ao sair de Explorar; não há rastreamento em segundo
-plano. O mapa consulta `/roles/proximos` com posição e raio de 5 km; a lista
-por cidade é independente do mapa. A câmera pode ser centralizada manualmente.
-Permissão recusada e GPS indisponível exibem mensagem e mantêm a busca disponível.
+O pacote Android configurado é `br.com.roleout.mobile`. A chave precisa estar restrita a **Maps SDK for Android** e à combinação do pacote com o SHA-1 do certificado que assina o APK. Não use o certificado de outro aplicativo.
 
-Somente rolês vinculados a locais PUBLICADO e organizações APROVADA, com latitude
- e longitude cadastradas, aparecem como pontos. Os exemplos antigos sem local_id
-não ganham coordenadas inventadas. Máximo de 100 pontos por consulta.
-A API não persiste a posição; servidor/proxy devem evitar registrar coordenadas
-em logs de URLs antes da publicação. HTTPS continua obrigatório em produção.
+`app.config.js` lê `GOOGLE_MAPS_ANDROID_API_KEY` e configura o plugin de `react-native-maps`. Para compilar na nuvem, a variável também precisa existir no ambiente `development` do EAS. Alterações na chave nativa ou na configuração de assinatura exigem novo APK; reiniciar o servidor JavaScript não altera o binário instalado.
 
-O mapa nativo ainda precisa de validação em aparelho, incluindo permissão, GPS,
-pontos e consumo de bateria. A prévia web não contém mapa; não representa teste
-nativo. Para distribuir Android, configurar chave Google Maps restrita ao app,
-conforme https://docs.expo.dev/versions/v57.0.0/sdk/map-view/ . Não há chave
-embutida neste projeto. Testar no Expo Go compatível ou development build.
+O perfil usa credenciais locais: `credentials.json` aponta para o certificado de testes mantido fora do Git. Esses arquivos precisam estar disponíveis no computador que inicia a compilação. Cada colaborador deve obter credenciais autorizadas ou configurar seu próprio certificado e a restrição correspondente no Google Cloud.
 
-A aba Criar rolê agora tem duas etapas e montagem manual de várias paradas.
-Data, participantes, orçamento total, ordem e duração estimada são considerados.
-A montagem fica em memória até salvar; roteiros salvos podem ser recuperados em Conta -> Meus roteiros. Consulte ../docs/roteiro-mobile.md.
+Para um ambiente já autenticado e configurado:
 
-Testes de regras: pnpm test (Node 24). Ainda pendente: preferências
-de ambientes, trajetos, horários reais e integração no aparelho.
+```bash
+pnpm --package=eas-cli dlx eas build --platform android --profile development
+```
 
-Persistência e contrato: ../docs/roteiros-salvos.md. Requer sessão real e V004.
-Demonstração não grava no servidor. A integração real no aparelho continua pendente.
+A compilação em nuvem envia o código e as credenciais necessárias ao EAS. Não publique a chave em exemplos, capturas ou arquivos versionados. A restrição por API, pacote e certificado é necessária porque a chave de Maps é incorporada ao aplicativo Android.
+
+O carregamento do mapa no APK próprio está em validação. O app Google Maps funcionar no aparelho não comprova que a chave usada pelo RolêOut esteja configurada corretamente.
+
+## Estrutura
+
+| Caminho | Responsabilidade |
+| :--- | :--- |
+| `src/app/` | Rotas: entrada, autenticação, abas, preferências, roteiros, organizações e revisão |
+| `src/` | Componentes, telas compartilhadas, sessão, cliente HTTP e regras de planejamento |
+| `assets/` | Ícones e recursos visuais |
+| `tests/` | Testes de planejamento e afinidades |
+| `app.json` | Identidade, pacote Android e plugins |
+| `app.config.js` | Configuração do Maps por ambiente |
+| `eas.json` | Perfil de geração do APK |
+
+## Verificação
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+```
+
+A exportação dos bundles pode verificar o empacotamento JavaScript:
+
+```bash
+pnpm exec expo export --platform all
+```
+
+Isso não gera APK/IPA nem valida permissões, GPS ou mapas no aparelho. Para homologação, siga os critérios em [Etapas](../docs/etapas.md).
+
+## Dados e comportamento
+
+- Cadastro e login usam a API Java real; erros de conexão não são substituídos por dados fictícios.
+- A demonstração é separada, identificada e disponível apenas em desenvolvimento.
+- SecureStore guarda o token nativo; a senha não é persistida no app.
+- Localização é solicitada em primeiro plano, sem rastreamento em segundo plano.
+- Rolês próximos exigem local publicado, organização aprovada e coordenadas cadastradas.
+- HTTP é reservado ao desenvolvimento. O cliente exige HTTPS fora dele.
+
+## Próxima distribuição
+
+Para convidados testarem em outra rede, é necessário hospedar API/banco e configurar um APK com código embarcado. O perfil atual de desenvolvimento não atende sozinho a esse cenário. Testes e distribuição iOS continuam pendentes.

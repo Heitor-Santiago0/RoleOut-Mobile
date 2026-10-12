@@ -1,424 +1,239 @@
+<div align="center">
+
 # RolêOut
 
-## Evolução em desenvolvimento
+### Descubra rolês que combinam com você.
 
-A branch `develop/api-pool` preserva a aplicação web e acrescenta HikariCP,
-scripts SQL para banco novo e uma primeira API REST de consulta.
-O cadastro de organizações e locais terá aprovação administrativa antes da
-publicação. Login, permissões e endpoints de cadastro em rascunho estão
-implementados; telas, confirmação de e-mail e aprovação vêm nos próximos
-incrementos. Os rolês anteriores são dados de teste.
+Planeje seu tempo livre, encontre lugares e organize experiências dentro do seu orçamento.
 
-- [Plano de evolução](docs/evolucao.md)
-- [Escopo e sequência do MVP acadêmico](docs/mvp-academico.md)
-- [Banco e aplicação dos scripts](docs/banco-de-dados.md)
-- [API de consulta](docs/api-rest.md) e [OpenAPI](docs/openapi.yaml)
-- [Cadastro de organizações e locais](docs/cadastro-de-locais.md)
-- [Login, permissões e rascunhos](docs/login-e-rascunhos.md)
-- [Primeiro app mobile](mobile/README.md) e [referência Figma](docs/referencia-figma.md)
+![Status](https://img.shields.io/badge/status-em_desenvolvimento-357AF6?style=flat-square)
+![Expo](https://img.shields.io/badge/Expo-SDK_57-171923?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square)
+![Java](https://img.shields.io/badge/Java-17-E76F00?style=flat-square)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat-square)
 
-Em bancos/volumes novos, Docker inicializa o esquema com V001/V002/V003. Em volumes
-existentes, é necessário comparar e aplicar a evolução do banco explicitamente;
-os scripts não são reaplicados pelo WAR nem pelo Docker automaticamente.
+[Funcionalidades](docs/funcionalidades.md) · [Etapas do projeto](docs/etapas.md) · [Executar o app](mobile/README.md) · [API](docs/openapi.yaml)
 
-Aplicação web desenvolvida como projeto acadêmico para cadastro, gerenciamento e sugestão de rolês.
+</div>
 
-O **RolêOut** permite que usuários cadastrem opções de lazer e utilizem filtros como categoria, cidade e orçamento máximo para encontrar sugestões compatíveis com suas preferências.
+---
 
-## Objetivo
+## O projeto
 
-O objetivo do projeto é facilitar a escolha de atividades, eventos e lugares para sair.
+O **RolêOut** é uma plataforma de descoberta de lazer e planejamento de roteiros. O aplicativo reúne opções de cultura, música, gastronomia e outras atividades para ajudar cada pessoa a escolher onde ir, quanto gastar e como organizar seu passeio.
 
-Além do gerenciamento dos rolês cadastrados, o sistema possui uma funcionalidade de recomendação baseada nos critérios informados pelo usuário.
+Restaurantes, bares, museus, prefeituras e outras organizações podem cadastrar seus locais e propor rolês. A publicação passa por análise administrativa, com histórico das decisões.
 
-A aplicação foi desenvolvida utilizando o padrão de arquitetura **MVC (Model-View-Controller)**, além das camadas **DAO** e **Service**, buscando manter o projeto organizado, modular e de fácil manutenção.
+Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual é validar a experiência completa no Android e preparar uma versão para testes remotos.
+
+> **Estado atual:** funcionalidades principais implementadas, com validação no aparelho em andamento. O mapa nativo ainda precisa de confirmação na versão Android própria. A API ainda não está hospedada para acesso público.
+>
+> **Código atual:** a implementação descrita está na branch [`develop/api-pool`](https://github.com/Heitor-Santiago0/RoleOut-Mobile/tree/develop/api-pool). A documentação também é publicada na `main` para facilitar a apresentação do projeto.
+
+## Uma experiência, três frentes
+
+| Para quem | O que o RolêOut oferece |
+| :--- | :--- |
+| **Quem quer sair** | Explorar opções, informar interesses e montar roteiros com controle de tempo e orçamento. |
+| **Quem oferece experiências** | Cadastrar organização, locais e atividades; acompanhar análise e corrigir cadastros rejeitados. |
+| **Quem administra** | Revisar organizações, locais e rolês, registrando aprovação ou rejeição com justificativa. |
 
 ## Funcionalidades
 
-* Cadastro de rolês
-* Listagem de rolês cadastrados
-* Edição de rolês
-* Exclusão de rolês
-* Busca de sugestões de rolês
-* Filtro de sugestões por categoria
-* Filtro de sugestões por cidade
-* Filtro de sugestões por orçamento máximo
-* Validação dos dados informados
-* Persistência de dados em banco MySQL
-* Interface web utilizando JSP, HTML e CSS
-* Confirmação antes da exclusão de registros
+| Área | Recursos implementados |
+| :--- | :--- |
+| **Conta** | Cadastro, login, restauração de sessão, edição do nome e saída com revogação da sessão. |
+| **Preferências** | Onboarding opcional de música, comida, atividades e ambientes; edição posterior na conta. |
+| **Explorar** | Busca por cidade e categoria, paginação, detalhes dos rolês e destaques por afinidade de categoria. |
+| **Mapa** | Localização em primeiro plano, pontos próximos e botão para centralizar; validação nativa em andamento. |
+| **Criar rolê** | Cidade, data com máscara, horário de partida, duração, participantes e orçamento por pessoa ou por grupo. |
+| **Montar roteiro** | Seleção manual, ordenação e remoção de paradas; duração das visitas, estimativas de horários, custo e saldo. |
+| **Meus roteiros** | Salvar, consultar e excluir roteiros privados; preços e limites conferidos pelo servidor. |
+| **Meus locais** | Cadastro de organizações e locais, endereço, acessibilidade, coordenadas e envio para análise. |
+| **Rolês dos locais** | Rascunhos de atividades, edição, envio, acompanhamento e publicação após aprovação. |
+| **Administração** | Filas de análise, justificativas, histórico e proteção contra decisões com dados desatualizados. |
 
-## Sistema de Sugestões
+Consulte o [catálogo de funcionalidades](docs/funcionalidades.md) para conhecer os fluxos, regras e limitações de cada área. Implementado não significa homologado em todos os dispositivos.
 
-O RolêOut possui uma funcionalidade específica para encontrar opções de rolês com base nas preferências do usuário.
+## Como um rolê chega ao público
 
-O usuário informa:
+```mermaid
+flowchart LR
+    A[Organização cadastrada] --> B[Análise da organização]
+    B --> C[Local cadastrado e aprovado]
+    C --> D[Rolê em rascunho]
+    D --> E[Envio para análise]
+    E --> F{Decisão administrativa}
+    F -->|Aprovar| G[Disponível no Explorar]
+    F -->|Rejeitar| H[Correção pelo responsável]
+    H --> E
+```
 
-* **Categoria desejada**
-* **Cidade**
-* **Orçamento máximo**
-
-A aplicação utiliza esses dados para consultar os rolês cadastrados no banco de dados e retornar apenas aqueles que correspondem aos critérios informados.
-
-### Exemplo
-
-**Categoria:** Música
-**Cidade:** Uberaba
-**Orçamento máximo:** R$ 50,00
-
-O sistema poderá retornar rolês cadastrados que atendam a:
-
-* Categoria = Música
-* Cidade = Uberaba
-* Valor ≤ R$ 50,00
-
-Dessa forma, o RolêOut não funciona apenas como um sistema de cadastro, mas também como uma aplicação de sugestão de opções de lazer.
+A aprovação da organização não publica automaticamente seus locais ou atividades. Cada etapa possui suas próprias regras de revisão.
 
 ## Arquitetura
 
-O projeto utiliza o padrão **MVC** em conjunto com as camadas **DAO** e **Service**.
-
-### Model
-
-Responsável pela representação dos dados utilizados pela aplicação.
-
-**Classe principal:**
-
-* `Role`
-
-Essa classe representa um rolê e contém informações como:
-
-* ID
-* Nome
-* Descrição
-* Local
-* Cidade
-* Data
-* Categoria
-* Valor
-
-### View
-
-Responsável pela interface apresentada ao usuário.
-
-As páginas foram desenvolvidas utilizando:
-
-* JSP
-* HTML5
-* CSS3
-* JSTL
-
-**Principais telas:**
-
-* Página inicial
-* Gerenciamento de rolês
-* Cadastro e edição de rolês
-* Busca de sugestões
-* Resultados das sugestões
-
-### Controller
-
-Responsável por receber as requisições realizadas pelo navegador e encaminhá-las para as demais camadas da aplicação.
-
-**Controllers principais:**
-
-* `RoleController`
-* `SugestaoController`
-
-### Service
-
-Responsável pelas regras de negócio e validações da aplicação.
-
-**Classe principal:**
-
-* `RoleService`
-
-Entre suas responsabilidades estão:
-
-* Validar dados dos rolês
-* Encaminhar operações para o DAO
-* Validar parâmetros utilizados na busca de sugestões
-
-### DAO
-
-Responsável pela comunicação direta com o banco de dados.
-
-**Classe principal:**
-
-* `RoleDAO`
-
-O DAO implementa operações como:
-
-* Inserção
-* Consulta
-* Atualização
-* Exclusão
-* Busca de rolês por critérios de sugestão
-
-### Config
-
-Responsável pelas configurações relacionadas à aplicação.
-
-**Classe principal:**
-
-* `ConnectionFactory`
-
-Essa classe é responsável por estabelecer a conexão entre a aplicação Java e o banco de dados MySQL.
-
-## CRUD
-
-O sistema implementa um CRUD completo para gerenciamento dos rolês.
-
-### Create
-
-Permite cadastrar novos rolês.
-
-### Read
-
-Permite listar os rolês existentes.
-
-### Update
-
-Permite alterar informações de um rolê cadastrado.
-
-### Delete
-
-Permite excluir um rolê do sistema.
-
-## Tecnologias Utilizadas
-
-* Java 17
-* Jakarta Servlets
-* JSP
-* JSTL
-* Maven
-* MySQL 8.4
-* JDBC
-* Apache Tomcat 10
-* Docker
-* Docker Compose
-* HTML5
-* CSS3
-* Git
-* GitHub
-
-## Banco de Dados
-
-O sistema utiliza **MySQL** para armazenamento dos dados.
-
-A principal tabela da aplicação é:
-
-`roles`
-
-Ela possui os seguintes campos:
-
-* `id`
-* `nome`
-* `descricao`
-* `local`
-* `cidade`
-* `data`
-* `categoria`
-* `valor`
-
-O campo `id` é utilizado como chave primária e possui incremento automático.
-
-O banco de dados é executado através de um container Docker.
-
-## Estrutura do Projeto
-
-```text
-RoleOut/
-│
-├── src/
-│   └── main/
-│       ├── java/
-│       │   └── br/
-│       │       └── com/
-│       │           └── roleout/
-│       │               ├── config/
-│       │               │   └── ConnectionFactory.java
-│       │               │
-│       │               ├── controller/
-│       │               │   ├── RoleController.java
-│       │               │   └── SugestaoController.java
-│       │               │
-│       │               ├── dao/
-│       │               │   └── RoleDAO.java
-│       │               │
-│       │               ├── model/
-│       │               │   └── Role.java
-│       │               │
-│       │               └── service/
-│       │                   └── RoleService.java
-│       │
-│       └── webapp/
-│           ├── index.jsp
-│           ├── css/
-│           │   └── style.css
-│           ├── images/
-│           └── WEB-INF/
-│               ├── web.xml
-│               └── views/
-│                   ├── role-form.jsp
-│                   ├── role-list.jsp
-│                   ├── sugestao-form.jsp
-│                   └── sugestao-list.jsp
-│
-├── docker-compose.yml
-├── pom.xml
-├── .gitignore
-└── README.md
+```mermaid
+flowchart TD
+    App[Aplicativo · React Native + Expo + TypeScript]
+    API[API REST · Java 17 + Jakarta Servlets]
+    Services[Services · regras de negócio e autorização]
+    DAO[DAO / SQL · persistência]
+    Pool[DatabaseManager Singleton · HikariCP]
+    DB[(MySQL 8.4)]
+    Maps[Google Maps · mapa Android]
+    App -->|JSON · HTTPS em produção| API
+    App --> Maps
+    API --> Services --> DAO --> Pool --> DB
 ```
 
-## Pré-requisitos
+O `DatabaseManager` mantém uma instância do gerenciador de pool por aplicação. Cada operação obtém sua própria conexão JDBC e a devolve ao pool ao terminar. **Uma conexão única não é compartilhada entre usuários.** O pool limita recursos e a espera por conexões; a capacidade real precisa ser medida com testes de carga.
 
-Para executar o projeto, é necessário possuir:
+| Camada | Tecnologias |
+| :--- | :--- |
+| Aplicativo | React Native 0.86, Expo SDK 57, TypeScript, Expo Router, React Native SVG |
+| Recursos nativos | Expo Location, Expo SecureStore, react-native-maps, Expo Dev Client |
+| API | Java 17, Jakarta Servlet 6, Jackson, Maven |
+| Dados | MySQL 8.4, JDBC, HikariCP |
+| Execução | Apache Tomcat 10.1, Docker Compose, EAS Build para Android |
+| Verificação | JUnit 5, Mockito, H2, testes Node, TypeScript, ESLint e integração HTTP |
 
-* Java JDK 17
-* Apache Maven
-* Docker
-* Docker Compose
-* Git
-* Navegador web
+## Organização do repositório
 
-Também pode ser utilizado qualquer editor ou IDE compatível com Java e Maven, como:
+```text
+RoleOut-Mobile/
+├── mobile/                       Aplicativo Expo e configuração Android
+│   ├── src/app/                  Rotas e navegação
+│   ├── src/                      Telas, componentes e regras do cliente
+│   ├── assets/                   Recursos visuais
+│   └── tests/                    Testes das regras do aplicativo
+├── src/main/java/br/com/roleout/
+│   ├── api/                      Endpoints REST
+│   ├── service/                  Regras de negócio
+│   ├── security/                 Senhas, tokens e limitação de autenticação
+│   ├── dao/                      Acesso aos dados
+│   └── config/                   Pool e ciclo de vida da aplicação
+├── src/main/resources/db/migration/ Scripts SQL V001 a V007
+├── src/main/webapp/               Interface JSP mantida por compatibilidade
+├── src/test/                     Testes Java
+├── scripts/                      Verificação de integração HTTP
+├── docs/                         Produto, contratos e notas técnicas
+├── compose.integration.yml       MySQL + Tomcat para desenvolvimento isolado
+└── pom.xml                       Build da API e empacotamento WAR
+```
 
-* Visual Studio Code
-* Apache NetBeans
-* IntelliJ IDEA
+A interface JSP permanece preservada. O [repositório web original](https://github.com/Heitor-Santiago0/RoleOut) é separado deste projeto.
 
-## Como Executar o Projeto
+## Executar localmente
 
-### 1. Clonar o repositório
+### 1. Preparar o ambiente
+
+Requisitos: Git, Java JDK 17, Maven, Docker com Compose, Node.js 24 e pnpm compatível com o arquivo de dependências do app. O acesso a este repositório depende das permissões concedidas no GitHub.
 
 ```bash
-git clone https://github.com/Heitor-Santiago0/RoleOut.git
+git clone --branch develop/api-pool https://github.com/Heitor-Santiago0/RoleOut-Mobile.git
+cd RoleOut-Mobile
 ```
 
-### 2. Entrar na pasta do projeto
+### 2. Iniciar a API e o banco
 
 ```bash
-cd RoleOut
+mvn -B -ntp verify
+docker compose -f compose.integration.yml up -d
 ```
 
-### 3. Compilar o projeto
+Aguarde a inicialização do MySQL e do Tomcat. A API fica disponível em `http://127.0.0.1:8082/RoleOut/api/v1`. Uma consulta de verificação é `GET /roles`; uma base nova pode retornar uma lista vazia.
+
+O Compose usa volume próprio, não expõe a porta do MySQL e publica o Tomcat apenas no computador local. As credenciais desse ambiente são exclusivamente de desenvolvimento.
+
+> Os scripts **V001 a V007** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
+
+Depois de recompilar o WAR, reinicie o Tomcat para carregar a versão atualizada:
 
 ```bash
-mvn clean package
+docker compose -f compose.integration.yml restart tomcat
 ```
 
-Esse comando gera o arquivo:
-
-```text
-target/RoleOut.war
-```
-
-### 4. Iniciar os containers
+### 3. Iniciar o aplicativo
 
 ```bash
-docker compose up -d
+cd mobile
+pnpm install --frozen-lockfile
 ```
 
-O Docker Compose irá iniciar:
+Crie ou edite `mobile/.env.local`, preservando valores já existentes, e configure a URL da API:
 
-* MySQL
-* Apache Tomcat
+```dotenv
+EXPO_PUBLIC_API_URL=http://127.0.0.1:8082/RoleOut/api/v1
+```
 
-### 5. Verificar os containers
+Esse endereço serve para a prévia no navegador do notebook:
 
 ```bash
-docker ps
+pnpm exec expo start --web --localhost --port 8081
 ```
 
-Os containers esperados são:
+**Celular físico:** use o IP de rede do notebook e publique uma porta da API nessa interface. O Compose padrão aceita somente conexões locais; estar no mesmo Wi-Fi, sozinho, não torna a API acessível. O mapa nativo requer a configuração Android descrita no [guia do aplicativo](mobile/README.md).
 
-```text
-roleout-mysql
-roleout-tomcat
+## Testes e qualidade
+
+```bash
+# Na raiz: testes Java e geração do WAR
+mvn -B -ntp verify
+
+# Na pasta mobile: tipos, lint e regras do aplicativo
+pnpm typecheck
+pnpm lint
+pnpm test
 ```
 
-### 6. Acessar a aplicação
+Com MySQL e Tomcat de integração em execução, o teste HTTP pode ser executado em PowerShell a partir da raiz:
 
-Abra o navegador e acesse:
-
-```text
-http://localhost:8080/RoleOut/
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-integration.ps1
 ```
 
-## Principais Endereços
+O teste de integração cria registros fictícios no banco de desenvolvimento. As suítes cobrem regras de negócio, autenticação, isolamento entre contas, publicação e persistência. Elas complementam os testes manuais no aparelho; não representam certificação de segurança ou teste de capacidade sob carga.
 
-**Página inicial**
+## Segurança e dados
 
-```text
-http://localhost:8080/RoleOut/
-```
+- Senhas protegidas com PBKDF2 e salt; sessões por token revogável.
+- Tokens armazenados com SecureStore no Android/iOS; na prévia web, apenas em memória.
+- Acesso a roteiros, organizações e ações administrativas validado no servidor.
+- Revisões com histórico e controle de concorrência; o cadastro público não concede papel de administrador.
+- Localização utilizada em primeiro plano, com permissão; sem rastreamento em segundo plano.
+- Chaves, arquivos de ambiente e certificados de assinatura excluídos do Git.
+- HTTPS exigido pelo cliente fora do desenvolvimento; hospedagem pública ainda pendente.
 
-**Gerenciamento de Rolês**
+Os rolês do cadastro web original são **dados de teste**. A demonstração do aplicativo também utiliza exemplos identificados como fictícios. Esses registros não representam estabelecimentos parceiros nem disponibilidade real.
 
-```text
-http://localhost:8080/RoleOut/roles
-```
+## Etapas e próximos marcos
 
-**Busca de Sugestões**
+| Etapa | Situação |
+| :--- | :--- |
+| Base de dados, pool e API | Implementada; testes automatizados e integração local disponíveis |
+| Conta, preferências e descoberta | Implementadas; validação no dispositivo em andamento |
+| Roteiros e controle de orçamento | Implementados; validação completa no dispositivo pendente |
+| Organizações, locais e aprovação | Implementados; homologação das telas administrativas pendente |
+| Android com mapa próprio | Em validação; geração do APK de desenvolvimento iniciada |
+| Testes remotos com convidados | Planejados: API hospedada e APK com código embarcado |
+| Preparação para uso público | Pendente: recuperação de acesso, revisão operacional e homologação |
 
-```text
-http://localhost:8080/RoleOut/sugestoes
-```
+O [roteiro de entregas](docs/etapas.md) detalha o objetivo, a entrega e o critério de conclusão de cada etapa. O projeto ainda não é apresentado como pronto para produção.
 
-## Fluxo da Aplicação
+## Documentação
 
-```text
-Usuário
-   ↓
-View (JSP)
-   ↓
-Controller
-   ↓
-Service
-   ↓
-DAO
-   ↓
-MySQL
-```
+| Documento | Conteúdo |
+| :--- | :--- |
+| [Funcionalidades](docs/funcionalidades.md) | Jornadas, regras e limites do produto |
+| [Etapas](docs/etapas.md) | Entregas realizadas e próximos critérios de validação |
+| [Aplicativo mobile](mobile/README.md) | Ambiente, execução, mapa e APK Android |
+| [Contrato OpenAPI](docs/openapi.yaml) | Referência técnica dos endpoints; conferir também os servlets para mudanças recentes |
+| [Notas técnicas](docs/README.md) | Índice dos registros de implementação e integração |
 
-A View envia uma requisição ao Controller.
+## Autoria
 
-O Controller utiliza o Service para executar a lógica necessária.
+Projeto desenvolvido no contexto de **Análise e Desenvolvimento de Sistemas**.
 
-O Service aplica as regras de negócio e utiliza o DAO.
-
-O DAO realiza as operações no banco de dados MySQL.
-
-Os dados retornam pelas mesmas camadas até serem apresentados novamente ao usuário.
-
-## Versionamento
-
-O projeto utiliza **Git** para controle de versão e **GitHub** para armazenamento do repositório remoto.
-
-**Repositório:**
-
-https://github.com/Heitor-Santiago0/RoleOut
-
-## Projeto Acadêmico
-
-Projeto desenvolvido para fins acadêmicos no curso de **Análise e Desenvolvimento de Sistemas**.
-
-## Integrantes
-
-### Heitor Santiago
-
-**RA:** 5174491
-
-**GitHub:**
-https://github.com/Heitor-Santiago0
-
-### Vinicius Henrique
-
-**RA:** 5174473
-
-## Considerações Finais
-
-O RolêOut foi desenvolvido com o objetivo de aplicar conceitos de desenvolvimento web em Java, arquitetura MVC, persistência de dados, organização em camadas e controle de versão.
-
-Além do CRUD completo de rolês, a aplicação possui uma funcionalidade de sugestão baseada nas preferências do usuário, permitindo que os rolês cadastrados sejam utilizados para encontrar opções de lazer compatíveis com categoria, cidade e orçamento.
+**Heitor Santiago** · [GitHub](https://github.com/Heitor-Santiago0)
+**Vinicius Henrique**
