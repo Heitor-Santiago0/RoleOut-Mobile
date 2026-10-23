@@ -12,5 +12,5 @@ export default function DetailRoute() {
   const value = Number(id);
   const example = demoRoles.find(role => role.id === value);
   if (!Number.isSafeInteger(value) || value < 1 || (demo && !example)) return <View style={s.content}><Text style={s.text}>Rolê não encontrado.</Text><Button title="Voltar" onPress={() => router.replace('/explore')} /></View>;
-  return <DetailScreen key={value} selected={demo ? example! : { id: value }} demo={demo} token={session?.token} onBack={() => { if (router.canGoBack()) router.back(); else router.replace('/explore'); }} />;
+  return <DetailScreen key={value} selected={demo ? example! : { id: value }} demo={demo} token={session?.token} />;
 }

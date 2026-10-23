@@ -1,0 +1,1 @@
+ALTER TABLE roles ADD COLUMN data_fim DATE NULL;

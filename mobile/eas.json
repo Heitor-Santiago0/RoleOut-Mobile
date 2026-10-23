@@ -1,5 +1,13 @@
 {
   "build": {
+    "preview": {
+      "developmentClient": false,
+      "distribution": "internal",
+      "environment": "preview",
+      "credentialsSource": "local",
+      "env": { "ROLEOUT_STANDALONE": "1" },
+      "android": { "buildType": "apk" }
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",

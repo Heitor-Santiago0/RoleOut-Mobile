@@ -13,11 +13,30 @@ import java.util.List;
 /** Private drafts remain separate from legacy/public roles until reviewed. */
 public class RoleDraftService {
     public record Input(String nome, String descricao, String categoria, String data,
-                        BigDecimal valor, Integer versao) {}
+                        BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, List<OpeningHours.Rule> funcionamento, RoleCharacteristics caracteristicas) {
+        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, List<OpeningHours.Rule> funcionamento) {
+            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, cancelado, motivoCancelamento, dataFim, funcionamento, null);
+        }
+        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim) {
+            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, cancelado, motivoCancelamento, dataFim, null);
+        }
+        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento) {
+            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, cancelado, motivoCancelamento, null);
+        }
+        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim) {
+            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, false, null);
+        }
+        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario) {
+            this(nome, descricao, categoria, data, valor, versao, horario, null);
+        }
+        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao) {
+            this(nome, descricao, categoria, data, valor, versao, null, null);
+        }
+    }
     public record Draft(int id, int localId, String nome, String descricao, String categoria,
-                        String data, BigDecimal valor, int versao, String status, Integer roleId) {}
+                        String data, BigDecimal valor, int versao, String status, Integer roleId, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, List<OpeningHours.Rule> funcionamento, RoleCharacteristics caracteristicas) {}
     public record Submission(Integer versao) {}
-    public record Review(int id, int versao, String decisao, String justificativa, String criadoEm) {}
+    public record Review(int id, int versao, String decisao, String justificativa, String criadoEm, String conteudo) {}
     private final SqlAccess sql;
     public RoleDraftService() { this(new SqlAccess()); }
     public RoleDraftService(SqlAccess sql) { this.sql = sql; }
@@ -41,19 +60,25 @@ public class RoleDraftService {
             c.setAutoCommit(false);
             try {
                 authorize(c, account, venue, true);
+                RoleCharacteristics characteristics = v.caracteristicas();
                 if (id != null) {
                     var current = find(c, venue, id, true);
-                    editable(current);
+                    if (characteristics == null) characteristics = current.caracteristicas();
+                    if (current.status().equals("PENDENTE")) throw conflict("Aguarde a análise antes de editar.");
+                    if (v.cancelado() && current.roleId() == null) throw conflict("Somente eventos publicados podem ser cancelados.");
                     if (current.versao() != v.versao()) throw conflict("O rascunho mudou. Recarregue antes de salvar.");
                 }
+                if (id == null && v.cancelado()) throw conflict("Somente eventos publicados podem ser cancelados.");
                 String query = id == null
-                        ? "INSERT INTO rascunhos_roles(nome,descricao,categoria,data,valor,local_id) VALUES (?,?,?,?,?,?)"
-                        : "UPDATE rascunhos_roles SET nome=?,descricao=?,categoria=?,data=?,valor=?,versao=versao+1,status='RASCUNHO' WHERE local_id=? AND id=? AND versao=?";
+                        ? "INSERT INTO rascunhos_roles(nome,descricao,categoria,data,valor,local_id,horario,horario_fim,data_fim,funcionamento,caracteristicas) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                        : "UPDATE rascunhos_roles SET nome=?,descricao=?,categoria=?,data=?,valor=?,versao=versao+1,status='RASCUNHO',horario=?,horario_fim=?,cancelado=?,motivo_cancelamento=?,data_fim=?,funcionamento=?,caracteristicas=? WHERE local_id=? AND id=? AND versao=?";
                 try (var s = c.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                     s.setString(1, v.nome()); s.setString(2, v.descricao()); s.setString(3, v.categoria());
                     if (v.data() == null) s.setNull(4, Types.DATE); else s.setDate(4, Date.valueOf(v.data()));
-                    s.setBigDecimal(5, v.valor()); s.setInt(6, venue);
-                    if (id != null) { s.setInt(7, id); s.setInt(8, v.versao()); }
+                    s.setBigDecimal(5, v.valor());
+                    if (id == null) { s.setInt(6, venue); s.setString(7, v.horario()); s.setString(8, v.horarioFim()); s.setString(9, v.dataFim()); s.setString(10, OpeningHours.encode(v.funcionamento())); s.setString(11, RoleCharacteristics.encode(characteristics)); }
+                    else { s.setString(6, v.horario()); s.setString(7, v.horarioFim()); s.setBoolean(8, v.cancelado()); s.setString(9, v.motivoCancelamento()); s.setString(10, v.dataFim()); s.setString(11, OpeningHours.encode(v.funcionamento())); s.setString(12, RoleCharacteristics.encode(characteristics)); s.setInt(13, venue); }
+                    if (id != null) { s.setInt(14, id); s.setInt(15, v.versao()); }
                     if (s.executeUpdate() != 1) throw conflict("O rascunho mudou. Recarregue antes de salvar.");
                     if (id == null) {
                         try (var keys = s.getGeneratedKeys()) {
@@ -87,7 +112,7 @@ public class RoleDraftService {
             authorize(c, account, venue, false); find(c, venue, id, false);
             try (var s = c.prepareStatement("SELECT * FROM revisoes_roles WHERE rascunho_id=? ORDER BY id DESC LIMIT 100")) {
                 s.setInt(1, id); var result = new ArrayList<Review>();
-                try (var rs = s.executeQuery()) { while (rs.next()) result.add(new Review(rs.getInt("id"), rs.getInt("versao"), rs.getString("decisao"), rs.getString("justificativa"), rs.getTimestamp("criado_em").toInstant().toString())); }
+                try (var rs = s.executeQuery()) { while (rs.next()) result.add(new Review(rs.getInt("id"), rs.getInt("versao"), rs.getString("decisao"), rs.getString("justificativa"), rs.getTimestamp("criado_em").toInstant().toString(), rs.getString("conteudo"))); }
                 return result;
             }
         } catch (SQLException e) { throw new RuntimeException("Draft review history failed.", e); }
@@ -126,7 +151,7 @@ public class RoleDraftService {
         int role = rs.getInt("role_id"); Integer roleId = rs.wasNull() ? null : role;
         return new Draft(rs.getInt("id"), rs.getInt("local_id"), rs.getString("nome"),
                 rs.getString("descricao"), rs.getString("categoria"), date == null ? null : date.toLocalDate().toString(),
-                rs.getBigDecimal("valor"), rs.getInt("versao"), rs.getString("status"), roleId);
+                rs.getBigDecimal("valor"), rs.getInt("versao"), rs.getString("status"), roleId, rs.getString("horario"), rs.getString("horario_fim"), rs.getBoolean("cancelado"), rs.getString("motivo_cancelamento"), rs.getString("data_fim"), OpeningHours.decode(rs.getString("funcionamento")), RoleCharacteristics.decode(rs.getString("caracteristicas")));
     }
     private Input validate(Input v, boolean edit) {
         if (v == null || v.valor() == null || v.valor().signum() < 0 || v.valor().compareTo(new BigDecimal("99999999.99")) > 0)
@@ -143,8 +168,20 @@ public class RoleDraftService {
                     throw new IllegalArgumentException("Data inválida.");
             } catch (DateTimeParseException e) { throw new IllegalArgumentException("Data inválida."); }
         }
+        String time = Inputs.optional(v.horario(), 5);
+        if (time != null && (date == null || !time.matches("([01][0-9]|2[0-3]):[0-5][0-9]"))) throw new IllegalArgumentException("Informe data e horário válidos para o evento.");
+        String end = Inputs.optional(v.horarioFim(), 5);
+        String endDate = Inputs.optional(v.dataFim(), 10);
+        if (endDate != null) {
+            try {
+                if (!endDate.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}") || date == null || time == null || end == null || LocalDate.parse(endDate).isBefore(LocalDate.parse(date)))
+                    throw new IllegalArgumentException("Informe início e término completos, com datas em ordem.");
+            } catch (DateTimeParseException e) { throw new IllegalArgumentException("Data de término inválida."); }
+        }
+        if (end != null && (time == null || !end.matches("([01][0-9]|2[0-3]):[0-5][0-9]") || ((endDate == null || endDate.equals(date)) && end.compareTo(time) <= 0)))
+            throw new IllegalArgumentException("O término deve ser posterior ao início. Para atravessar a meia-noite, informe a data de término.");
         return new Input(Inputs.required(v.nome(), 200), Inputs.optional(v.descricao(), 4000),
-                Inputs.required(v.categoria(), 100), date, money, v.versao());
+                Inputs.required(v.categoria(), 100), date, money, v.versao(), time, end, v.cancelado(), v.cancelado() ? Inputs.required(v.motivoCancelamento(), 2000) : null, endDate, OpeningHours.validate(v.funcionamento()), RoleCharacteristics.validate(v.caracteristicas()));
     }
     private ApiException missing() { return new ApiException(404, "NAO_ENCONTRADO", "Cadastro não encontrado."); }
     private ApiException conflict(String message) { return new ApiException(409, "ESTADO_INVALIDO", message); }

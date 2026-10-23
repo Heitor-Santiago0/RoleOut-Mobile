@@ -1,2 +1,2 @@
-export type NearbyMapProps = { demo: boolean; token?: string; onSelect: (id: number) => void };
-export type Point = { id: number; nome: string; categoria: string | null; latitude: number; longitude: number; distanciaKm: number };
+export type NearbyMapProps = { demo: boolean; token?: string; onSelect: (id: number) => void; onContext?: (context: import("./automaticSuggestions").DiscoveryContext | null) => void; onCity?: (city: string) => void; onNearby?: (points: Point[] | null) => void };
+export type Point = { caracteristicas?: import("./roleCharacteristics").Characteristics | null; id: number; nome: string; categoria: string | null; latitude: number; longitude: number; distanciaKm: number; cidade?: string | null; data?: string | null; dataFim?: string | null; horario?: string | null; horarioFim?: string | null; funcionamento?: import('./openingHours').HoursRule[] | null; cancelado?: boolean };

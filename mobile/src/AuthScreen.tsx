@@ -10,7 +10,7 @@ export function AuthScreen({ onLogin, onDemo, message = '' }: { onLogin: (sessio
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   async function submit() {
     setError(''); setNotice('');
-    if (!apiUrl) { setError('O acesso à conta ainda não está disponível nesta prévia.'); return; }
+    if (!apiUrl) { setError('Esta versão está sem conexão configurada com o servidor. Atualize o aplicativo ou reinicie o ambiente de desenvolvimento.'); return; }
     if (!email.trim() || senha.length < 12 || senha.length > 128 || (signup && !nome.trim())) { setError('Preencha os campos. A senha deve ter entre 12 e 128 caracteres.'); return; }
     setBusy(true);
     try {

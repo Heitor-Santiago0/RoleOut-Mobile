@@ -112,4 +112,12 @@ Isso não gera APK/IPA nem valida permissões, GPS ou mapas no aparelho. Para ho
 
 ## Próxima distribuição
 
-Para convidados testarem em outra rede, é necessário hospedar API/banco e configurar um APK com código embarcado. O perfil atual de desenvolvimento não atende sozinho a esse cenário. Testes e distribuição iOS continuam pendentes.
+O perfil `preview` gera APK com código embarcado (`developmentClient: false`), sem Metro. Usa o ambiente EAS `preview` e o mesmo pacote/certificado local; a instalação substitui o app atual. Não desinstale antes de atualizar se quiser preservar os dados locais. A geração e a validação física desse APK ainda estão pendentes.
+
+Antes de compilar, hospede API/banco e configure `EXPO_PUBLIC_API_URL` com o endereço HTTPS completo, incluindo `/RoleOut/api/v1`, e `GOOGLE_MAPS_ANDROID_API_KEY` no ambiente `preview` do EAS. A URL pública da API não é segredo; senhas do banco nunca devem ser incluídas em variáveis `EXPO_PUBLIC_*`. A configuração rejeita URLs ausentes, HTTP e endereços locais nesse perfil. O ambiente `development` e sua conexão USB permanecem disponíveis.
+
+```bash
+pnpm --package=eas-cli dlx eas build --platform android --profile preview
+```
+
+Critério de validação: instalar o APK assinado, entrar com internet, baixar roteiros, encerrar o processo, desconectar USB e internet, reabrir e consultar as paradas. Depois reconectar e conferir atualização, exclusão e saída da conta. Compilar o JavaScript sozinho não comprova esse fluxo. Testes e distribuição iOS continuam pendentes.

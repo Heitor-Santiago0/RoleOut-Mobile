@@ -34,19 +34,24 @@ public class RoleDAO {
     }
 
     public record Ponto(int id, String nome, String categoria, double latitude,
-                        double longitude, double distanciaKm) {}
+                        double longitude, double distanciaKm, String cidade, String data, String horario, String dataFim,
+                        String horarioFim, List<br.com.roleout.service.OpeningHours.Rule> funcionamento, br.com.roleout.service.RoleCharacteristics caracteristicas) {
+        public Ponto(int id, String nome, String categoria, double latitude, double longitude, double distanciaKm) {
+            this(id, nome, categoria, latitude, longitude, distanciaKm, null, null, null, null, null, null, null);
+        }
+    }
 
     public List<Ponto> buscarProximos(double latitude, double longitude, double raioKm) {
         String sql = """
                 SELECT * FROM (
-                    SELECT r.id, r.nome, r.categoria, l.latitude, l.longitude,
+                    SELECT r.id, r.nome, r.categoria, r.cidade, r.data, r.horario, r.data_fim, r.horario_fim, r.funcionamento, r.caracteristicas, l.latitude, l.longitude,
                       6371 * 2 * ASIN(SQRT(LEAST(1,
                         POWER(SIN(RADIANS(l.latitude - ?) / 2), 2) +
                         COS(RADIANS(?)) * COS(RADIANS(l.latitude)) *
                         POWER(SIN(RADIANS(l.longitude - ?) / 2), 2)))) AS distancia_km
                     FROM roles r JOIN locais l ON l.id = r.local_id
                     JOIN organizacoes o ON o.id = l.organizacao_id
-                    WHERE l.status = 'PUBLICADO' AND o.status = 'APROVADA'
+                    WHERE r.cancelado=FALSE AND l.status = 'PUBLICADO' AND o.status = 'APROVADA'
                       AND l.latitude BETWEEN -90 AND 90
                       AND l.longitude BETWEEN -180 AND 180
                       AND l.latitude BETWEEN ? AND ?
@@ -64,7 +69,7 @@ public class RoleDAO {
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) pontos.add(new Ponto(rs.getInt("id"), rs.getString("nome"),
                         rs.getString("categoria"), rs.getDouble("latitude"),
-                        rs.getDouble("longitude"), rs.getDouble("distancia_km")));
+                        rs.getDouble("longitude"), rs.getDouble("distancia_km"), rs.getString("cidade"), rs.getString("data"), rs.getString("horario"), rs.getString("data_fim"), rs.getString("horario_fim"), br.com.roleout.service.OpeningHours.decode(rs.getString("funcionamento")), br.com.roleout.service.RoleCharacteristics.decode(rs.getString("caracteristicas"))));
             }
             return pontos;
         } catch (SQLException exception) {
@@ -78,11 +83,11 @@ public class RoleDAO {
     }
     public List<Role> consultarPagina(String categoria, String cidade, Double valorMaximo,
                                      int limite, int deslocamento, java.time.LocalDate data) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM roles WHERE " + PUBLICATION_FILTER);
+        StringBuilder sql = new StringBuilder("SELECT * FROM roles WHERE cancelado=FALSE AND " + PUBLICATION_FILTER);
         if (categoria != null) sql.append(" AND LOWER(categoria) = LOWER(?)");
         if (cidade != null) sql.append(" AND LOWER(cidade) = LOWER(?)");
         if (valorMaximo != null) sql.append(" AND valor <= ?");
-        if (data != null) sql.append(" AND (data IS NULL OR data = ?)");
+        if (data != null) sql.append(" AND (data IS NULL OR (? BETWEEN data AND COALESCE(data_fim,data)))");
         sql.append(" ORDER BY ").append(valorMaximo == null ? "data, id" : "valor, id");
         sql.append(" LIMIT ? OFFSET ?");
         try (Connection connection = getConnection();
@@ -107,12 +112,16 @@ public class RoleDAO {
     }
 
     public Role buscarPublicadoPorId(int id) {
-        String sql = "SELECT * FROM roles WHERE id = ? AND " + PUBLICATION_FILTER;
+        String sql = "SELECT roles.*, l.latitude, l.longitude FROM roles LEFT JOIN locais l ON l.id=roles.local_id WHERE roles.id = ? AND " + PUBLICATION_FILTER;
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet rs = statement.executeQuery()) {
-                return rs.next() ? mapear(rs) : null;
+                if (!rs.next()) return null;
+                Role role = mapear(rs);
+                role.setLatitude(rs.getBigDecimal("latitude"));
+                role.setLongitude(rs.getBigDecimal("longitude"));
+                return role;
             }
         } catch (SQLException exception) {
             throw new RuntimeException("Erro ao consultar rolê publicado.", exception);
@@ -128,6 +137,14 @@ public class RoleDAO {
         role.setCidade(rs.getString("cidade"));
         var data = rs.getDate("data");
         role.setData(data == null ? null : data.toLocalDate());
+        role.setHorario(rs.getString("horario"));
+        role.setHorarioFim(rs.getString("horario_fim"));
+        role.setCaracteristicas(br.com.roleout.service.RoleCharacteristics.decode(rs.getString("caracteristicas")));
+        role.setFuncionamento(br.com.roleout.service.OpeningHours.decode(rs.getString("funcionamento")));
+        var endDate = rs.getDate("data_fim");
+        role.setDataFim(endDate == null ? null : endDate.toLocalDate());
+        role.setCancelado(rs.getBoolean("cancelado"));
+        role.setMotivoCancelamento(rs.getString("motivo_cancelamento"));
         role.setCategoria(rs.getString("categoria"));
         role.setValor(rs.getDouble("valor"));
         return role;

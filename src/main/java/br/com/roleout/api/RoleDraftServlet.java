@@ -9,6 +9,7 @@ import java.util.Map;
 
 @WebServlet("/api/v1/rascunhos-roles/*")
 public final class RoleDraftServlet extends JsonServlet {
+    @Override protected int bodyLimit() { return 65536; }
     private final RoleDraftService drafts;
     public RoleDraftServlet() { this(new AuthService(), new RoleDraftService()); }
     public RoleDraftServlet(AuthService auth, RoleDraftService drafts) { super(auth); this.drafts = drafts; }

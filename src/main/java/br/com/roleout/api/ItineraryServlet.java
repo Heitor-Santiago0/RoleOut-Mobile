@@ -24,6 +24,23 @@ public final class ItineraryServlet extends JsonServlet {
             }
             throw method();
         }
+        if (path.equals("/alertas")) {
+            if (!method.equals("GET")) throw method();
+            return new Reply(200, Map.of("itens", itineraries.alerts(account)));
+        }
+        if (path.matches("/[1-9][0-9]*/verificar")) {
+            if (!method.equals("GET")) throw method();
+            return new Reply(200, itineraries.check(account,Integer.parseInt(path.split("/")[1])));
+        }
+        if (path.matches("/[1-9][0-9]*/paradas/[1-9][0-9]*")) {
+            if (!method.equals("PUT")) throw method();
+            String[] parts = path.split("/");
+            return new Reply(200, itineraries.progress(account, Integer.parseInt(parts[1]), Integer.parseInt(parts[3]), body(request, ItineraryService.Progress.class)));
+        }
+        if (path.matches("/[1-9][0-9]*/nome")) {
+            if (!method.equals("PUT")) throw method();
+            return new Reply(200, itineraries.rename(account, Integer.parseInt(path.split("/")[1]), body(request, ItineraryService.Rename.class)));
+        }
         if (!path.matches("/[1-9][0-9]*")) throw missing();
         if (method.equals("DELETE")) {
             itineraries.delete(account, Integer.parseInt(path.substring(1)));

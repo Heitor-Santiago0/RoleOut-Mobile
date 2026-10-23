@@ -18,7 +18,7 @@ class RoleDraftServiceTest {
     @BeforeEach void setup() throws Exception {
         source = new JdbcDataSource(); source.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
         try (var c = source.getConnection()) {
-            for (var file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V006__rascunhos_roles.sql", "V007__revisao_roles.sql")) {
+            for (var file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V009__horario_evento.sql", "V012__termino_evento.sql", "V014__cancelamento_publicado.sql", "V016__data_termino_evento.sql", "V018__funcionamento_evento.sql", "V023__caracteristicas_evento.sql", "V006__rascunhos_roles.sql", "V010__horario_rascunho.sql", "V013__termino_rascunho.sql", "V007__revisao_roles.sql", "V015__revisoes_publicacao.sql", "V017__data_termino_rascunho.sql", "V019__funcionamento_rascunho.sql", "V024__caracteristicas_rascunho.sql")) {
                 try (var r = new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/db/migration/" + file)), StandardCharsets.UTF_8)) { RunScript.execute(c, r); }
             }
             try (var s = c.createStatement()) { s.executeUpdate("INSERT INTO contas(nome,email,senha_hash) VALUES ('Owner','owner@example.invalid','x'),('Other','other@example.invalid','x')"); }
@@ -32,6 +32,40 @@ class RoleDraftServiceTest {
             s.executeUpdate("UPDATE organizacoes SET status='APROVADA'"); s.executeUpdate("UPDATE locais SET status='PUBLICADO'");
         }
     }
+    @Test void validatesExplicitEndDatesAndKeepsLegacySingleDayRules() throws Exception {
+        approve();
+        var saved = drafts.save(1, venue, null, new RoleDraftService.Input("Virada", null, "Cultura", "2027-12-31", BigDecimal.ZERO, null, "22:00", "02:00", false, null, "2028-01-01"));
+        assertEquals("2028-01-01", drafts.list(1, venue, 0).get(0).dataFim());
+        for (String date : List.of("2027-12-30", "2027-12-31", "2028-02-30", "28-01-01"))
+            assertThrows(IllegalArgumentException.class, () -> drafts.save(1, venue, null, new RoleDraftService.Input("Virada", null, "Cultura", "2027-12-31", BigDecimal.ZERO, null, "22:00", "02:00", false, null, date)));
+        assertThrows(IllegalArgumentException.class, () -> drafts.save(1, venue, null, new RoleDraftService.Input("Virada", null, "Cultura", "2027-12-31", BigDecimal.ZERO, null, "22:00", null, false, null, "2028-01-01")));
+        var cleared = drafts.save(1, venue, saved.id(), new RoleDraftService.Input("Virada", null, "Cultura", "2027-12-31", BigDecimal.ZERO, saved.versao(), "22:00", "23:00"));
+        assertNull(cleared.dataFim());
+    }
+    @Test void storesAndValidatesEventStartTime() throws Exception {
+        approve();
+        var created = drafts.save(1, venue, null, new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, null, "18:30"));
+        assertEquals("18:30", drafts.list(1, venue, 0).get(0).horario());
+        var updated = drafts.save(1, venue, created.id(), new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, created.versao(), "19:00"));
+        assertEquals("19:00", updated.horario());
+        assertThrows(IllegalArgumentException.class, () -> drafts.save(1, venue, null, new RoleDraftService.Input("Show", null, "Cultura", null, BigDecimal.ZERO, null, "18:30")));
+        assertThrows(IllegalArgumentException.class, () -> drafts.save(1, venue, null, new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, null, "25:00")));
+    }
+    @Test void endTimeIsOptionalValidatedEditableAndRemovable() throws Exception {
+        approve();
+        for (String end : List.of("18:30", "18:29", "25:00", "19:60", "2:00"))
+            assertThrows(IllegalArgumentException.class, () -> drafts.save(1, venue, null,
+                new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, null, "18:30", end)));
+        assertThrows(IllegalArgumentException.class, () -> drafts.save(1, venue, null,
+            new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, null, null, "20:00")));
+        var draft = drafts.save(1, venue, null, new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, null, "18:30", "20:00"));
+        assertEquals("20:00", drafts.list(1, venue, 0).get(0).horarioFim());
+        var changed = drafts.save(1, venue, draft.id(), new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, 1, "18:30", "21:00"));
+        assertEquals("21:00", changed.horarioFim());
+        var cleared = drafts.save(1, venue, draft.id(), new RoleDraftService.Input("Show", null, "Cultura", "2027-10-13", BigDecimal.ZERO, 2, "18:30", null));
+        assertNull(cleared.horarioFim());
+    }
+
     RoleDraftService.Input input(String value, String date, Integer version) {
         return new RoleDraftService.Input("Visita", "Exposição", "Cultura", date, new BigDecimal(value), version);
     }

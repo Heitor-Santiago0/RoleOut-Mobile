@@ -22,7 +22,7 @@ class RoleDAOSchemaTest {
         source = new JdbcDataSource();
         source.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
         try (var connection = source.getConnection()) {
-            for (String script : new String[]{"V001__roles.sql", "V002__organizacoes_e_locais.sql"}) {
+            for (String script : new String[]{"V001__roles.sql", "V002__organizacoes_e_locais.sql", "V009__horario_evento.sql", "V012__termino_evento.sql", "V014__cancelamento_publicado.sql", "V016__data_termino_evento.sql", "V018__funcionamento_evento.sql", "V023__caracteristicas_evento.sql"}) {
                 try (var stream = getClass().getResourceAsStream("/db/migration/" + script);
                      var reader = new InputStreamReader(java.util.Objects.requireNonNull(stream), StandardCharsets.UTF_8)) {
                     RunScript.execute(connection, reader);
@@ -35,6 +35,24 @@ class RoleDAOSchemaTest {
     private Role role(String name, double price) {
         return new Role(0, name, "Descrição de teste", "Museu", "Uberaba",
                 LocalDate.of(2026, 10, 8), "Cultura", price);
+    }
+
+    @Test
+    void publicDetailCoordinatesPreserveZeroAndRespectPublication() throws Exception {
+        dao.inserir(role("Legacy", 0));
+        int id = dao.listarTodos().get(0).getId();
+        assertNull(dao.buscarPublicadoPorId(id).getLatitude());
+        assertNull(dao.buscarPublicadoPorId(id).getLongitude());
+        try (var c = source.getConnection(); var sql = c.createStatement()) {
+            sql.executeUpdate("INSERT INTO organizacoes (nome,tipo,contato_email,status) VALUES ('Test','OUTRO','test@example.invalid','APROVADA')");
+            sql.executeUpdate("INSERT INTO locais (organizacao_id,nome,categoria,endereco,cidade,uf,latitude,longitude,status) VALUES (1,'Test','Cultura','Test','Uberaba','MG',0,-47.930001,'PUBLICADO')");
+            sql.executeUpdate("UPDATE roles SET local_id=1 WHERE id=" + id);
+            var detail = dao.buscarPublicadoPorId(id);
+            assertEquals(0, detail.getLatitude().doubleValue());
+            assertEquals(-47.930001, detail.getLongitude().doubleValue());
+            sql.executeUpdate("UPDATE locais SET status='SUSPENSO' WHERE id=1");
+            assertNull(dao.buscarPublicadoPorId(id));
+        }
     }
 
     @Test
@@ -120,10 +138,13 @@ class RoleDAOSchemaTest {
             sql.executeUpdate("INSERT INTO locais (organizacao_id,nome,categoria,endereco,cidade,uf,status,latitude,longitude) VALUES (1,'Museu','Cultura','Rua','Uberaba','MG','PUBLICADO',-19.75,-47.93)");
             dao.inserir(role("Perto", 10));
             dao.inserir(role("Sem coordenadas", 20));
-            sql.executeUpdate("UPDATE roles SET local_id=1 WHERE nome='Perto'");
+            sql.executeUpdate("UPDATE roles SET local_id=1, data='2026-10-14', horario='18:30' WHERE nome='Perto'");
             var points = new RoleService(dao).buscarProximos(-19.75, -47.93, 5);
             assertEquals(1, points.size());
             assertEquals("Perto", points.get(0).nome());
+            assertEquals("2026-10-14", points.get(0).data());
+            assertEquals("18:30", points.get(0).horario());
+            assertNotNull(points.get(0).cidade());
             assertEquals(0, points.get(0).distanciaKm(), 0.001);
             assertTrue(dao.buscarProximos(-19.85, -47.93, 5).isEmpty());
             assertTrue(dao.buscarProximos(-19.75, -48.03, 5).isEmpty());

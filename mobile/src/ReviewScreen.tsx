@@ -1,3 +1,5 @@
+import { describeCharacteristics, type Characteristics } from './roleCharacteristics';
+import { describeHours, type HoursRule } from './openingHours';
 import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Redirect, router, useFocusEffect } from 'expo-router';
@@ -6,9 +8,9 @@ import { ApiError, request } from './api';
 import { Button, Field, Message, price } from './ui';
 import { colors, styles as s } from './theme';
 
-type Details = { nome: string; status: string } & Record<string, string | number | null>;
-type Item = { organizacaoId: number; localId: number | null; organizacao: Details; local: Details | null; versao: string; role?: Details & { id: number; versao: number; valor: number; data: string | null } };
-const labels: Record<string, string> = { nome: 'Nome', tipo: 'Tipo', descricao: 'Descrição', contatoEmail: 'E-mail de contato', contatoTelefone: 'Telefone', status: 'Status', categoria: 'Categoria', endereco: 'Endereço', cidade: 'Cidade', uf: 'UF', cep: 'CEP', acessibilidade: 'Acessibilidade', valor: 'Preço por pessoa', data: 'Data', latitude: 'Latitude do local', longitude: 'Longitude do local' };
+type Details = { nome: string; status: string } & Record<string, string | number | boolean | HoursRule[] | Characteristics | null>;
+type Item = { organizacaoId: number; localId: number | null; organizacao: Details; local: Details | null; versao: string; publicacao?: Details | null; role?: Details & { id: number; versao: number; valor: number; data: string | null } };
+const labels: Record<string, string> = { caracteristicas: 'Características declaradas', funcionamento: 'Funcionamento da atividade', nome: 'Nome', tipo: 'Tipo', descricao: 'Descrição', contatoEmail: 'E-mail de contato', contatoTelefone: 'Telefone', status: 'Status', categoria: 'Categoria', endereco: 'Endereço', cidade: 'Cidade', uf: 'UF', cep: 'CEP', acessibilidade: 'Acessibilidade', valor: 'Preço por pessoa', data: 'Data', horario: 'Início do evento', dataFim: 'Data de término (intervalo contínuo)', horarioFim: 'Horário de término', cancelado: 'Cancelado', motivoCancelamento: 'Motivo do cancelamento', latitude: 'Latitude do local', longitude: 'Longitude do local' };
 export function ReviewScreen() {
   const { session } = useAuth();
   const [kind, setKind] = useState<'cadastros' | 'roles'>('cadastros');
@@ -56,11 +58,12 @@ function Queue({ token, kind }: { token: string; kind: 'cadastros' | 'roles' }) 
     {selected ? <>
       <Text style={s.cardTitle}>Organização</Text><Detail data={selected.organizacao} />
       {selected.local && <><Text style={s.cardTitle}>Local</Text><Detail data={selected.local} /></>}
-      {selected.role && <><Text style={s.cardTitle}>Rolê</Text><Detail data={selected.role} /></>}
+      {selected.publicacao && <><Text style={s.cardTitle}>Publicação atual</Text><Detail data={selected.publicacao} /></>}
+      {selected.role && <><Text style={s.cardTitle}>Proposta para análise</Text><Detail data={selected.role} /></>}
       <Text style={s.small}>Confira os dados antes de decidir. A justificativa será exibida ao responsável. Cadastros vinculados à sua conta não podem ser revisados por você.</Text>
       <Field label="Justificativa da decisão" value={reason} setValue={setReason} />
       {selected.local && selected.organizacao.status !== 'APROVADA' && <Text style={s.subtitle}>A organização precisa ser aprovada antes deste local.</Text>}
-      <Button title={selected.role ? 'Aprovar e publicar rolê' : selected.local ? 'Aprovar e publicar local' : 'Aprovar organização'} disabled={busy || !!selected.local && selected.organizacao.status !== 'APROVADA' || !!selected.role && selected.local?.status !== 'PUBLICADO'} onPress={() => { void decide('APROVAR'); }} />
+      <Button title={selected.role ? selected.role.cancelado ? 'Aprovar cancelamento' : selected.publicacao ? 'Aprovar alteração' : 'Aprovar e publicar rolê' : selected.local ? 'Aprovar e publicar local' : 'Aprovar organização'} disabled={busy || !!selected.local && selected.organizacao.status !== 'APROVADA' || !!selected.role && selected.local?.status !== 'PUBLICADO'} onPress={() => { void decide('APROVAR'); }} />
       {selected.role && selected.local?.status !== 'PUBLICADO' && <Text style={s.subtitle}>O local precisa estar aprovado antes da publicação do rolê.</Text>}
       <Button title="Rejeitar e solicitar correção" secondary disabled={busy} onPress={() => { void decide('REJEITAR'); }} />
     </> : <>
@@ -72,5 +75,5 @@ function Queue({ token, kind }: { token: string; kind: 'cadastros' | 'roles' }) 
   </ScrollView>;
 }
 function Detail({ data }: { data: Details }) {
-  return <View style={[s.secondary, { padding: 16, borderRadius: 12, gap: 8 }]}>{Object.entries(data).filter(([key]) => labels[key]).map(([key, value]) => <Text key={key} style={s.text}>{labels[key]}: {value === null || value === '' ? 'Não informado' : key === 'valor' ? price(Number(value)) : key === 'data' ? String(value).split('-').reverse().join('/') : String(value)}</Text>)}</View>;
+  return <View style={[s.secondary, { padding: 16, borderRadius: 12, gap: 8 }]}>{Object.entries(data).filter(([key]) => labels[key]).map(([key, value]) => <Text key={key} style={s.text}>{labels[key]}: {value === null || value === '' ? 'Não informado' : key === 'caracteristicas' ? describeCharacteristics(value as Characteristics) : key === 'funcionamento' ? describeHours(value as HoursRule[]) : typeof value === 'boolean' ? value ? 'Sim' : 'Não' : key === 'valor' ? price(Number(value)) : (key === 'data' || key === 'dataFim') ? String(value).split('-').reverse().join('/') : String(value)}</Text>)}</View>;
 }

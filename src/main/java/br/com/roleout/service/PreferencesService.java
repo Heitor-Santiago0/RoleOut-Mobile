@@ -11,7 +11,7 @@ public class PreferencesService {
     public record Input(Boolean pular, List<String> musica, List<String> comida, List<String> atividades, List<String> ambientes) {}
     public record Profile(String status, List<String> musica, List<String> comida, List<String> atividades, List<String> ambientes) {}
     public record View(Profile perfil, Map<String, List<String>> opcoes) {}
-    private static final Map<String, List<String>> OPTIONS = Map.of(
+    static final Map<String, List<String>> OPTIONS = Map.of(
         "musica", List.of("Pop", "Rock", "Sertanejo", "MPB", "Samba e pagode", "Eletrônica", "Forró", "Hip-hop"),
         "comida", List.of("Brasileira", "Italiana", "Japonesa", "Hambúrguer", "Vegetariana", "Cafés e doces"),
         "atividades", List.of("Música ao vivo", "Cinema", "Museus", "Gastronomia", "Passeios ao ar livre", "Esportes"),

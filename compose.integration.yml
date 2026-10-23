@@ -25,6 +25,8 @@ services:
       DB_USER: roleout
       DB_PASSWORD: integration-local-only
       API_CORS_ORIGINS: http://localhost:8081,http://127.0.0.1:8081
+      PUSH_ENABLED: ${PUSH_ENABLED:-false}
+      EXPO_ACCESS_TOKEN: ${EXPO_ACCESS_TOKEN:-}
     ports:
       - "127.0.0.1:8082:8080"
     volumes:

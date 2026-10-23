@@ -1,0 +1,1 @@
+ALTER TABLE roles ADD COLUMN horario VARCHAR(5) NULL;

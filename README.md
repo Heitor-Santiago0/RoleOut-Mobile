@@ -113,7 +113,7 @@ RoleOut-Mobile/
 │   ├── security/                 Senhas, tokens e limitação de autenticação
 │   ├── dao/                      Acesso aos dados
 │   └── config/                   Pool e ciclo de vida da aplicação
-├── src/main/resources/db/migration/ Scripts SQL V001 a V007
+├── src/main/resources/db/migration/ Scripts SQL V001 a V022
 ├── src/main/webapp/               Interface JSP mantida por compatibilidade
 ├── src/test/                     Testes Java
 ├── scripts/                      Verificação de integração HTTP
@@ -146,7 +146,7 @@ Aguarde a inicialização do MySQL e do Tomcat. A API fica disponível em `http:
 
 O Compose usa volume próprio, não expõe a porta do MySQL e publica o Tomcat apenas no computador local. As credenciais desse ambiente são exclusivamente de desenvolvimento.
 
-> Os scripts **V001 a V007** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
+> Os scripts **V001 a V022** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
 
 Depois de recompilar o WAR, reinicie o Tomcat para carregar a versão atualizada:
 
@@ -237,3 +237,7 @@ Projeto desenvolvido no contexto de **Análise e Desenvolvimento de Sistemas**.
 
 **Heitor Santiago** · [GitHub](https://github.com/Heitor-Santiago0)
 **Vinicius Henrique**
+
+### Avisos com o app fechado
+
+Fluxo Android implementado para alterações nos rolês salvos, com autorização, fila persistente e controles no perfil. **Ativação no celular pendente de Firebase/FCM e novo APK.** Consulte [configuração e testes de notificações](docs/notificacoes-push.md).

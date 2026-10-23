@@ -20,6 +20,25 @@ class ItineraryServletTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer token");
         when(auth.authenticate("token")).thenReturn(new AuthService.Account(7,"A","a@example.com",false,false));
     }
+    @Test void scheduleChecksUseAuthenticatedOwnerAndReadOnlyMethods() throws Exception {
+        when(request.getMethod()).thenReturn("GET"); when(request.getPathInfo()).thenReturn("/12/verificar");
+        servlet.service(request,response); verify(plans).check(7,12);
+        reset(plans); clearInvocations(response); when(request.getPathInfo()).thenReturn("/alertas"); when(plans.alerts(7)).thenReturn(List.of());
+        servlet.service(request,response); verify(plans).alerts(7);
+        reset(plans); clearInvocations(response); when(request.getMethod()).thenReturn("PUT");
+        servlet.service(request,response); verify(response).setStatus(405); verifyNoInteractions(plans);
+        clearInvocations(response); when(request.getMethod()).thenReturn("GET"); when(request.getHeader("Authorization")).thenReturn(null);
+        servlet.service(request,response); verify(response).setStatus(401); verifyNoInteractions(plans);
+    }
+    @Test void renameUsesAuthenticatedAccountAndRequiresSession() throws Exception {
+        when(request.getPathInfo()).thenReturn("/12/nome"); when(request.getMethod()).thenReturn("PUT");
+        when(request.getContentType()).thenReturn("application/json");
+        when(request.getReader()).thenReturn(new BufferedReader(new StringReader("{\"nome\":\"Aniversário\"}")));
+        servlet.service(request,response);
+        verify(plans).rename(7,12,new ItineraryService.Rename("Aniversário"));
+        reset(plans); clearInvocations(response); when(request.getHeader("Authorization")).thenReturn(null);
+        servlet.service(request,response); verify(response).setStatus(401); verifyNoInteractions(plans);
+    }
     @Test void listAlwaysUsesAuthenticatedAccount() throws Exception {
         when(request.getMethod()).thenReturn("GET"); when(plans.list(7,0)).thenReturn(List.of());
         servlet.service(request,response); verify(plans).list(7,0); verify(response).setStatus(200);

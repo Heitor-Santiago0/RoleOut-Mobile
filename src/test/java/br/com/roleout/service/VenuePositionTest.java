@@ -18,7 +18,7 @@ class VenuePositionTest {
     @BeforeEach void setup() throws Exception {
         source = new JdbcDataSource(); source.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
         try (var c = source.getConnection()) {
-            for (var file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V003__sessoes.sql")) {
+            for (var file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V009__horario_evento.sql", "V012__termino_evento.sql", "V014__cancelamento_publicado.sql", "V016__data_termino_evento.sql", "V018__funcionamento_evento.sql", "V023__caracteristicas_evento.sql", "V003__sessoes.sql")) {
                 try (var r = new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/db/migration/" + file)), StandardCharsets.UTF_8)) { RunScript.execute(c, r); }
             }
             try (var s = c.createStatement()) { s.executeUpdate("INSERT INTO contas(nome,email,senha_hash,administrador) VALUES ('Owner','o@example.invalid','x',false),('Admin','a@example.invalid','x',true)"); }
@@ -54,6 +54,14 @@ class VenuePositionTest {
         orgs.submitVenue(1, org, venue); approve(pending(null));
         var item = pending(venue); assertEquals(new BigDecimal("-19.750000"), item.local().latitude()); approve(item);
         assertEquals(1, dao.buscarProximos(-19.75, -47.93, 5).size());
+        try(var c=source.getConnection();var s=c.prepareStatement("UPDATE roles SET horario='09:00',horario_fim='18:00',funcionamento=?,caracteristicas=? WHERE local_id=?")) {
+            s.setString(1,"[{\"dia\":\"2\",\"intervalos\":[{\"inicio\":\"09:00\",\"fim\":\"18:00\"}]}]");
+            s.setString(2, RoleCharacteristics.encode(new RoleCharacteristics(List.of(),List.of(),List.of("Cultural")))); s.setInt(3,venue);s.executeUpdate();
+        }
+        var point=dao.buscarProximos(-19.75,-47.93,5).get(0);
+        assertEquals("18:00",point.horarioFim());
+        assertEquals(List.of("Cultural"),point.caracteristicas().ambientes());
+        assertEquals(List.of(new OpeningHours.Rule("2",List.of(new OpeningHours.Window("09:00","18:00")))),point.funcionamento());
         assertTrue(dao.buscarProximos(-20, -47.93, 5).isEmpty());
         assertEquals(409, assertThrows(ApiException.class, () -> orgs.saveVenue(1, org, venue, input("0", "0"))).status());
     }

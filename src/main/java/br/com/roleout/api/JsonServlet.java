@@ -55,19 +55,20 @@ public abstract class JsonServlet extends HttpServlet {
         return header.substring(7);
     }
     protected int accountId(HttpServletRequest request) { return auth.authenticate(token(request)).id(); }
+    protected int bodyLimit() { return 16384; }
     protected <T> T body(HttpServletRequest request, Class<T> type) throws IOException {
         String content = request.getContentType();
         if (content == null || !content.split(";", 2)[0].trim().toLowerCase(Locale.ROOT).equals("application/json")) {
             throw new ApiException(415, "TIPO_INVALIDO", "Envie application/json.");
         }
-        if (request.getContentLengthLong() > 16384) throw new ApiException(413, "CORPO_MUITO_GRANDE", "Corpo excede o limite.");
+        if (request.getContentLengthLong() > bodyLimit()) throw new ApiException(413, "CORPO_MUITO_GRANDE", "Corpo excede o limite.");
         var reader = request.getReader();
         StringBuilder text = new StringBuilder();
         char[] buffer = new char[1024];
         int size;
         while ((size = reader.read(buffer)) != -1) {
             text.append(buffer, 0, size);
-            if (text.length() > 16384) throw new ApiException(413, "CORPO_MUITO_GRANDE", "Corpo excede o limite.");
+            if (text.length() > bodyLimit()) throw new ApiException(413, "CORPO_MUITO_GRANDE", "Corpo excede o limite.");
         }
         T value = json.readValue(text.toString(), type);
         if (value == null) throw new IllegalArgumentException("Null JSON.");

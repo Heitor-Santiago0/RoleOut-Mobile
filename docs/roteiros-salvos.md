@@ -75,3 +75,16 @@ Testes de servlet validam autenticação, escopo e JSON. Isso não substitui o t
 com MySQL/Tomcat real nem o fluxo completo do app autenticado no aparelho.
 O backend não oferece CORS para a prévia web; não foi aberto acesso por CORS neste
 incremento. A demonstração do navegador não comprova persistência real.
+
+
+## Alertas de horários dos roteiros salvos
+
+Em Meus rolês e no detalhe de um roteiro, o painel **Atualizações dos horários** consulta os dados publicados ao abrir/retomar a tela. **Verificar alterações** refaz a consulta. Mostra alterações de datas, início, término e funcionamento; conflitos com a visita planejada; cancelamentos e cadastros indisponíveis. Paradas concluídas não geram novos alertas, mas continuam contando na linha do tempo. A consulta é privada e não altera planejamento, preços ou progresso.
+
+Novos roteiros capturam os horários publicados em `roteiro_paradas.horarios_originais` (V020, TEXT anulável). Essa referência permanece imutável. Roteiros anteriores conservam NULL: recebem aviso de ausência de histórico e a compatibilidade é conferida com o cadastro atual, sem afirmar que ocorreu uma mudança. Não há atualização automática do histórico ao consultar avisos.
+
+Endpoints autenticados somente GET: `/roteiros/{id}/verificar` retorna `verificadoEm`, `paradasVerificadas`, `alertas[{roleId,nome,codigo,mensagem}]`; `/roteiros/alertas` retorna `itens[{id,nome,verificacao}]` dos roteiros com paradas pendentes, até o limite de 100 da conta. A lista é restrita ao dono; consultar o ID alheio retorna 404. Códigos: HORARIOS_ALTERADOS, HORARIO_INCOMPATIVEL, SEM_HISTORICO, CANCELADO, INDISPONIVEL.
+
+Uma falha de rede remove a confirmação anterior do painel e mostra que a conferência não foi possível. As cópias offline continuam disponíveis, mas não recebem validação atual nem esses alertas. Os alertas internos estão disponíveis. O fluxo Android de push com o app fechado está implementado, mas sua ativação depende de Firebase/FCM e de novo APK; veja [notificações push](notificacoes-push.md). Valores, vagas e deslocamentos não são revalidados por este endpoint.
+
+Testado: comparação de horários e funcionamento, mudança compatível/incompatível, histórico ausente, cancelamento/remoção, repetição da consulta sem apagar alertas, isolamento entre contas, exclusão de concluídos e preservação do roteiro. Validar no celular: salvar novo roteiro, aprovar mudança do evento em outra conta, voltar a Meus rolês, consultar os detalhes e repetir sem rede. O horário original do roteiro deve permanecer igual.

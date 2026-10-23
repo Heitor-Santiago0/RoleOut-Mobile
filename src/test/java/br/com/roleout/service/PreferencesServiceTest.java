@@ -17,7 +17,7 @@ class PreferencesServiceTest {
         var source = new JdbcDataSource();
         source.setURL("jdbc:h2:mem:" + UUID.randomUUID() + ";MODE=MySQL;DB_CLOSE_DELAY=-1");
         try (var c = source.getConnection()) {
-            for (String file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V005__preferencias.sql")) {
+            for (String file : List.of("V001__roles.sql", "V002__organizacoes_e_locais.sql", "V009__horario_evento.sql", "V012__termino_evento.sql", "V014__cancelamento_publicado.sql", "V016__data_termino_evento.sql", "V018__funcionamento_evento.sql", "V023__caracteristicas_evento.sql", "V005__preferencias.sql")) {
                 try (var r = new InputStreamReader(java.util.Objects.requireNonNull(getClass().getResourceAsStream("/db/migration/" + file)), StandardCharsets.UTF_8)) { RunScript.execute(c, r); }
             }
             try (var s = c.createStatement()) { s.executeUpdate("INSERT INTO contas (nome,email,senha_hash) VALUES ('A','a@example.com','x'),('B','b@example.com','x')"); }

@@ -79,3 +79,33 @@ Foto/avatar, imagens dos locais, informações detalhadas de funcionamento, edi�
 ## Como atualizar esta página
 
 Ao concluir um marco, registrar a evidência de validação, atualizar o catálogo de funcionalidades e remover a pendência correspondente. Exportar bundles, gerar APK e testar no aparelho são verificações diferentes e devem permanecer identificadas.
+
+## Atualização local — 20/10/2026
+
+Recomendações por características declaradas concluídas; agora há sugestões automáticas dentro do Explorar, com consentimento opcional, frequência por conta e escolha sobre outras cidades. A API valida proximidade, aprovação, programação e interesses antes de gerar o cartão. Nenhum serviço foi hospedado. Os testes no celular permanecem adiados.
+
+Próximo passo desta frente: detecção e avisos de viagens em segundo plano, com configuração nativa, controles de privacidade e validação Android. Publicação social e Copiar rolê permanecem posteriores, conforme prioridade definida. Ver [sugestões automáticas](sugestoes-automaticas.md).
+
+## Avisos em viagens — entrega local de 20/10/2026
+
+Adicionado fluxo Android opcional em Perfil → Avisos em viagens, com consentimento por sessão, serviço visível no Android, revalidação da conta e notificação que abre o local. Reutiliza API e frequência existentes; não altera banco ou dados. Necessita novo APK para homologação. [Implementação, limites e checklist](avisos-viagens.md).
+
+Próxima validação desta frente: novo APK e teste em segundo plano. A publicação social e Copiar rolê continuam posteriores. A interface simplificada do Explorar foi confirmada pelo usuário no aparelho nesta data.
+
+## Preferências e frequência — ajuste solicitado
+
+Adicionada tela Perfil → Configurações com sequência de autorizações, situação real das permissões e controles separados. Nova política padrão: três sugestões nas últimas 24 horas; extras só com música, culinária e ambiente correspondentes, intervalo mínimo de uma hora e sem repetir rolê na janela. Configurações anteriores preservadas. V026 aplicada, 143 testes Java e 83 móveis aprovados. Autorizações do sistema continuam dependendo do usuário.
+
+## Confiabilidade das permissões — 22/10/2026
+
+Concluída revisão da ativação centralizada: resultados por recurso, limite de espera do GPS/geocodificador, cancelamento ao sair da tela ou trocar a sessão e confirmação do serviço nativo antes do sucesso. 88 testes móveis, TypeScript e lint aprovados. Banco e API preservados. Novo APK e testes físicos seguem pendentes; roteiro atualizado em [avisos em viagens](avisos-viagens.md).
+
+## Novo APK de avisos de viagem — 22/10/2026
+
+Build Android de desenvolvimento concluído: df2f4e52-a61a-404a-ab5e-38398d253ba5. APK baixado e manifesto conferido: pacote original e permissões de background, serviço de localização e notificações presentes. Instalação como atualização e teste real ainda pendentes. Ver [avisos em viagens](avisos-viagens.md).
+
+## Perfis públicos — entrega local de 22/10/2026
+
+Usuário adiou os demais testes no celular e autorizou seguir. Iniciada a frente social com perfil opt-in, nome público separado, apresentação, publicação/ocultação, visualização e lista paginada de pessoas. Banco V027, API autenticada e telas implementados; dados existentes preservados. 153 testes Java e 90 móveis aprovados, TypeScript/lint e teste HTTP com MySQL/Tomcat concluídos. [Fluxo e testes físicos pendentes](perfis-publicos.md).
+
+Próxima entrega prevista: publicação voluntária de roteiros com relato e privacidade, aproveitando essa identidade; depois feed/fotos/interações e Copiar rolê com revalidação. Ainda não implementados nesta entrega. Testes físicos de permissões/viagens não foram considerados concluídos.

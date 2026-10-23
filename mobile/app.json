@@ -12,7 +12,7 @@
     "android": {
       "package": "br.com.roleout.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#06122F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -26,14 +26,38 @@
       "expo-secure-store",
       "expo-router",
       [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": false,
+          "supportsPictureInPicture": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#06122F",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain"
+        }
+      ],
+      [
         "expo-location",
         {
           "isIosBackgroundLocationEnabled": false,
           "locationWhenInUsePermission": "O RolêOut usa sua localização quando você solicita rolês próximos ou a posição de um local que está cadastrando.",
-          "isAndroidBackgroundLocationEnabled": false
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
       ]
     ],
-    "scheme": "roleout"
+    "scheme": "roleout",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "94098a22-1063-4f2e-9dda-5515a59324d4"
+      }
+    },
+    "owner": "toledosantiago0"
   }
 }

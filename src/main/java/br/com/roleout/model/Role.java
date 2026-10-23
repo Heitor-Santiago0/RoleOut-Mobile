@@ -4,14 +4,42 @@ import java.time.LocalDate;
 
 public class Role {
 
+    private br.com.roleout.service.RoleCharacteristics caracteristicas;
+    public br.com.roleout.service.RoleCharacteristics getCaracteristicas() { return caracteristicas; }
+    public void setCaracteristicas(br.com.roleout.service.RoleCharacteristics value) { caracteristicas = value; }
+    private java.util.List<br.com.roleout.service.OpeningHours.Rule> funcionamento;
+    public java.util.List<br.com.roleout.service.OpeningHours.Rule> getFuncionamento() { return funcionamento; }
+    public void setFuncionamento(java.util.List<br.com.roleout.service.OpeningHours.Rule> value) { funcionamento = value; }
+    private boolean cancelado;
+    private String motivoCancelamento;
+    public boolean isCancelado() { return cancelado; }
+    public void setCancelado(boolean value) { cancelado = value; }
+    public String getMotivoCancelamento() { return motivoCancelamento; }
+    public void setMotivoCancelamento(String value) { motivoCancelamento = value; }
+    private String horarioFim;
+    public String getHorarioFim() { return horarioFim; }
+    public void setHorarioFim(String value) { horarioFim = value; }
+    private String horario;
+    public String getHorario() { return horario; }
+    public void setHorario(String value) { horario = value; }
     private int id;
     private String nome;
     private String descricao;
     private String local;
     private String cidade;
     private LocalDate data;
+    private LocalDate dataFim;
+    public LocalDate getDataFim() { return dataFim; }
+    public void setDataFim(LocalDate value) { dataFim = value; }
     private String categoria;
     private double valor;
+    private java.math.BigDecimal latitude;
+    private java.math.BigDecimal longitude;
+
+    public java.math.BigDecimal getLatitude() { return latitude; }
+    public void setLatitude(java.math.BigDecimal value) { latitude = value; }
+    public java.math.BigDecimal getLongitude() { return longitude; }
+    public void setLongitude(java.math.BigDecimal value) { longitude = value; }
 
     public Role() {
     }

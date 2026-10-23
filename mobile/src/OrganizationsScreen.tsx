@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { Redirect, router } from 'expo-router';
+import { FormKeyboardView } from './FormKeyboardView';
+import { useFormKeyboard } from './useFormKeyboard';
 import { useAuth } from './AuthContext';
 import { RoleDrafts } from './RoleDrafts';
 import { VenuePosition } from './VenuePosition';
@@ -25,6 +27,8 @@ export function OrganizationsScreen() {
   return <Manager key={session.token} token={session.token} email={session.conta.email} />;
 }
 function Manager({ token, email }: { token: string; email: string }) {
+  const draftScroll = useRef<ScrollView>(null);
+  const focusDraftField = useFormKeyboard(draftScroll);
   const { expire } = useAuth(); const active = useRef(true);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -100,7 +104,7 @@ function Manager({ token, email }: { token: string; email: string }) {
       if (active.current) { setVenues(previous => previous.map(item => item.id === id ? saved : item)); setNotice('Local enviado para análise. A edição fica bloqueada enquanto aguarda a decisão.'); }
     } catch (e) { await failure(e); } finally { if (active.current) setBusy(false); }
   }
-  if (draftVenue && organization) return <ScrollView contentContainerStyle={[s.content, { maxWidth: 680, width: '100%', alignSelf: 'center' }]} keyboardShouldPersistTaps="handled"><RoleDrafts key={draftVenue.id} token={token} venue={draftVenue} canEdit={organization.status === 'APROVADA' && draftVenue.status === 'PUBLICADO'} onBack={() => { setDraftVenue(null); void refresh(organization); }} /></ScrollView>;
+  if (draftVenue && organization) return <FormKeyboardView><ScrollView ref={draftScroll} contentContainerStyle={[s.content, { maxWidth: 680, width: '100%', alignSelf: 'center' }]} keyboardShouldPersistTaps="handled"><RoleDrafts onFieldFocus={focusDraftField} key={draftVenue.id} token={token} venue={draftVenue} canEdit={organization.status === 'APROVADA' && draftVenue.status === 'PUBLICADO'} onBack={() => { setDraftVenue(null); void refresh(organization); }} /></ScrollView></FormKeyboardView>;
   const editableOrg = organization?.papel === 'RESPONSAVEL' && ['PENDENTE', 'REJEITADA'].includes(organization.status);
   return <ScrollView contentContainerStyle={[s.content, { maxWidth: 680, width: '100%', alignSelf: 'center' }]} keyboardShouldPersistTaps="handled">
     <Button title={mode === 'list' ? '← Minha conta' : '← Voltar'} secondary disabled={busy} onPress={() => { setError(''); setNotice(''); if (mode === 'list') router.replace('/account'); else if (mode === 'venueForm' || (mode === 'orgForm' && organization)) setMode('organization'); else void refresh(); }} />
