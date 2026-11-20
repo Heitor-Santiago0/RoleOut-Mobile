@@ -4,12 +4,12 @@ import java.time.LocalDate;
 
 public class Role {
 
-    private br.com.roleout.service.RoleCharacteristics caracteristicas;
-    public br.com.roleout.service.RoleCharacteristics getCaracteristicas() { return caracteristicas; }
-    public void setCaracteristicas(br.com.roleout.service.RoleCharacteristics value) { caracteristicas = value; }
-    private java.util.List<br.com.roleout.service.OpeningHours.Rule> funcionamento;
-    public java.util.List<br.com.roleout.service.OpeningHours.Rule> getFuncionamento() { return funcionamento; }
-    public void setFuncionamento(java.util.List<br.com.roleout.service.OpeningHours.Rule> value) { funcionamento = value; }
+    private br.com.roleout.model.RoleCharacteristics caracteristicas;
+    public br.com.roleout.model.RoleCharacteristics getCaracteristicas() { return caracteristicas; }
+    public void setCaracteristicas(br.com.roleout.model.RoleCharacteristics value) { caracteristicas = value; }
+    private java.util.List<br.com.roleout.model.OpeningHours.Rule> funcionamento;
+    public java.util.List<br.com.roleout.model.OpeningHours.Rule> getFuncionamento() { return funcionamento; }
+    public void setFuncionamento(java.util.List<br.com.roleout.model.OpeningHours.Rule> value) { funcionamento = value; }
     private boolean cancelado;
     private String motivoCancelamento;
     public boolean isCancelado() { return cancelado; }

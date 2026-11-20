@@ -12,7 +12,7 @@ Planeje seu tempo livre, encontre lugares e organize experiências dentro do seu
 ![Java](https://img.shields.io/badge/Java-17-E76F00?style=flat-square)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat-square)
 
-[Funcionalidades](docs/funcionalidades.md) · [Etapas do projeto](docs/etapas.md) · [Executar o app](mobile/README.md) · [API](docs/openapi.yaml)
+[Funcionalidades](docs/funcionalidades.md) · [Etapas do projeto](docs/etapas.md) · [Executar o app](mobile/README.md) · [API](docs/openapi.yaml) · [Trabalho T2](docs/trabalho-api-t2.md)
 
 </div>
 
@@ -26,9 +26,9 @@ Restaurantes, bares, museus, prefeituras e outras organizações podem cadastrar
 
 Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual é validar a experiência completa no Android e preparar uma versão para testes remotos.
 
-> **Estado atual:** funcionalidades principais implementadas, com validação no aparelho em andamento. O mapa nativo ainda precisa de confirmação na versão Android própria. A API ainda não está hospedada para acesso público.
+> **Estado atual (19/11/2026):** desenvolvimento local com API Java, MySQL e app Android. Descoberta, roteiros, horários e notificações implementados; perfis públicos disponíveis como primeira etapa social. Arquitetura Controller → Service → DAO revisada para o T2. A API ainda não está hospedada para acesso público; testes físicos pendentes estão documentados.
 >
-> **Código atual:** a implementação descrita está na branch [`develop/api-pool`](https://github.com/Heitor-Santiago0/RoleOut-Mobile/tree/develop/api-pool). A documentação também é publicada na `main` para facilitar a apresentação do projeto.
+> **Código atual:** a implementação descrita está na branch [`develop/api-pool`](https://github.com/Heitor-Santiago0/RoleOut-Mobile/tree/develop/api-pool). Use esse link para consultar código e documentação da entrega; a `main` pode conter uma versão anterior.
 
 ## Uma experiência, três frentes
 
@@ -44,13 +44,15 @@ Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual 
 | :--- | :--- |
 | **Conta** | Cadastro, login, restauração de sessão, edição do nome e saída com revogação da sessão. |
 | **Preferências** | Onboarding opcional de música, comida, atividades e ambientes; edição posterior na conta. |
-| **Explorar** | Busca por cidade e categoria, paginação, detalhes dos rolês e destaques por afinidade de categoria. |
-| **Mapa** | Localização em primeiro plano, pontos próximos e botão para centralizar; validação nativa em andamento. |
+| **Explorar** | Busca por cidade e categoria, paginação, detalhes dos rolês e recomendações por interesses, gênero musical, culinária e ambiente. |
+| **Mapa** | Localização em primeiro plano, pontos próximos, centralização e detalhes; mapa Android já testado, com regressão física ainda necessária após esta entrega. |
 | **Criar rolê** | Cidade, data com máscara, horário de partida, duração, participantes e orçamento por pessoa ou por grupo. |
 | **Montar roteiro** | Seleção manual, ordenação e remoção de paradas; duração das visitas, estimativas de horários, custo e saldo. |
-| **Meus roteiros** | Salvar, consultar e excluir roteiros privados; preços e limites conferidos pelo servidor. |
+| **Meus roteiros** | Salvar, consultar, renomear e excluir roteiros privados, progresso das paradas e consulta offline dos roteiros armazenados; validação de preços e horários no servidor. |
 | **Meus locais** | Cadastro de organizações e locais, endereço, acessibilidade, coordenadas e envio para análise. |
 | **Rolês dos locais** | Rascunhos de atividades, edição, envio, acompanhamento e publicação após aprovação. |
+| **Avisos** | Alterações de horários nos roteiros, sugestões automáticas e avisos opcionais em viagens; controles de frequência e permissões. |
+| **Perfis públicos** | Nome/apresentação públicos opcionais, publicação e ocultação; feed e cópia de roteiros ainda previstos. |
 | **Administração** | Filas de análise, justificativas, histórico e proteção contra decisões com dados desatualizados. |
 
 Consulte o [catálogo de funcionalidades](docs/funcionalidades.md) para conhecer os fluxos, regras e limitações de cada área. Implementado não significa homologado em todos os dispositivos.
@@ -78,7 +80,7 @@ flowchart TD
     App[Aplicativo · React Native + Expo + TypeScript]
     API[API REST · Java 17 + Jakarta Servlets]
     Services[Services · regras de negócio e autorização]
-    DAO[DAO / SQL · persistência]
+    DAO[DAO · SQL e mapeamento]
     Pool[DatabaseManager Singleton · HikariCP]
     DB[(MySQL 8.4)]
     Maps[Google Maps · mapa Android]
@@ -108,12 +110,13 @@ RoleOut-Mobile/
 │   ├── assets/                   Recursos visuais
 │   └── tests/                    Testes das regras do aplicativo
 ├── src/main/java/br/com/roleout/
-│   ├── api/                      Endpoints REST
-│   ├── service/                  Regras de negócio
+│   ├── api/                      Controllers HTTP (Servlets)
+│   ├── service/                  Regras de negócio e transações
+│   ├── model/                    Modelos compartilhados e valores de domínio
 │   ├── security/                 Senhas, tokens e limitação de autenticação
 │   ├── dao/                      Acesso aos dados
 │   └── config/                   Pool e ciclo de vida da aplicação
-├── src/main/resources/db/migration/ Scripts SQL V001 a V022
+├── src/main/resources/db/migration/ Scripts SQL V001 a V027
 ├── src/main/webapp/               Interface JSP mantida por compatibilidade
 ├── src/test/                     Testes Java
 ├── scripts/                      Verificação de integração HTTP
@@ -146,7 +149,7 @@ Aguarde a inicialização do MySQL e do Tomcat. A API fica disponível em `http:
 
 O Compose usa volume próprio, não expõe a porta do MySQL e publica o Tomcat apenas no computador local. As credenciais desse ambiente são exclusivamente de desenvolvimento.
 
-> Os scripts **V001 a V022** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
+> Os scripts **V001 a V027** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
 
 Depois de recompilar o WAR, reinicie o Tomcat para carregar a versão atualizada:
 
@@ -193,7 +196,9 @@ Com MySQL e Tomcat de integração em execução, o teste HTTP pode ser executad
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-integration.ps1
 ```
 
-O teste de integração cria registros fictícios no banco de desenvolvimento. As suítes cobrem regras de negócio, autenticação, isolamento entre contas, publicação e persistência. Elas complementam os testes manuais no aparelho; não representam certificação de segurança ou teste de capacidade sob carga.
+Para o CRUD do T2, execute `node scripts/test-t2-crud.mjs` com Node.js e Docker no PATH. Esse teste remove seus próprios registros temporários.
+
+O teste de integração geral cria registros fictícios no banco de desenvolvimento. As suítes cobrem regras de negócio, autenticação, isolamento entre contas, publicação e persistência. Elas complementam os testes manuais no aparelho; não representam certificação de segurança ou teste de capacidade sob carga.
 
 ## Segurança e dados
 
@@ -201,7 +206,7 @@ O teste de integração cria registros fictícios no banco de desenvolvimento. A
 - Tokens armazenados com SecureStore no Android/iOS; na prévia web, apenas em memória.
 - Acesso a roteiros, organizações e ações administrativas validado no servidor.
 - Revisões com histórico e controle de concorrência; o cadastro público não concede papel de administrador.
-- Localização utilizada em primeiro plano, com permissão; sem rastreamento em segundo plano.
+- Localização em primeiro plano e avisos de viagem opcionais em segundo plano, sujeitos à autorização do sistema e controles no app.
 - Chaves, arquivos de ambiente e certificados de assinatura excluídos do Git.
 - HTTPS exigido pelo cliente fora do desenvolvimento; hospedagem pública ainda pendente.
 
@@ -215,7 +220,7 @@ Os rolês do cadastro web original são **dados de teste**. A demonstração do 
 | Conta, preferências e descoberta | Implementadas; validação no dispositivo em andamento |
 | Roteiros e controle de orçamento | Implementados; validação completa no dispositivo pendente |
 | Organizações, locais e aprovação | Implementados; homologação das telas administrativas pendente |
-| Android com mapa próprio | Em validação; geração do APK de desenvolvimento iniciada |
+| Android com mapa próprio | Testado no aparelho; novo APK de viagens disponível, homologação de background pendente |
 | Testes remotos com convidados | Planejados: API hospedada e APK com código embarcado |
 | Preparação para uso público | Pendente: recuperação de acesso, revisão operacional e homologação |
 
@@ -225,6 +230,7 @@ O [roteiro de entregas](docs/etapas.md) detalha o objetivo, a entrega e o crité
 
 | Documento | Conteúdo |
 | :--- | :--- |
+| [Trabalho T2](docs/trabalho-api-t2.md) | Matriz dos requisitos, arquitetura, CRUD e roteiro de apresentação |
 | [Funcionalidades](docs/funcionalidades.md) | Jornadas, regras e limites do produto |
 | [Etapas](docs/etapas.md) | Entregas realizadas e próximos critérios de validação |
 | [Aplicativo mobile](mobile/README.md) | Ambiente, execução, mapa e APK Android |
@@ -240,4 +246,4 @@ Projeto desenvolvido no contexto de **Análise e Desenvolvimento de Sistemas**.
 
 ### Avisos com o app fechado
 
-Fluxo Android implementado para alterações nos rolês salvos, com autorização, fila persistente e controles no perfil. **Ativação no celular pendente de Firebase/FCM e novo APK.** Consulte [configuração e testes de notificações](docs/notificacoes-push.md).
+Fluxo Android implementado para alterações nos rolês salvos, com autorização, fila persistente e controles no perfil. Firebase/FCM configurado e recebimento em segundo plano confirmado em teste anterior. Repetir a regressão após mudanças do backend; avisos de viagens têm checklist próprio. Consulte [configuração e testes de notificações](docs/notificacoes-push.md).

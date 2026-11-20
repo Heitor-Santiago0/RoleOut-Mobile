@@ -1,4 +1,4 @@
-package br.com.roleout.service;
+package br.com.roleout.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;

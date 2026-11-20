@@ -4,6 +4,8 @@
 
 ## Visão atual
 
+- [Trabalho T2: arquitetura, CRUD e apresentação](trabalho-api-t2.md).
+
 - [Funcionalidades e regras do produto](funcionalidades.md).
 - [Etapas e critérios de conclusão](etapas.md).
 - [Execução do aplicativo e Android](../mobile/README.md).

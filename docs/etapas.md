@@ -109,3 +109,10 @@ Build Android de desenvolvimento concluído: df2f4e52-a61a-404a-ab5e-38398d253ba
 Usuário adiou os demais testes no celular e autorizou seguir. Iniciada a frente social com perfil opt-in, nome público separado, apresentação, publicação/ocultação, visualização e lista paginada de pessoas. Banco V027, API autenticada e telas implementados; dados existentes preservados. 153 testes Java e 90 móveis aprovados, TypeScript/lint e teste HTTP com MySQL/Tomcat concluídos. [Fluxo e testes físicos pendentes](perfis-publicos.md).
 
 Próxima entrega prevista: publicação voluntária de roteiros com relato e privacidade, aproveitando essa identidade; depois feed/fotos/interações e Copiar rolê com revalidação. Ainda não implementados nesta entrega. Testes físicos de permissões/viagens não foram considerados concluídos.
+
+
+## Adequação ao T2 — 19/11/2026
+
+Concluída separação Controller → Service → DAO na API: consultas e mapeamento no DAO, regras/autorização/transações no Service, transporte HTTP nos Servlets. Modelos compartilhados e vocabulário de preferências em `model/`. Sem migração nova, mudança de endpoint ou remoção de dados. Parte social permanece pausada nesta etapa.
+
+[Guia do trabalho](trabalho-api-t2.md): requisitos, CRUD de roteiros, execução, apresentação e pendências da dupla. Validação: suíte Java, teste de limites entre camadas e CRUD HTTP com MySQL real, incluindo isolamento entre contas e limpeza das fixtures. Testes no celular continuam pendentes: login, Explorar, roteiro/renomeação/exclusão, revisão de horários, aprovação e notificações. As entradas anteriores são registros históricos, não o estado final de todas as funcionalidades.

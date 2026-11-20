@@ -1,4 +1,5 @@
 package br.com.roleout.service;
+import br.com.roleout.model.OpeningHours;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.*;

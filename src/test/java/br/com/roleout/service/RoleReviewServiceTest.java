@@ -1,4 +1,6 @@
 package br.com.roleout.service;
+import br.com.roleout.model.RoleCharacteristics;
+import br.com.roleout.model.OpeningHours;
 
 import br.com.roleout.api.ApiException;
 import br.com.roleout.dao.RoleDAO;

@@ -4,7 +4,7 @@ import br.com.roleout.model.Role;
 import java.math.BigDecimal;
 
 public record RoleDto(int id, String nome, String descricao, String local,
-                      String cidade, String data, String categoria, BigDecimal valor, BigDecimal latitude, BigDecimal longitude, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, java.util.List<br.com.roleout.service.OpeningHours.Rule> funcionamento, br.com.roleout.service.RoleCharacteristics caracteristicas) {
+                      String cidade, String data, String categoria, BigDecimal valor, BigDecimal latitude, BigDecimal longitude, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, java.util.List<br.com.roleout.model.OpeningHours.Rule> funcionamento, br.com.roleout.model.RoleCharacteristics caracteristicas) {
     public static RoleDto from(Role role) {
         return new RoleDto(role.getId(), role.getNome(), role.getDescricao(), role.getLocal(),
                 role.getCidade(), role.getData() == null ? null : role.getData().toString(),

@@ -1,7 +1,11 @@
 package br.com.roleout.service;
+import br.com.roleout.model.RoleCharacteristics;
+import br.com.roleout.model.OpeningHours;
 
 import br.com.roleout.dao.RoleDAO;
 import br.com.roleout.dao.SqlAccess;
+import br.com.roleout.dao.DiscoveryDAO;
+import br.com.roleout.dao.PreferencesDAO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.*;
 import java.time.*;
@@ -9,11 +13,7 @@ import java.text.Normalizer;
 import java.util.*;
 
 /** Suggestions share frequency across foreground and travel checks. No coordinates are persisted. */
-public class DiscoverySuggestions {
-    public record Settings(Boolean ativo, Boolean viagens, Integer intervaloHoras, String cidadeBase) {}
-    public record Context(Double latitude, Double longitude, String cidade, String fuso) {}
-    public record Suggestion(int roleId, String nome, String cidade, double distanciaKm, List<String> motivos, boolean outraCidade) {}
-    public record Result(Suggestion sugestao) {}
+public class DiscoverySuggestions implements br.com.roleout.model.DiscoveryData {
     private final SqlAccess sql;
     private final RoleDAO roles;
     private final Clock clock;
@@ -22,19 +22,14 @@ public class DiscoverySuggestions {
     public DiscoverySuggestions(SqlAccess sql, RoleDAO roles, Clock clock) { this.sql=sql; this.roles=roles; this.clock=clock; }
     private Settings defaults() { return new Settings(true,true,0,null); }
     private Settings read(Connection c, int account) throws SQLException {
-        try(var s=c.prepareStatement("SELECT * FROM sugestoes_config WHERE conta_id=?")) {
-            s.setInt(1,account);
-            try(var r=s.executeQuery()) { return r.next() ? new Settings(r.getBoolean("ativo"),r.getBoolean("viagens"),r.getInt("intervalo_horas"),r.getString("cidade_base")) : defaults(); }
-        }
+        var found=new DiscoveryDAO(c).settings(account);return found==null?defaults():found;
     }
     public Settings get(int account) {
         try(var c=sql.connection()) { return read(c,account); }
         catch(SQLException e) { throw new RuntimeException("Suggestion settings lookup failed.",e); }
     }
     private void lock(Connection c,int account) throws SQLException {
-        try(var s=c.prepareStatement("SELECT id FROM contas WHERE id=? FOR UPDATE")) {
-            s.setInt(1,account);try(var r=s.executeQuery()) { if(!r.next()) throw new IllegalArgumentException("Conta indisponível."); }
-        }
+        if(!new DiscoveryDAO(c).lockAccount(account))throw new IllegalArgumentException("Conta indisponível.");
     }
     public Settings save(int account,Settings value) {
         if(value==null || value.ativo()==null || value.viagens()==null || value.intervaloHoras()==null || !Set.of(0,24,72,168).contains(value.intervaloHoras())) throw new IllegalArgumentException("Configuração inválida.");
@@ -44,10 +39,7 @@ public class DiscoverySuggestions {
             c.setAutoCommit(false);
             try {
                 lock(c,account);
-                boolean exists;
-                try(var s=c.prepareStatement("SELECT 1 FROM sugestoes_config WHERE conta_id=?")) { s.setInt(1,account);try(var r=s.executeQuery()){exists=r.next();} }
-                String query=exists?"UPDATE sugestoes_config SET ativo=?,viagens=?,intervalo_horas=?,cidade_base=? WHERE conta_id=?":"INSERT INTO sugestoes_config(ativo,viagens,intervalo_horas,cidade_base,conta_id) VALUES (?,?,?,?,?)";
-                try(var s=c.prepareStatement(query)) { s.setBoolean(1,clean.ativo());s.setBoolean(2,clean.viagens());s.setInt(3,clean.intervaloHoras());s.setString(4,city);s.setInt(5,account);s.executeUpdate(); }
+                new DiscoveryDAO(c).save(account,clean);
                 c.commit(); return clean;
             } catch(SQLException|RuntimeException e) {c.rollback();throw e;}
         } catch(SQLException e) {throw new RuntimeException("Suggestion settings save failed.",e);}
@@ -66,20 +58,12 @@ public class DiscoverySuggestions {
                 var settings=read(c,account);
                 boolean away=!normalize(city).equals(normalize(settings.cidadeBase()));
                 if(!settings.ativo() || settings.cidadeBase()==null || (away&&!settings.viagens())) {c.commit();return new Result(null);}
-                try(var s=c.prepareStatement("SELECT ultimo_aviso FROM sugestoes_config WHERE conta_id=?")) {
-                    s.setInt(1,account);try(var r=s.executeQuery()) {
-                        if(r.next()) {var last=r.getTimestamp(1);if(last!=null && now.isBefore(last.toInstant().plus(Duration.ofHours(settings.intervaloHoras()==0?1:settings.intervaloHoras())))) {c.commit();return new Result(null);}}
-                    }
-                }
-                var sent=new HashSet<Integer>();
-                try(var s=c.prepareStatement("SELECT role_id FROM sugestoes_entregas WHERE conta_id=? AND enviado_em>?")) {
-                    s.setInt(1,account);s.setTimestamp(2,Timestamp.from(now.minus(Duration.ofHours(24))));
-                    try(var r=s.executeQuery()){while(r.next())sent.add(r.getInt(1));}
-                }
-                PreferencesService.Profile preferences=null;
-                try(var s=c.prepareStatement("SELECT conteudo FROM preferencias_conta WHERE conta_id=?")) {
-                    s.setInt(1,account);try(var r=s.executeQuery()){if(r.next()) preferences=JSON.readValue(r.getString(1),PreferencesService.Profile.class);}
-                }
+                var dao=new DiscoveryDAO(c);
+                var last=dao.lastNotice(account);
+                if(last!=null && now.isBefore(last.plus(Duration.ofHours(settings.intervaloHoras()==0?1:settings.intervaloHoras())))){c.commit();return new Result(null);}
+                var sent=dao.sentSince(account,now.minus(Duration.ofHours(24)));
+                String content=new PreferencesDAO(c).content(account);
+                PreferencesService.Profile preferences=content==null?null:JSON.readValue(content,PreferencesService.Profile.class);
                 if(preferences==null || !preferences.status().equals("CONCLUIDO")) {c.commit();return new Result(null);}
                 var matches=new ArrayList<Suggestion>();
                 for(var point:roles.buscarProximos(context.latitude(),context.longitude(),5)) {
@@ -90,9 +74,7 @@ public class DiscoverySuggestions {
                 }
                 matches.sort(Comparator.<Suggestion>comparingInt(v->v.motivos().size()).reversed().thenComparingDouble(Suggestion::distanciaKm).thenComparingInt(Suggestion::roleId));
                 if(matches.isEmpty()){c.commit();return new Result(null);}
-                try(var s=c.prepareStatement("UPDATE sugestoes_config SET ultimo_aviso=? WHERE conta_id=?")){s.setTimestamp(1,Timestamp.from(now));s.setInt(2,account);s.executeUpdate();}
-                try(var s=c.prepareStatement("DELETE FROM sugestoes_entregas WHERE conta_id=? AND enviado_em<=?")){s.setInt(1,account);s.setTimestamp(2,Timestamp.from(now.minus(Duration.ofHours(24))));s.executeUpdate();}
-                try(var s=c.prepareStatement("INSERT INTO sugestoes_entregas(conta_id,role_id,enviado_em) VALUES (?,?,?)")){s.setInt(1,account);s.setInt(2,matches.get(0).roleId());s.setTimestamp(3,Timestamp.from(now));s.executeUpdate();}
+                dao.recordDelivery(account,matches.get(0).roleId(),now,now.minus(Duration.ofHours(24)));
                 c.commit();return new Result(matches.get(0));
             } catch(SQLException|java.io.IOException|RuntimeException e){c.rollback();throw e;}
         } catch(SQLException|java.io.IOException e){throw new RuntimeException("Suggestion evaluation failed.",e);}

@@ -35,7 +35,7 @@ public class RoleDAO {
 
     public record Ponto(int id, String nome, String categoria, double latitude,
                         double longitude, double distanciaKm, String cidade, String data, String horario, String dataFim,
-                        String horarioFim, List<br.com.roleout.service.OpeningHours.Rule> funcionamento, br.com.roleout.service.RoleCharacteristics caracteristicas) {
+                        String horarioFim, List<br.com.roleout.model.OpeningHours.Rule> funcionamento, br.com.roleout.model.RoleCharacteristics caracteristicas) {
         public Ponto(int id, String nome, String categoria, double latitude, double longitude, double distanciaKm) {
             this(id, nome, categoria, latitude, longitude, distanciaKm, null, null, null, null, null, null, null);
         }
@@ -69,7 +69,7 @@ public class RoleDAO {
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) pontos.add(new Ponto(rs.getInt("id"), rs.getString("nome"),
                         rs.getString("categoria"), rs.getDouble("latitude"),
-                        rs.getDouble("longitude"), rs.getDouble("distancia_km"), rs.getString("cidade"), rs.getString("data"), rs.getString("horario"), rs.getString("data_fim"), rs.getString("horario_fim"), br.com.roleout.service.OpeningHours.decode(rs.getString("funcionamento")), br.com.roleout.service.RoleCharacteristics.decode(rs.getString("caracteristicas"))));
+                        rs.getDouble("longitude"), rs.getDouble("distancia_km"), rs.getString("cidade"), rs.getString("data"), rs.getString("horario"), rs.getString("data_fim"), rs.getString("horario_fim"), br.com.roleout.model.OpeningHours.decode(rs.getString("funcionamento")), br.com.roleout.model.RoleCharacteristics.decode(rs.getString("caracteristicas"))));
             }
             return pontos;
         } catch (SQLException exception) {
@@ -139,8 +139,8 @@ public class RoleDAO {
         role.setData(data == null ? null : data.toLocalDate());
         role.setHorario(rs.getString("horario"));
         role.setHorarioFim(rs.getString("horario_fim"));
-        role.setCaracteristicas(br.com.roleout.service.RoleCharacteristics.decode(rs.getString("caracteristicas")));
-        role.setFuncionamento(br.com.roleout.service.OpeningHours.decode(rs.getString("funcionamento")));
+        role.setCaracteristicas(br.com.roleout.model.RoleCharacteristics.decode(rs.getString("caracteristicas")));
+        role.setFuncionamento(br.com.roleout.model.OpeningHours.decode(rs.getString("funcionamento")));
         var endDate = rs.getDate("data_fim");
         role.setDataFim(endDate == null ? null : endDate.toLocalDate());
         role.setCancelado(rs.getBoolean("cancelado"));

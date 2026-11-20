@@ -1,4 +1,4 @@
-package br.com.roleout.service;
+package br.com.roleout.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -12,7 +12,7 @@ public record RoleCharacteristics(List<String> musica, List<String> comida, List
     }
     private static List<String> selection(String key, List<String> values) {
         if (values == null) return List.of();
-        var allowed = PreferencesService.OPTIONS.get(key);
+        var allowed = PreferenceOptions.OPTIONS.get(key);
         if (values.size() > allowed.size() || new HashSet<>(values).size() != values.size()
                 || values.stream().anyMatch(v -> v == null || !allowed.contains(v)))
             throw new IllegalArgumentException("Confira as características do rolê: selecione opções válidas, sem repetir.");

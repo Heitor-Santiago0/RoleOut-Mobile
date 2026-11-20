@@ -2,8 +2,8 @@ package br.com.roleout.service;
 
 import br.com.roleout.api.ApiException;
 import br.com.roleout.dao.SqlAccess;
+import br.com.roleout.dao.OrganizationDAO;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -13,22 +13,7 @@ import java.util.Set;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public class OrganizationService {
-    public record OrganizationInput(String nome, String tipo, String descricao,
-                                    String contatoEmail, String contatoTelefone) { }
-    public record Organization(int id, String nome, String tipo, String descricao,
-                               String contatoEmail, String contatoTelefone, String status, String papel) { }
-    public record VenueInput(String nome, String categoria, String endereco, String cidade,
-                             String uf, String cep, String descricao, String acessibilidade,
-                             BigDecimal latitude, BigDecimal longitude) {
-        public VenueInput(String nome, String categoria, String endereco, String cidade,
-                          String uf, String cep, String descricao, String acessibilidade) {
-            this(nome, categoria, endereco, cidade, uf, cep, descricao, acessibilidade, null, null);
-        }
-    }
-    public record Venue(int id, int organizacaoId, String nome, String categoria, String endereco,
-                        String cidade, String uf, String cep, String descricao, String acessibilidade, String status,
-                        BigDecimal latitude, BigDecimal longitude) { }
+public class OrganizationService implements br.com.roleout.model.OrganizationData {
     private final SqlAccess sql;
     public OrganizationService() { this(new SqlAccess()); }
     public OrganizationService(SqlAccess sql) { this.sql = sql; }
@@ -38,17 +23,8 @@ public class OrganizationService {
         try (var c = sql.connection()) {
             c.setAutoCommit(false);
             try {
-                int id;
-                try (var s = c.prepareStatement("INSERT INTO organizacoes (nome,tipo,descricao,contato_email,contato_telefone) VALUES (?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)) {
-                    bindOrganization(s, validated); s.executeUpdate();
-                    try (var keys = s.getGeneratedKeys()) {
-                        if (!keys.next()) throw new SQLException("Missing organization ID.");
-                        id = keys.getInt(1);
-                    }
-                }
-                try (var s = c.prepareStatement("INSERT INTO membros_organizacao (organizacao_id,conta_id,papel) VALUES (?,?,'RESPONSAVEL')")) {
-                    s.setInt(1, id); s.setInt(2, accountId); s.executeUpdate();
-                }
+                var dao=new OrganizationDAO(c);
+                int id=dao.insertOrganization(validated);dao.addOwner(id,accountId);
                 c.commit();
                 return new Organization(id, validated.nome(), validated.tipo(), validated.descricao(),
                         validated.contatoEmail(), validated.contatoTelefone(), "PENDENTE", "RESPONSAVEL");
@@ -57,11 +33,7 @@ public class OrganizationService {
     }
 
     public List<Organization> list(int accountId) {
-        try (var c = sql.connection(); var s = c.prepareStatement("SELECT o.*,m.papel FROM organizacoes o JOIN membros_organizacao m ON m.organizacao_id=o.id WHERE m.conta_id=? ORDER BY o.id LIMIT 100")) {
-            s.setInt(1, accountId);
-            List<Organization> items = new ArrayList<>();
-            try (var rs = s.executeQuery()) { while (rs.next()) items.add(organization(rs)); }
-            return items;
+        try (var c = sql.connection()) {return new OrganizationDAO(c).list(accountId);
         } catch (SQLException e) { throw new RuntimeException("Organization listing failed.", e); }
     }
 
@@ -78,9 +50,7 @@ public class OrganizationService {
                 Organization existing = member(c, accountId, id, true);
                 if (!existing.papel().equals("RESPONSAVEL")) throw forbidden();
                 if (!Set.of("PENDENTE", "REJEITADA").contains(existing.status())) throw conflict();
-                try (var s = c.prepareStatement("UPDATE organizacoes SET nome=?,tipo=?,descricao=?,contato_email=?,contato_telefone=?,status='PENDENTE' WHERE id=?")) {
-                    bindOrganization(s, value); s.setInt(6, id); s.executeUpdate();
-                }
+                new OrganizationDAO(c).updateOrganization(id,value);
                 c.commit();
                 return new Organization(id, value.nome(), value.tipo(), value.descricao(),
                         value.contatoEmail(), value.contatoTelefone(), "PENDENTE", existing.papel());
@@ -99,24 +69,8 @@ public class OrganizationService {
                     Venue current = venue(c, organizationId, venueId);
                     if (!Set.of("RASCUNHO", "REJEITADO").contains(current.status())) throw conflict();
                 }
-                String query = venueId == null
-                        ? "INSERT INTO locais (nome,categoria,endereco,cidade,uf,cep,descricao,acessibilidade,latitude,longitude,organizacao_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
-                        : "UPDATE locais SET nome=?,categoria=?,endereco=?,cidade=?,uf=?,cep=?,descricao=?,acessibilidade=?,latitude=?,longitude=?,status='RASCUNHO' WHERE organizacao_id=? AND id=?";
-                int id;
-                try (var s = c.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-                    s.setString(1, v.nome()); s.setString(2, v.categoria()); s.setString(3, v.endereco());
-                    s.setString(4, v.cidade()); s.setString(5, v.uf()); s.setString(6, v.cep());
-                    s.setString(7, v.descricao()); s.setString(8, v.acessibilidade());
-                    s.setBigDecimal(9, v.latitude()); s.setBigDecimal(10, v.longitude()); s.setInt(11, organizationId);
-                    if (venueId != null) s.setInt(12, venueId);
-                    if (s.executeUpdate() != 1) throw notFound();
-                    if (venueId == null) {
-                        try (var keys = s.getGeneratedKeys()) {
-                            if (!keys.next()) throw new SQLException("Missing venue ID.");
-                            id = keys.getInt(1);
-                        }
-                    } else { id = venueId; }
-                }
+                int id=new OrganizationDAO(c).saveVenue(organizationId,venueId,v);
+                if(id==0)throw notFound();
                 c.commit();
                 return new Venue(id, organizationId, v.nome(), v.categoria(), v.endereco(), v.cidade(),
                         v.uf(), v.cep(), v.descricao(), v.acessibilidade(), "RASCUNHO", v.latitude(), v.longitude());
@@ -127,12 +81,7 @@ public class OrganizationService {
     public List<Venue> listVenues(int accountId, int organizationId) {
         try (var c = sql.connection()) {
             member(c, accountId, organizationId, false);
-            try (var s = c.prepareStatement("SELECT * FROM locais WHERE organizacao_id=? ORDER BY id LIMIT 100")) {
-                s.setInt(1, organizationId);
-                List<Venue> items = new ArrayList<>();
-                try (var rs = s.executeQuery()) { while (rs.next()) items.add(venue(rs)); }
-                return items;
-            }
+            return new OrganizationDAO(c).venues(organizationId);
         } catch (SQLException e) { throw new RuntimeException("Venue listing failed.", e); }
     }
 
@@ -151,55 +100,22 @@ public class OrganizationService {
                 if (organization.status().equals("SUSPENSA")) throw conflict();
                 var current = venue(c, org, id);
                 if (!Set.of("RASCUNHO", "REJEITADO").contains(current.status())) throw conflict();
-                try (var s = c.prepareStatement("UPDATE locais SET status='PENDENTE' WHERE id=? AND organizacao_id=?")) {
-                    s.setInt(1, id); s.setInt(2, org); s.executeUpdate();
-                }
+                new OrganizationDAO(c).submitVenue(org,id);
                 var saved = venue(c, org, id); c.commit(); return saved;
             } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
         } catch (SQLException e) { throw new RuntimeException("Venue submission failed.", e); }
     }
-    public record Review(int id, Integer localId, String decisao, String justificativa, String criadoEm) {}
     public List<Review> reviews(int account, int org) {
         try (var c = sql.connection()) {
             member(c, account, org, false);
-            try (var s = c.prepareStatement("SELECT * FROM revisoes_cadastro WHERE organizacao_id=? ORDER BY id DESC LIMIT 100")) {
-                s.setInt(1, org); var items = new ArrayList<Review>();
-                try (var rs = s.executeQuery()) {
-                    while (rs.next()) { int local = rs.getInt("local_id"); Integer localId = rs.wasNull() ? null : local;
-                        items.add(new Review(rs.getInt("id"), localId, rs.getString("decisao"), rs.getString("justificativa"), rs.getTimestamp("criado_em").toInstant().toString())); }
-                }
-                return items;
-            }
+            return new OrganizationDAO(c).reviews(org);
         } catch (SQLException e) { throw new RuntimeException("Review history failed.", e); }
     }
-    private Organization member(Connection c, int account, int organization, boolean lock) throws SQLException {
-        try (var s = c.prepareStatement("SELECT o.*,m.papel FROM organizacoes o JOIN membros_organizacao m ON m.organizacao_id=o.id WHERE o.id=? AND m.conta_id=?" + (lock ? " FOR UPDATE" : ""))) {
-            s.setInt(1, organization); s.setInt(2, account);
-            try (var rs = s.executeQuery()) {
-                if (!rs.next()) throw notFound();
-                return organization(rs);
-            }
-        }
+    private Organization member(Connection c,int account,int org,boolean lock)throws SQLException {
+        var found=new OrganizationDAO(c).member(account,org,lock);if(found==null)throw notFound();return found;
     }
-    private Venue venue(Connection c, int org, int id) throws SQLException {
-        try (var s = c.prepareStatement("SELECT * FROM locais WHERE id=? AND organizacao_id=?")) {
-            s.setInt(1, id); s.setInt(2, org);
-            try (var rs = s.executeQuery()) {
-                if (!rs.next()) throw notFound();
-                return venue(rs);
-            }
-        }
-    }
-    static Organization organization(ResultSet rs) throws SQLException {
-        return new Organization(rs.getInt("id"), rs.getString("nome"), rs.getString("tipo"),
-                rs.getString("descricao"), rs.getString("contato_email"), rs.getString("contato_telefone"),
-                rs.getString("status"), rs.getString("papel"));
-    }
-    static Venue venue(ResultSet rs) throws SQLException {
-        return new Venue(rs.getInt("id"), rs.getInt("organizacao_id"), rs.getString("nome"),
-                rs.getString("categoria"), rs.getString("endereco"), rs.getString("cidade"), rs.getString("uf"),
-                rs.getString("cep"), rs.getString("descricao"), rs.getString("acessibilidade"), rs.getString("status"),
-                rs.getBigDecimal("latitude"), rs.getBigDecimal("longitude"));
+    private Venue venue(Connection c,int org,int id)throws SQLException {
+        var found=new OrganizationDAO(c).venue(org,id,false);if(found==null)throw notFound();return found;
     }
     private OrganizationInput validate(OrganizationInput v) {
         String type = Inputs.required(v.tipo(), 30).toUpperCase(Locale.ROOT);
@@ -227,10 +143,6 @@ public class OrganizationService {
         if (value.abs().compareTo(BigDecimal.valueOf(limit)) > 0) throw new IllegalArgumentException("Coordenada fora do intervalo permitido.");
         try { return value.setScale(6, RoundingMode.UNNECESSARY); }
         catch (ArithmeticException e) { throw new IllegalArgumentException("Use até seis casas decimais nas coordenadas."); }
-    }
-    private void bindOrganization(java.sql.PreparedStatement s, OrganizationInput v) throws SQLException {
-        s.setString(1, v.nome()); s.setString(2, v.tipo()); s.setString(3, v.descricao());
-        s.setString(4, v.contatoEmail()); s.setString(5, v.contatoTelefone());
     }
     private ApiException notFound() { return new ApiException(404, "NAO_ENCONTRADO", "Cadastro não encontrado."); }
     private ApiException forbidden() { return new ApiException(403, "SEM_PERMISSAO", "Operação não permitida para este perfil."); }

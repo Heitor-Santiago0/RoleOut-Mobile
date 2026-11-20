@@ -1,7 +1,10 @@
 package br.com.roleout.service;
+import br.com.roleout.model.RoleCharacteristics;
+import br.com.roleout.model.OpeningHours;
 
 import br.com.roleout.api.ApiException;
 import br.com.roleout.dao.SqlAccess;
+import br.com.roleout.dao.RoleDraftDAO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.*;
@@ -11,32 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Private drafts remain separate from legacy/public roles until reviewed. */
-public class RoleDraftService {
-    public record Input(String nome, String descricao, String categoria, String data,
-                        BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, List<OpeningHours.Rule> funcionamento, RoleCharacteristics caracteristicas) {
-        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, List<OpeningHours.Rule> funcionamento) {
-            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, cancelado, motivoCancelamento, dataFim, funcionamento, null);
-        }
-        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim) {
-            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, cancelado, motivoCancelamento, dataFim, null);
-        }
-        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim, boolean cancelado, String motivoCancelamento) {
-            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, cancelado, motivoCancelamento, null);
-        }
-        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario, String horarioFim) {
-            this(nome, descricao, categoria, data, valor, versao, horario, horarioFim, false, null);
-        }
-        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao, String horario) {
-            this(nome, descricao, categoria, data, valor, versao, horario, null);
-        }
-        public Input(String nome, String descricao, String categoria, String data, BigDecimal valor, Integer versao) {
-            this(nome, descricao, categoria, data, valor, versao, null, null);
-        }
-    }
-    public record Draft(int id, int localId, String nome, String descricao, String categoria,
-                        String data, BigDecimal valor, int versao, String status, Integer roleId, String horario, String horarioFim, boolean cancelado, String motivoCancelamento, String dataFim, List<OpeningHours.Rule> funcionamento, RoleCharacteristics caracteristicas) {}
-    public record Submission(Integer versao) {}
-    public record Review(int id, int versao, String decisao, String justificativa, String criadoEm, String conteudo) {}
+public class RoleDraftService implements br.com.roleout.model.RoleDraftData {
     private final SqlAccess sql;
     public RoleDraftService() { this(new SqlAccess()); }
     public RoleDraftService(SqlAccess sql) { this.sql = sql; }
@@ -45,12 +23,7 @@ public class RoleDraftService {
         if (offset < 0 || offset > 100000) throw new IllegalArgumentException("Página inválida.");
         try (var c = sql.connection()) {
             authorize(c, account, venue, false);
-            try (var s = c.prepareStatement("SELECT * FROM rascunhos_roles WHERE local_id=? ORDER BY id LIMIT 20 OFFSET ?")) {
-                s.setInt(1, venue); s.setInt(2, offset);
-                var result = new ArrayList<Draft>();
-                try (var rs = s.executeQuery()) { while (rs.next()) result.add(map(rs)); }
-                return result;
-            }
+            return new RoleDraftDAO(c).list(venue,offset);
         } catch (SQLException e) { throw new RuntimeException("Draft listing failed.", e); }
     }
 
@@ -69,24 +42,8 @@ public class RoleDraftService {
                     if (current.versao() != v.versao()) throw conflict("O rascunho mudou. Recarregue antes de salvar.");
                 }
                 if (id == null && v.cancelado()) throw conflict("Somente eventos publicados podem ser cancelados.");
-                String query = id == null
-                        ? "INSERT INTO rascunhos_roles(nome,descricao,categoria,data,valor,local_id,horario,horario_fim,data_fim,funcionamento,caracteristicas) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
-                        : "UPDATE rascunhos_roles SET nome=?,descricao=?,categoria=?,data=?,valor=?,versao=versao+1,status='RASCUNHO',horario=?,horario_fim=?,cancelado=?,motivo_cancelamento=?,data_fim=?,funcionamento=?,caracteristicas=? WHERE local_id=? AND id=? AND versao=?";
-                try (var s = c.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-                    s.setString(1, v.nome()); s.setString(2, v.descricao()); s.setString(3, v.categoria());
-                    if (v.data() == null) s.setNull(4, Types.DATE); else s.setDate(4, Date.valueOf(v.data()));
-                    s.setBigDecimal(5, v.valor());
-                    if (id == null) { s.setInt(6, venue); s.setString(7, v.horario()); s.setString(8, v.horarioFim()); s.setString(9, v.dataFim()); s.setString(10, OpeningHours.encode(v.funcionamento())); s.setString(11, RoleCharacteristics.encode(characteristics)); }
-                    else { s.setString(6, v.horario()); s.setString(7, v.horarioFim()); s.setBoolean(8, v.cancelado()); s.setString(9, v.motivoCancelamento()); s.setString(10, v.dataFim()); s.setString(11, OpeningHours.encode(v.funcionamento())); s.setString(12, RoleCharacteristics.encode(characteristics)); s.setInt(13, venue); }
-                    if (id != null) { s.setInt(14, id); s.setInt(15, v.versao()); }
-                    if (s.executeUpdate() != 1) throw conflict("O rascunho mudou. Recarregue antes de salvar.");
-                    if (id == null) {
-                        try (var keys = s.getGeneratedKeys()) {
-                            if (!keys.next()) throw new SQLException("Missing draft ID.");
-                            id = keys.getInt(1);
-                        }
-                    }
-                }
+                id=new RoleDraftDAO(c).save(venue,id,v,characteristics);
+                if(id==0)throw conflict("O rascunho mudou. Recarregue antes de salvar.");
                 var saved = find(c, venue, id, true); c.commit(); return saved;
             } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
         } catch (SQLException e) { throw new RuntimeException("Draft save failed.", e); }
@@ -100,9 +57,7 @@ public class RoleDraftService {
                 authorize(c, account, venue, true);
                 var current = find(c, venue, id, true); editable(current);
                 if (current.versao() != input.versao()) throw conflict("O rascunho mudou. Recarregue antes de enviar.");
-                try (var s = c.prepareStatement("UPDATE rascunhos_roles SET status='PENDENTE',versao=versao+1 WHERE id=?")) {
-                    s.setInt(1, id); s.executeUpdate();
-                }
+                new RoleDraftDAO(c).submit(id);
                 var saved = find(c, venue, id, true); c.commit(); return saved;
             } catch (SQLException | RuntimeException e) { c.rollback(); throw e; }
         } catch (SQLException e) { throw new RuntimeException("Draft submission failed.", e); }
@@ -110,11 +65,7 @@ public class RoleDraftService {
     public List<Review> reviews(int account, int venue, int id) {
         try (var c = sql.connection()) {
             authorize(c, account, venue, false); find(c, venue, id, false);
-            try (var s = c.prepareStatement("SELECT * FROM revisoes_roles WHERE rascunho_id=? ORDER BY id DESC LIMIT 100")) {
-                s.setInt(1, id); var result = new ArrayList<Review>();
-                try (var rs = s.executeQuery()) { while (rs.next()) result.add(new Review(rs.getInt("id"), rs.getInt("versao"), rs.getString("decisao"), rs.getString("justificativa"), rs.getTimestamp("criado_em").toInstant().toString(), rs.getString("conteudo"))); }
-                return result;
-            }
+            return new RoleDraftDAO(c).reviews(id);
         } catch (SQLException e) { throw new RuntimeException("Draft review history failed.", e); }
     }
     private void editable(Draft draft) {
@@ -122,36 +73,17 @@ public class RoleDraftService {
             throw conflict("O rolê não pode ser alterado enquanto aguarda análise ou após publicação.");
     }
     private void authorize(Connection c, int account, int venue, boolean write) throws SQLException {
-        // Lock in the same organization -> venue order used by administrative review.
-        try (var s = c.prepareStatement("SELECT o.status FROM organizacoes o JOIN membros_organizacao m ON m.organizacao_id=o.id WHERE m.conta_id=? AND o.id=(SELECT organizacao_id FROM locais WHERE id=?)" + (write ? " FOR UPDATE" : ""))) {
-            s.setInt(1, account); s.setInt(2, venue);
-            try (var rs = s.executeQuery()) {
-                if (!rs.next()) throw missing();
-                if (write && !rs.getString(1).equals("APROVADA")) throw conflict("A organização precisa estar aprovada.");
-            }
-        }
-        if (write) {
-            try (var s = c.prepareStatement("SELECT status FROM locais WHERE id=? FOR UPDATE")) {
-                s.setInt(1, venue);
-                try (var rs = s.executeQuery()) {
-                    if (!rs.next()) throw missing();
-                    if (!rs.getString(1).equals("PUBLICADO")) throw conflict("O local precisa estar aprovado.");
-                }
-            }
+        // Keep the same organization -> venue lock order as administrative review.
+        var dao=new RoleDraftDAO(c);String org=dao.organizationStatus(account,venue,write);
+        if(org==null)throw missing();
+        if(write){
+            if(!org.equals("APROVADA"))throw conflict("A organização precisa estar aprovada.");
+            String local=dao.lockVenue(venue);if(local==null)throw missing();
+            if(!local.equals("PUBLICADO"))throw conflict("O local precisa estar aprovado.");
         }
     }
-    private Draft find(Connection c, int venue, int id, boolean lock) throws SQLException {
-        try (var s = c.prepareStatement("SELECT * FROM rascunhos_roles WHERE id=? AND local_id=?" + (lock ? " FOR UPDATE" : ""))) {
-            s.setInt(1, id); s.setInt(2, venue);
-            try (var rs = s.executeQuery()) { if (!rs.next()) throw missing(); return map(rs); }
-        }
-    }
-    static Draft map(ResultSet rs) throws SQLException {
-        var date = rs.getDate("data");
-        int role = rs.getInt("role_id"); Integer roleId = rs.wasNull() ? null : role;
-        return new Draft(rs.getInt("id"), rs.getInt("local_id"), rs.getString("nome"),
-                rs.getString("descricao"), rs.getString("categoria"), date == null ? null : date.toLocalDate().toString(),
-                rs.getBigDecimal("valor"), rs.getInt("versao"), rs.getString("status"), roleId, rs.getString("horario"), rs.getString("horario_fim"), rs.getBoolean("cancelado"), rs.getString("motivo_cancelamento"), rs.getString("data_fim"), OpeningHours.decode(rs.getString("funcionamento")), RoleCharacteristics.decode(rs.getString("caracteristicas")));
+    private Draft find(Connection c,int venue,int id,boolean lock)throws SQLException {
+        var found=new RoleDraftDAO(c).find(venue,id,lock);if(found==null)throw missing();return found;
     }
     private Input validate(Input v, boolean edit) {
         if (v == null || v.valor() == null || v.valor().signum() < 0 || v.valor().compareTo(new BigDecimal("99999999.99")) > 0)
