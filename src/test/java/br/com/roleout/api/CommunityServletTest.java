@@ -6,6 +6,14 @@ import java.io.*;
 import static org.mockito.Mockito.*;
 
 class CommunityServletTest {
+    @Test void coverUsesAuthenticatedAccountAndDisablesCaching()throws Exception {
+        var req=mock(HttpServletRequest.class);var res=mock(HttpServletResponse.class);var auth=mock(AuthService.class);
+        when(res.getWriter()).thenReturn(new PrintWriter(new StringWriter()));when(req.getHeader("Authorization")).thenReturn("Bearer token");when(auth.authenticate("token")).thenReturn(new AuthService.Account(2,"A","a@b.com",false,false));
+        String id="00000000-0000-4000-8000-000000000001";
+        when(req.getPathInfo()).thenReturn("/capa/"+id);when(req.getMethod()).thenReturn("GET");
+        var service=mock(CommunityService.class);new CommunityServlet(auth,service,mock(ItineraryService.class)).service(req,res);
+        verify(service).cover(2,id);verify(res).setStatus(200);verify(res).setHeader("Cache-Control","no-store");
+    }
     @Test void anonymousCannotReadFeedOrModifyAnything()throws Exception {
         var req=mock(HttpServletRequest.class);var res=mock(HttpServletResponse.class);when(res.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
         var service=mock(CommunityService.class);var routes=mock(ItineraryService.class);

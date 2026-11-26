@@ -17,6 +17,7 @@ public final class CommunityServlet extends JsonServlet {
         if(path==null)throw missing();
         String[] p=path.split("/");
         if(path.equals("/feed")&&method.equals("GET"))return new Reply(200,community.feed(account,"true".equals(req.getParameter("seguindo")),after));
+        if(path.matches("/capa/[0-9a-f-]{36}")&&method.equals("GET"))return new Reply(200,community.cover(account,p[2]));
         if(path.matches("/seguir/[0-9a-f-]{36}")){
             switch(method){
                 case "GET":return new Reply(200,Map.of("seguindo",community.follows(account,p[2])));

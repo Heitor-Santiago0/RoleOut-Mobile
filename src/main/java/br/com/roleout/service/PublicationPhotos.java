@@ -17,6 +17,13 @@ public final class PublicationPhotos {
     private PublicationPhotos() {}
 
     public static Photo sanitize(Photo photo) {
+        return resize(photo,1280,MAX_BYTES);
+    }
+    /** A bounded feed preview; the stored publication photo is never modified. */
+    public static Photo thumbnail(Photo photo) {
+        return resize(photo,480,64*1024);
+    }
+    private static Photo resize(Photo photo,int maxEdge,int maxBytes) {
         if (photo == null || photo.base64() == null || photo.base64().length() > 2796204)
             throw new IllegalArgumentException("Foto muito grande: use até 2 MB.");
         String caption = PublicationService.text(photo.legenda(), 200, false);
@@ -40,7 +47,7 @@ public final class PublicationPhotos {
                 int sample = Math.max(1, Math.max(width, height) / 1600);
                 params.setSourceSubsampling(sample, sample, 0, 0);
                 var source = reader.read(0, params);
-                double scale = Math.min(1d, 1280d / Math.max(source.getWidth(), source.getHeight()));
+                double scale = Math.min(1d, (double)maxEdge / Math.max(source.getWidth(), source.getHeight()));
                 var output = new BufferedImage(Math.max(1,(int)(source.getWidth()*scale)), Math.max(1,(int)(source.getHeight()*scale)), BufferedImage.TYPE_INT_RGB);
                 var graphics = output.createGraphics();
                 try {
@@ -49,9 +56,22 @@ public final class PublicationPhotos {
                     graphics.drawImage(source,0,0,output.getWidth(),output.getHeight(),null);
                 } finally { graphics.dispose(); source.flush(); }
                 var buffer = new ByteArrayOutputStream();
-                if (!ImageIO.write(output,"jpeg",buffer)) throw new IllegalStateException("JPEG encoder unavailable");
+                for(float quality: maxEdge==480?new float[]{0.55f,0.35f,0.15f}:new float[]{0.75f}){
+                    buffer.reset();
+                    var writers=ImageIO.getImageWritersByFormatName("jpeg");
+                    if(!writers.hasNext())throw new IllegalStateException("JPEG encoder unavailable");
+                    var writer=writers.next();
+                    try(var stream=new javax.imageio.stream.MemoryCacheImageOutputStream(buffer)){
+                        writer.setOutput(stream);
+                        var encoding=writer.getDefaultWriteParam();
+                        encoding.setCompressionMode(javax.imageio.ImageWriteParam.MODE_EXPLICIT);
+                        encoding.setCompressionQuality(quality);
+                        writer.write(null,new javax.imageio.IIOImage(output,null,null),encoding);
+                    }finally{writer.dispose();}
+                    if(buffer.size()<=maxBytes)break;
+                }
                 output.flush();
-                if (buffer.size()>MAX_BYTES) throw new IllegalArgumentException("Reduza a foto.");
+                if (buffer.size()>maxBytes) throw new IllegalArgumentException("Reduza a foto.");
                 return new Photo(Base64.getEncoder().encodeToString(buffer.toByteArray()),caption);
             } finally { reader.dispose(); }
         } catch (IOException e) { throw new IllegalArgumentException("Não foi possível ler a foto."); }

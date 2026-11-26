@@ -35,7 +35,11 @@ Locais suspensos e organizações não aprovadas não são retornados. Rascunhos
 - Migração e seed local: 32 contas e 12 roteiros mantidos; 22 para 25 rolês, sem duplicação ao reaplicar seed.
 - Verificação de tipos e lint aprovados; 96 testes mobile aprovados. Teste HTTP local validou foto, interesses privados/públicos, senha curta, seguidores e isolamento entre contas.
 
-## Validar no celular com o novo APK
+## Validação no celular da atualização
+
+Em 26/11/2026, após instalar a atualização e receber o roteiro de testes, o usuário informou: “Testei no celular e está tudo funcionando”. Registramos a confirmação geral desta entrega. Isso não comprova individualmente os testes antigos de viagem, moderação ou notificações que não foram relatados separadamente.
+
+Roteiro fornecido para esta entrega:
 
 1. Criar conta com senha de seis caracteres; senha com cinco deve ser recusada.
 2. Abrir Feed, alternar Todos/Seguindo, abrir autor e seguir/deixar de seguir; conferir em outra conta.

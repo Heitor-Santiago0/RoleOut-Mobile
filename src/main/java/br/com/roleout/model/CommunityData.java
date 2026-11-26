@@ -4,7 +4,7 @@ public interface CommunityData {
     record TextInput(String texto,Integer nota) {}
     record Entry(long id,SocialProfileData.Public autor,String texto,Integer nota,boolean meu) {}
     record Entries(List<Entry> itens,Long proximo,int total,Double media) {}
-    record FeedItem(String id,String titulo,String cidade,int paradas,SocialProfileData.Public autor) {}
+    record FeedItem(String id,String titulo,String cidade,int paradas,SocialProfileData.Public autor,String resumo,int fotos) {}
     record Feed(List<FeedItem> itens,Long proximo) {}
     record ReportInput(String tipo,String alvo,String motivo) {}
     record Report(long id,String tipo,String alvo,String motivo,String conteudo,String estado) {}

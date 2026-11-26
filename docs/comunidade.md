@@ -39,6 +39,7 @@ Base `/api/v1`; todas as rotas exigem sessão Bearer e usam respostas `Cache-Con
 | Método e caminho | Entrada / resultado |
 | --- | --- |
 | GET `/comunidade/feed?seguindo=false&apos=123` | `itens`, `proximo`; omitir `apos` na primeira página |
+| GET `/comunidade/capa/{publicacaoUUID}` | Foto de capa reduzida, `{base64,legenda}`; autenticação e privacidade revalidadas; [contrato e limites](feed-visual.md) |
 | GET `/comunidade/seguir/{perfilUUID}` | `{seguindo: boolean}` |
 | PUT / DELETE `/comunidade/seguir/{perfilUUID}` | Acompanhar / parar; 204 |
 | GET `/comunidade/textos/{tipo}/{alvo}?apos=0` | Tipos COMENTARIO/publicação UUID e AVALIACAO/rolê ID; `itens`, `proximo`, `total`, `media` |

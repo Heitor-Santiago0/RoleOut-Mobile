@@ -64,6 +64,51 @@ class CommunityServiceTest {
         profiles.save(1,new SocialProfileService.Input("Autor público","",false,1));assertTrue(community.feed(2,false,null).itens().isEmpty());
         community.follow(2,author,false);assertFalse(community.follows(2,author));
     }
+    @Test void coverIsSmallAndDoesNotChangeOriginalPhoto()throws Exception {
+        var image=new java.awt.image.BufferedImage(1200,800,java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var random=new Random(42);
+        for(int y=0;y<800;y++)for(int x=0;x<1200;x++)image.setRGB(x,y,random.nextInt());
+        var bytes=new ByteArrayOutputStream();javax.imageio.ImageIO.write(image,"jpeg",bytes);
+        var photo=new br.com.roleout.model.PublicationData.Photo(Base64.getEncoder().encodeToString(bytes.toByteArray()),"Museu e jardim");
+        var saved=publications.save(1,route,new PublicationService.Input(post,"Passeio","Um relato longo. ".repeat(30),true,1,List.of(photo,photo)));
+        var item=community.feed(2,false,null).itens().get(0);
+        assertEquals(2,item.fotos());assertEquals(180,item.resumo().length());
+        var cover=community.cover(2,post);assertEquals("Museu e jardim",cover.legenda());
+        byte[] small=Base64.getDecoder().decode(cover.base64());assertTrue(small.length<=65536);
+        var decoded=javax.imageio.ImageIO.read(new ByteArrayInputStream(small));
+        assertEquals(480,decoded.getWidth());assertEquals(320,decoded.getHeight());
+        assertEquals(saved.fotos(),publications.own(1,route).fotos());
+    }
+    @Test void coverChecksProfilePublicationModerationAndDeletion()throws Exception {
+        assertEquals(404,assertThrows(ApiException.class,()->community.cover(2,post)).status());
+        var image=new java.awt.image.BufferedImage(16,16,java.awt.image.BufferedImage.TYPE_INT_RGB);
+        var bytes=new ByteArrayOutputStream();javax.imageio.ImageIO.write(image,"jpeg",bytes);
+        var photo=new br.com.roleout.model.PublicationData.Photo(Base64.getEncoder().encodeToString(bytes.toByteArray()),"");
+        publications.save(1,route,new PublicationService.Input(post,"Passeio","",true,1,List.of(photo)));
+        assertNotNull(community.cover(2,post));
+        execute("UPDATE perfis_sociais SET publico=FALSE WHERE conta_id=1");
+        assertEquals(404,assertThrows(ApiException.class,()->community.cover(2,post)).status());
+        execute("UPDATE perfis_sociais SET publico=TRUE WHERE conta_id=1");
+        execute("UPDATE publicacoes_roteiros SET publico=FALSE WHERE roteiro_id="+route);
+        assertEquals(404,assertThrows(ApiException.class,()->community.cover(2,post)).status());
+        execute("UPDATE publicacoes_roteiros SET publico=TRUE WHERE roteiro_id="+route);
+        execute("INSERT INTO comunidade_bloqueios(tipo,alvo) VALUES ('PUBLICACAO','"+post+"')");
+        assertEquals(404,assertThrows(ApiException.class,()->community.cover(2,post)).status());
+        execute("DELETE FROM comunidade_bloqueios");routes.delete(1,route);
+        assertEquals(404,assertThrows(ApiException.class,()->community.cover(2,post)).status());
+        assertThrows(IllegalArgumentException.class,()->community.cover(2,"invalid"));
+    }
+    @Test void feedPaginationRemainsUniqueAcrossAuthors()throws Exception {
+        profiles.save(2,new SocialProfileService.Input("Segundo autor","",true,0));
+        for(int i=0;i<21;i++){
+            int account=i%2+1;
+            int next=routes.create(account,plan("2027-01-01",5000)).roteiro().id();
+            publications.save(account,next,new PublicationService.Input(null,"Passeio "+i,"",true,0,List.of()));
+        }
+        var first=community.feed(2,false,null);assertEquals(20,first.itens().size());assertNotNull(first.proximo());
+        var second=community.feed(2,false,first.proximo());assertEquals(2,second.itens().size());assertNull(second.proximo());
+        var ids=new HashSet<String>();first.itens().forEach(item->assertTrue(ids.add(item.id())));second.itens().forEach(item->assertTrue(ids.add(item.id())));
+    }
     @Test void commentsAreOwnedEditableAndPrivateProfilesDisappear(){
         assertEquals(409,assertThrows(ApiException.class,()->community.text(2,"COMENTARIO",post,new TextInput("Legal",null))).status());
         profiles.save(2,new SocialProfileService.Input("Visitante","",true,0));

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { request, ApiError } from './api';
 import { useAuth } from './AuthContext';
@@ -8,11 +8,12 @@ import { Button, Field, Message } from './ui';
 import { styles as s } from './theme';
 import { FormKeyboardView } from './FormKeyboardView';
 import { useFormKeyboard } from './useFormKeyboard';
+import { FeedCover } from './FeedCover';
 
 type Author = { id: string; nome: string };
 type Entry = { id: number; autor: Author; texto: string; nota: number | null; meu: boolean };
 type Entries = { itens: Entry[]; proximo: number | null; total: number; media: number | null };
-type Feed = { itens: { id: string; titulo: string; cidade: string; paradas: number; autor: Author }[]; proximo: number | null };
+type Feed = { itens: { id: string; titulo: string; cidade: string; paradas: number; autor: Author; resumo?: string; fotos?: number }[]; proximo: number | null };
 
 // Serialize taps and invalidate responses when the owning resource loses focus.
 function useAction(token: string, generation: React.RefObject<number>) {
@@ -39,19 +40,28 @@ export function CommunityFeed({ token }: { token: string }) {
   const [following, setFollowing] = useState(false), [pages, setPages] = useState<number[]>([0]);
   const after = pages[pages.length - 1];
   const remote = useSocialResource<Feed>(`/comunidade/feed?seguindo=${following}${after ? `&apos=${after}` : ''}`, token);
-  return <ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={remote.loading} onRefresh={remote.reload} tintColor="#4386FF" />}>
+  return <FlatList key={`${following}-${after}`} data={remote.data?.itens ?? []} keyExtractor={item => item.id} contentContainerStyle={s.content} initialNumToRender={2} maxToRenderPerBatch={2} windowSize={3}
+    refreshControl={<RefreshControl refreshing={remote.loading} onRefresh={() => { if (after) setPages([0]); else remote.reload(); }} tintColor="#4386FF" />}
+    ListHeaderComponent={<View style={{ gap: 16 }}>
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={s.title}>Feed</Text><Pressable accessibilityRole="button" onPress={() => router.push('/people')} style={{ padding: 12 }}><Text style={s.label}>Pessoas</Text></Pressable></View>
     <View style={{ flexDirection: 'row', gap: 8 }}><Button title="Todos" secondary={following} onPress={() => { setFollowing(false); setPages([0]); }} /><Button title="Seguindo" secondary={!following} onPress={() => { setFollowing(true); setPages([0]); }} /></View>
     <Message text={remote.error} />{remote.loading && <Text style={s.small}>Carregando passeios…</Text>}
-    {remote.data?.itens.map(item => <View key={item.id} style={[s.secondary, { padding: 18, borderRadius: 18, gap: 10 }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${item.autor.nome}`} onPress={() => router.push({ pathname: '/people/[id]', params: { id: item.autor.id } })}><Text style={s.label}>{item.autor.nome} ↗</Text></Pressable><Text style={s.cardTitle}>{item.titulo}</Text><Text style={s.small}>{item.cidade} · {item.paradas} paradas</Text>
-      <Button title="Conhecer passeio" secondary onPress={() => router.push({ pathname: '/publications/[id]', params: { id: item.id } })} />
-    </View>)}
-    {remote.data?.itens.length === 0 && <Text style={s.text}>{following ? 'Ainda não há passeios públicos das pessoas que você acompanha.' : 'Ainda não há passeios publicados. Compartilhe um em Meus rolês.'}</Text>}
+    </View>}
+    renderItem={({ item }) => <View style={[s.secondary, { borderRadius: 18, overflow: 'hidden' }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${item.autor.nome}`} onPress={() => router.push({ pathname: '/people/[id]', params: { id: item.autor.id } })} style={{ padding: 18 }}><Text style={s.label}>{item.autor.nome} ↗</Text></Pressable>
+      {!!item.fotos && <FeedCover token={token} id={item.id} title={item.titulo} open={() => router.push({ pathname: '/publications/[id]', params: { id: item.id } })} />}
+      <View style={{ padding: 18, gap: 10 }}><Text style={s.cardTitle}>{item.titulo}</Text><Text style={s.small}>{item.cidade} · {item.paradas} {item.paradas === 1 ? 'parada' : 'paradas'}{item.fotos ? ` · ${item.fotos} ${item.fotos === 1 ? 'foto' : 'fotos'}` : ''}</Text>
+        {!!item.resumo && <Text style={s.text} numberOfLines={2}>{item.resumo}</Text>}
+        <Button title="Conhecer passeio" secondary onPress={() => router.push({ pathname: '/publications/[id]', params: { id: item.id } })} />
+      </View>
+    </View>}
+    ListEmptyComponent={!remote.loading && !remote.error ? <Text style={s.text}>{following ? 'Ainda não há passeios públicos das pessoas que você acompanha.' : 'Ainda não há passeios publicados. Compartilhe um em Meus rolês.'}</Text> : null}
+    ListFooterComponent={<View style={{ gap: 12 }}>
     {!!remote.data?.proximo && <Button title="Mais passeios" secondary onPress={() => setPages([...pages, remote.data!.proximo!])} />}
     {pages.length > 1 && <Button title="Página anterior" secondary onPress={() => setPages(pages.slice(0, -1))} />}
 
-  </ScrollView>;
+    {!!remote.error && <Button title="Tentar novamente" secondary onPress={remote.reload} />}
+    </View>} />;
 }
 export function TextsScreen({ token, type, target }: { token: string; type: 'COMENTARIO' | 'AVALIACAO'; target: string }) {
   const [pages, setPages] = useState<number[]>([0]), [text, setText] = useState(''), [score, setScore] = useState('5'), [editing, setEditing] = useState(false);

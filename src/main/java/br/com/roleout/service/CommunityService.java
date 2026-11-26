@@ -33,6 +33,12 @@ public final class CommunityService implements CommunityData {
         }else throw new IllegalArgumentException("Tipo inválido.");
     }
     public Feed feed(int account,boolean following,Long after){return transaction(account,c->new CommunityDAO(c).feed(account,following,after==null?Long.MAX_VALUE:cursor(after)));}
+    public br.com.roleout.model.PublicationData.Photo cover(int account,String publication){
+        SocialProfileService.validId(publication);
+        var photo=transaction(account,c->new CommunityDAO(c).cover(publication));
+        if(photo==null)throw missing();
+        return PublicationPhotos.thumbnail(photo);
+    }
     public boolean follows(int account,String profile){SocialProfileService.validId(profile);return transaction(account,c->new CommunityDAO(c).follows(account,profile));}
     public void follow(int account,String profile,boolean value){
         SocialProfileService.validId(profile);

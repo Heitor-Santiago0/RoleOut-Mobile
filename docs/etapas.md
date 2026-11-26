@@ -130,3 +130,9 @@ Próximas frentes: feed e interações, controles de denúncia/moderação, Copi
 Implementados feed público/seguindo, acompanhamento privado de autores, comentários editáveis por autoria, avaliações de visitas autodeclaradas concluídas, denúncias e moderação administrativa. Copiar rolê cria um novo roteiro privado na conta do usuário, personalizável, com revalidação de datas/horários/preços e créditos da origem; não altera o roteiro do autor. V029 adiciona tabelas sem excluir registros. Ver [comunidade](comunidade.md).
 
 PDF T2 original revisado: Java, MVC/Controller-Service-DAO, MySQL, CRUD, documentação, GitHub e apresentação. [Checklist consolidado](entrega-final-t2.md) reúne a validação física pendente e os passos de entrega. Hospedagem e produção pública permanecem fora desta entrega local.
+
+## Feed visual — 26/11/2026
+
+Após confirmar o funcionamento da atualização de perfil, feed e catálogo no celular, o usuário autorizou continuar. Implementados cartões com capa reduzida, resumo curto e contagem de fotos, carregamento por janela, recuperação de falhas e atualização desde o início. Endpoint autenticado de miniaturas aplica as regras de privacidade/moderação existentes; sem nova migração ou mudança nos dados originais.
+
+188 testes Java, 96 mobile, TypeScript, lint de `src/`, exportação Android e integração HTTP/MySQL aprovados. Mantidas 32 contas, 12 roteiros e 25 rolês locais após limpar as fixtures. [Entrega e checklist](feed-visual.md). Ainda requer publicação da API e novo APK; o APK instalado pelo usuário corresponde à etapa anterior.

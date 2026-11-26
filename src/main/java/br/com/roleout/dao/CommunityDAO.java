@@ -15,7 +15,7 @@ public final class CommunityDAO {
         }
     }
     public Feed feed(int account,boolean following,long after)throws SQLException {
-        String query="SELECT p.roteiro_id,p.id_publico,p.titulo,p.cidade,p.paradas,a.id_publico,a.nome,a.apresentacao FROM publicacoes_roteiros p JOIN perfis_sociais a ON a.conta_id=p.conta_id WHERE p.publico=TRUE AND a.publico=TRUE AND p.roteiro_id<? AND NOT EXISTS(SELECT 1 FROM comunidade_bloqueios b WHERE b.tipo='PUBLICACAO' AND b.alvo=p.id_publico)"+
+        String query="SELECT p.roteiro_id,p.id_publico,p.titulo,p.cidade,p.paradas,a.id_publico,a.nome,a.apresentacao,LEFT(p.relato,180),(SELECT COUNT(*) FROM publicacoes_fotos f WHERE f.roteiro_id=p.roteiro_id) FROM publicacoes_roteiros p JOIN perfis_sociais a ON a.conta_id=p.conta_id WHERE p.publico=TRUE AND a.publico=TRUE AND p.roteiro_id<? AND NOT EXISTS(SELECT 1 FROM comunidade_bloqueios b WHERE b.tipo='PUBLICACAO' AND b.alvo=p.id_publico)"+
             (following?" AND EXISTS(SELECT 1 FROM comunidade_seguidos f WHERE f.conta_id=? AND f.perfil_id=a.id_publico)":"")+" ORDER BY p.roteiro_id DESC LIMIT 21";
         var items=new ArrayList<FeedItem>();long cursor=0;
         try(var s=c.prepareStatement(query)){
@@ -23,9 +23,17 @@ public final class CommunityDAO {
             try(var r=s.executeQuery()){while(r.next()){
                 if(items.size()==20)return new Feed(List.copyOf(items),cursor);
                 int stops;try{stops=new com.fasterxml.jackson.databind.ObjectMapper().readTree(r.getString(5)).size();}catch(java.io.IOException e){throw new SQLException(e);}
-                items.add(new FeedItem(r.getString(2),r.getString(3),r.getString(4),stops,new SocialProfileData.Public(r.getString(6),r.getString(7),r.getString(8))));cursor=r.getLong(1);
+                items.add(new FeedItem(r.getString(2),r.getString(3),r.getString(4),stops,new SocialProfileData.Public(r.getString(6),r.getString(7),r.getString(8)),r.getString(9),r.getInt(10)));cursor=r.getLong(1);
             }}
         }return new Feed(List.copyOf(items),null);
+    }
+    /** Select only the first photo, and authorize in the same query as the image read. */
+    public br.com.roleout.model.PublicationData.Photo cover(String publication)throws SQLException {
+        String query="SELECT f.imagem,f.legenda FROM publicacoes_fotos f JOIN publicacoes_roteiros p ON p.roteiro_id=f.roteiro_id JOIN perfis_sociais a ON a.conta_id=p.conta_id WHERE p.id_publico=? AND p.publico=TRUE AND a.publico=TRUE AND NOT EXISTS(SELECT 1 FROM comunidade_bloqueios b WHERE b.tipo='PUBLICACAO' AND b.alvo=p.id_publico) ORDER BY f.ordem LIMIT 1";
+        try(var s=c.prepareStatement(query)){
+            s.setString(1,publication);
+            try(var r=s.executeQuery()){return r.next()?new br.com.roleout.model.PublicationData.Photo(Base64.getEncoder().encodeToString(r.getBytes(1)),r.getString(2)):null;}
+        }
     }
     public boolean follows(int account,String profile)throws SQLException {
         try(var s=c.prepareStatement("SELECT 1 FROM comunidade_seguidos WHERE conta_id=? AND perfil_id=?")){s.setInt(1,account);s.setString(2,profile);try(var r=s.executeQuery()){return r.next();}}
