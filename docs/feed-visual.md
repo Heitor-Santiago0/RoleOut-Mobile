@@ -26,7 +26,11 @@ Todos e Seguindo conservam a paginação de 20 itens. A lista renderiza os cart�
 5. Interromper a conexão, tentar abrir foto e recuperar com Tentar carregar foto, sem perder a navegação.
 6. Conferir rolagem, recorte de fotos verticais, fonte ampliada e leitor de tela no Samsung.
 
-Esta mudança ainda não foi incluída no APK instalado nem publicada no servidor online.
+API publicada em 26/11/2026 no serviço existente do RolêOut, deploy `0f6faa29-c977-42cf-8d1d-691fc7a8eacb`, status SUCCESS. O Railway executou os 188 testes Java sem falhas e aprovou a verificação de saúde. O catálogo respondeu 200 com os três locais reais; feed e capa sem sessão responderam 401. Não houve migração, alteração de plano ou mudança no Entec. A validação autenticada com fotos foi realizada localmente e a rodada online no celular continua pendente.
+
+APK desta entrega concluído no Expo: [build FINISHED](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/a99cc0a6-a503-4cde-8772-77968c89d0c9), código `78015b3`. [Baixar atualização](https://expo.dev/artifacts/eas/MOfR7bFLxbY68L8nbCy1Tcv9jmubar3w0tYaPslWR9A.apk). Tamanho: 136.838.185 bytes. SHA-256: `c08599c8d52ab991b6ea6f7d950bda7a7f45ea13e9509eb4b12d2968b49636d8`.
+
+Arquivo local ignorado pelo Git: `mobile/.expo/apks/roleout-feed-2026-11-26.apk`. Conferidos CRC do ZIP, pacote `br.com.roleout.mobile`, JavaScript embarcado com `/comunidade/capa/` e recuperação da foto, URL HTTPS de produção e ausência da URL local da API. O build usa as credenciais Android locais existentes. Instalar como atualização; a confirmação no celular desta versão continua pendente. A validação anterior do usuário refere-se ao APK de perfil/catálogo.
 
 ## Validação local concluída
 

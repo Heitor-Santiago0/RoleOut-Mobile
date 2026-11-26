@@ -4,8 +4,9 @@ Estado em 26/11/2026: **API e MySQL publicados no Railway**, em projeto separado
 
 - API: https://roleout-api-production.up.railway.app/RoleOut/api/v1
 - Projeto: https://railway.com/project/3ffc6bfd-c4cf-4244-98bc-6be56f269d0d
-- [Baixar APK independente](https://expo.dev/artifacts/eas/XX8VC7CkII78NO9U-_QUMotzdODc8lvOroW7gohmPE4.apk), 136,8 MB. [Build concluído, FINISHED](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/edb09f08-03fc-4647-abd9-b8b7303ef09a).
-- Arquivo local: `mobile/.expo/apks/roleout-social-2026-11-26.apk`, ignorado pelo Git. SHA-256: `afac9d1b4024df3054cc7b0db9ae0649d3e909bfa7b539187e210480aa1ca9f9`. Integridade ZIP, pacote `br.com.roleout.mobile`, código embarcado e URL HTTPS verificados; URL local ausente do bundle. Instalação e validação física ainda pendentes.
+- [Baixar APK independente com capas no feed](https://expo.dev/artifacts/eas/MOfR7bFLxbY68L8nbCy1Tcv9jmubar3w0tYaPslWR9A.apk), 136,8 MB. [Build concluído, FINISHED](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/a99cc0a6-a503-4cde-8772-77968c89d0c9).
+- Arquivo local: `mobile/.expo/apks/roleout-feed-2026-11-26.apk`, ignorado pelo Git. SHA-256: `c08599c8d52ab991b6ea6f7d950bda7a7f45ea13e9509eb4b12d2968b49636d8`. Integridade ZIP, pacote `br.com.roleout.mobile`, código das capas e URL HTTPS verificados; URL local ausente do bundle. Instalação e validação física desta versão ainda pendentes; o usuário confirmou o funcionamento do APK anterior de perfil/catálogo.
+- API do feed publicada: deploy `0f6faa29-c977-42cf-8d1d-691fc7a8eacb`, 188 testes Java e healthcheck aprovados. Sem migração nesta atualização. [Entrega e testes do feed](feed-visual.md).
 - Migração preservou 32 contas, 12 roteiros e 22 rolês. Backup privado em `tmp/roleout-before-cloud.sql`, ignorado pelo Git. Pacote de transferência criptografado; serviços temporários de importação e limpeza removidos após verificação.
 - Banco sem proxy TCP público; API usa `roleout_api` com SELECT/INSERT/UPDATE/DELETE, sem privilégios administrativos. Volume persistente separado do Guardian.
 - MySQL configurado com buffer de 128 MB e máximo de 30 conexões. API com pool máximo de quatro conexões. `PUSH_ENABLED=true`; avisos dependem da disponibilidade e do saldo da hospedagem.
