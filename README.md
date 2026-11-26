@@ -52,7 +52,7 @@ Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual 
 | **Meus locais** | Cadastro de organizações e locais, endereço, acessibilidade, coordenadas e envio para análise. |
 | **Rolês dos locais** | Rascunhos de atividades, edição, envio, acompanhamento e publicação após aprovação. |
 | **Avisos** | Alterações de horários nos roteiros, sugestões automáticas e avisos opcionais em viagens; controles de frequência e permissões. |
-| **Perfis e publicações** | Perfil opcional, roteiros compartilhados com fotos/relatos, prévia, rascunho privado, feed, acompanhamento de autores, comentários, avaliações e cópia privada com créditos/revalidação. |
+| **Perfis e publicações** | Foto, bio, contadores, interesses públicos opcionais, aba Feed, seguir pessoas e locais; perfil opcional, roteiros compartilhados com fotos/relatos, prévia, rascunho privado, feed, acompanhamento de autores, comentários, avaliações e cópia privada com créditos/revalidação. |
 | **Administração** | Filas de análise, justificativas, histórico e proteção contra decisões com dados desatualizados. |
 
 Consulte o [catálogo de funcionalidades](docs/funcionalidades.md) para conhecer os fluxos, regras e limitações de cada área. Implementado não significa homologado em todos os dispositivos.
@@ -230,6 +230,7 @@ O [roteiro de entregas](docs/etapas.md) detalha o objetivo, a entrega e o crité
 
 | Documento | Conteúdo |
 | :--- | :--- |
+| [Perfil, Feed e locais reais](docs/perfil-feed-locais.md) | Navegação limpa, foto, interesses, seguidores e catálogo de Uberaba |
 | [Comunidade e cópia](docs/comunidade.md) | Feed, acompanhamento, comentários, avaliações, denúncias e créditos |
 | [Entrega final T2](docs/entrega-final-t2.md) | Evidências do PDF, apresentação e rodada única no celular |
 | [Publicações de roteiros](docs/publicacoes-roteiros.md) | Fotos, relatos, privacidade, API e testes físicos pendentes |
