@@ -146,3 +146,7 @@ Usuário confirmou instalação e funcionamento do feed com fotos e autorizou se
 ## Recuperação online com Brevo — 26/11/2026
 
 Integração HTTPS publicada no Railway, sem mudança de plano, com remetente verificado e credencial somente no servidor. V031 aplicada preservando 33 contas, 12 roteiros e 25 rolês. 203 testes Java aprovados; endpoints online conferidos sem alterar senhas reais. Brevo confirmou entrega do e-mail de configuração ao próprio remetente. [Detalhes](recuperacao-senha.md). Próxima validação: novo APK e fluxo completo de recuperação no celular; envio direto de teste não substitui esse teste ponta a ponta.
+
+## APK de recuperação — 26/11/2026
+
+Build c265ade7-ad54-4c40-a2f2-c4b0f4803a0d concluído, APK baixado e conferido com API online e rotas de recuperação. TypeScript/lint e testes focados aprovados. [Instalação e checklist](recuperacao-senha.md). Validação no celular pendente.

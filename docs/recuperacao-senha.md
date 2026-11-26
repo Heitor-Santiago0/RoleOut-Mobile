@@ -1,6 +1,6 @@
 # Recuperação de senha
 
-Atualizada em 26/11/2026: API publicada no Railway com Brevo via HTTPS e V031 aplicada online. Remetente verificado e e-mail de configuração entregue conforme evento do Brevo. A tela móvel já foi implementada/exportada, mas ainda precisa de novo APK e validação física.
+Atualizada em 26/11/2026: API publicada no Railway com Brevo via HTTPS e V031 aplicada online. Remetente verificado e e-mail de configuração entregue conforme evento do Brevo. APK gerado e conferido em 26/11/2026; instalação e validação física pendentes.
 
 ## Usar
 
@@ -53,7 +53,7 @@ Referências: [Railway](https://docs.railway.com/networking/outbound-networking)
 
 V031 foi aplicada de forma aditiva, preservando 33 contas, 12 roteiros e 25 rolês online. O serviço temporário foi removido. Deploy da API: `723f9e70-9d9b-48e3-8e36-cfda9d426dcc` (SUCCESS). Upload limitado ao código de servidor, sem arquivo local de credenciais. O serviço Entec não foi alterado.
 
-Teste externo: um e-mail de configuração enviado diretamente ao endereço do remetente autorizado foi aceito (201) e teve evento `delivered`. Isso valida chave/remetente/provedor, mas não é uma redefinição real de senha. No servidor publicado: catálogo 200, recuperação para endereço fictício 202/no-store, código inexistente 400/CODIGO_INVALIDO e campos extras rejeitados. Nenhuma senha real foi alterada. Fluxo completo de fila, entrega, redefinição e revogação foi testado localmente; permanece a validação ponta a ponta online no celular após o novo APK.
+Teste externo: um e-mail de configuração enviado diretamente ao endereço do remetente autorizado foi aceito (201) e teve evento `delivered`. Isso valida chave/remetente/provedor, mas não é uma redefinição real de senha. No servidor publicado: catálogo 200, recuperação para endereço fictício 202/no-store, código inexistente 400/CODIGO_INVALIDO e campos extras rejeitados. Nenhuma senha real foi alterada. Fluxo completo de fila, entrega, redefinição e revogação foi testado localmente; permanece a validação ponta a ponta online no celular após instalar o APK abaixo.
 
 ## Validação e pendências
 
@@ -64,3 +64,11 @@ Teste externo: um e-mail de configuração enviado diretamente ao endereço do r
 - Migração local manteve 32 contas, 12 roteiros e 25 rolês.
 - No celular, após disponibilizar a próxima versão: pedir/colar código, verificar teclado e retorno à entrada, testar senha inválida, código expirado/reutilizado e recusa da sessão antiga. Confirmar que roteiros e perfil continuam preservados e reativar avisos após entrar novamente.
 - Operação com múltiplas réplicas requer limitação de tráfego compartilhada na entrada; o limitador em memória atual é por instância. Ainda não há proteção distribuída contra abuso nem garantia de entrega na caixa principal.
+
+## APK de recuperação — 26/11/2026
+
+Build `c265ade7-ad54-4c40-a2f2-c4b0f4803a0d`, commit `79f2bae`, perfil preview standalone, status FINISHED. [Instalar APK](https://expo.dev/artifacts/eas/PXPm1A9Q1Bv33_f6085TN8Dm6UHmmSUicy4p-UESKwU.apk). Mesmo pacote e credencial Android usados anteriormente.
+
+Conferidos: integridade ZIP, pacote br.com.roleout.mobile, endereço HTTPS de produção no bundle, rotas /recover-password, /auth/recuperacao e /auth/nova-senha, ausência da URL local da API. TypeScript, lint src e os dois testes focados de recuperação passaram antes da compilação. SHA-256: `fd79e5294cb2bfacf9c91a056b0329b04e8ecaabcb5dc5bc5d419caf52ec0453`. Tamanho: 136843981 bytes.
+
+Ainda validar no aparelho: instalar sobre a versão anterior, solicitar código com e-mail cadastrado, conferir caixa/spam, definir nova senha e entrar; confirmar senha antiga recusada e perfil/roteiros preservados. Não registrar código ou senha em capturas/logs.
