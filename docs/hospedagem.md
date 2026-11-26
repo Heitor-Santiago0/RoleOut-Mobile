@@ -4,8 +4,8 @@ Estado em 26/11/2026: **API e MySQL publicados no Railway**, em projeto separado
 
 - API: https://roleout-api-production.up.railway.app/RoleOut/api/v1
 - Projeto: https://railway.com/project/3ffc6bfd-c4cf-4244-98bc-6be56f269d0d
-- [Baixar APK independente](https://expo.dev/artifacts/eas/W_ff9_G689IwriwLv54MjRxRcWD6kPneMV0TY3fJcyU.apk), 122,5 MB. [Build concluído, FINISHED](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/cc617841-dcb6-4cc8-85fb-1246e93cbb01).
-- Arquivo local: `mobile/.expo/apks/roleout-online-2026-11-26.apk`, ignorado pelo Git. SHA-256: `78cbb08b439e16b261f63328874a63c5c129cf7371fc33fbef6daa89a482df58`. Integridade ZIP, pacote `br.com.roleout.mobile`, código embarcado e URL HTTPS verificados; URL local ausente do bundle. Instalação e validação física ainda pendentes.
+- [Baixar APK independente](https://expo.dev/artifacts/eas/XX8VC7CkII78NO9U-_QUMotzdODc8lvOroW7gohmPE4.apk), 136,8 MB. [Build concluído, FINISHED](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/edb09f08-03fc-4647-abd9-b8b7303ef09a).
+- Arquivo local: `mobile/.expo/apks/roleout-social-2026-11-26.apk`, ignorado pelo Git. SHA-256: `afac9d1b4024df3054cc7b0db9ae0649d3e909bfa7b539187e210480aa1ca9f9`. Integridade ZIP, pacote `br.com.roleout.mobile`, código embarcado e URL HTTPS verificados; URL local ausente do bundle. Instalação e validação física ainda pendentes.
 - Migração preservou 32 contas, 12 roteiros e 22 rolês. Backup privado em `tmp/roleout-before-cloud.sql`, ignorado pelo Git. Pacote de transferência criptografado; serviços temporários de importação e limpeza removidos após verificação.
 - Banco sem proxy TCP público; API usa `roleout_api` com SELECT/INSERT/UPDATE/DELETE, sem privilégios administrativos. Volume persistente separado do Guardian.
 - MySQL configurado com buffer de 128 MB e máximo de 30 conexões. API com pool máximo de quatro conexões. `PUSH_ENABLED=true`; avisos dependem da disponibilidade e do saldo da hospedagem.
@@ -58,3 +58,7 @@ O agendador de avisos atual consulta o banco a cada minuto com `PUSH_ENABLED=tru
 Oracle Always Free é uma alternativa a avaliar para VM e MySQL próprios, sem contratar plano pago; cadastro exige cartão de verificação e a criação depende de capacidade disponível. Conferir recursos elegíveis e limites diretamente na conta antes de provisionar. Nenhuma opção gratuita é promessa de disponibilidade permanente.
 
 Referências: [Railway Free](https://docs.railway.com/pricing/free-plan), [Railway preços](https://railway.com/pricing), [Oracle Free Tier FAQ](https://www.oracle.com/cloud/free/faq/).
+
+## Atualização social de 26/11/2026
+
+Novo APK inclui Feed, perfil simplificado com foto e interesses opcionais, seguir locais, categorias ampliadas e fotografias reais de Uberaba. Veja [implementação e testes](perfil-feed-locais.md). APK validado por integridade ZIP, pacote Android, novos endpoints, três fotografias e URL HTTPS embarcada. Teste físico desta atualização ainda pendente. A versão online anterior foi testada pelo usuário.
