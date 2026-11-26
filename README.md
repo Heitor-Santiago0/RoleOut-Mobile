@@ -26,7 +26,7 @@ Restaurantes, bares, museus, prefeituras e outras organizações podem cadastrar
 
 Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual é validar a experiência completa no Android e preparar uma versão para testes remotos.
 
-> **Estado atual (25/11/2026):** desenvolvimento local com API Java, MySQL e app Android. Descoberta, roteiros, horários e notificações implementados; perfis públicos, publicação de roteiros com fotos/relatos, feed, acompanhamento, comentários, avaliações, denúncias/moderação e cópia com créditos implementados. Arquitetura Controller → Service → DAO revisada para o T2. A API ainda não está hospedada para acesso público; testes físicos pendentes estão documentados.
+> **Estado atual (26/11/2026):** API Java e MySQL publicados no Railway, usando créditos de teste, com dados existentes preservados. Descoberta, roteiros, horários e notificações implementados; perfis públicos, publicação de roteiros com fotos/relatos, feed, acompanhamento, comentários, avaliações, denúncias/moderação e cópia com créditos implementados. Arquitetura Controller → Service → DAO revisada para o T2. Consulte [hospedagem e APK independente](docs/hospedagem.md); testes físicos da versão online ainda são necessários.
 >
 > **Código atual:** a implementação descrita está na branch [`develop/api-pool`](https://github.com/Heitor-Santiago0/RoleOut-Mobile/tree/develop/api-pool). Use esse link para consultar código e documentação da entrega; a `main` pode conter uma versão anterior.
 

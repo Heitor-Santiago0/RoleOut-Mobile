@@ -112,7 +112,7 @@ Isso não gera APK/IPA nem valida permissões, GPS ou mapas no aparelho. Para ho
 
 ## Próxima distribuição
 
-O perfil `preview` gera APK com código embarcado (`developmentClient: false`), sem Metro. Usa o ambiente EAS `preview` e o mesmo pacote/certificado local; a instalação substitui o app atual. Não desinstale antes de atualizar se quiser preservar os dados locais. A geração e a validação física desse APK ainda estão pendentes.
+O perfil `preview` gera APK com código embarcado (`developmentClient: false`), sem Metro. Usa o ambiente EAS `preview` e o mesmo pacote/certificado local; a instalação substitui o app atual. Não desinstale antes de atualizar se quiser preservar os dados locais. A API já está hospedada no Railway e o ambiente preview está configurado; acompanhe o APK e a validação física em [Hospedagem](../docs/hospedagem.md).
 
 Antes de compilar, hospede API/banco e configure `EXPO_PUBLIC_API_URL` com o endereço HTTPS completo, incluindo `/RoleOut/api/v1`, e `GOOGLE_MAPS_ANDROID_API_KEY` no ambiente `preview` do EAS. A URL pública da API não é segredo; senhas do banco nunca devem ser incluídas em variáveis `EXPO_PUBLIC_*`. A configuração rejeita URLs ausentes, HTTP e endereços locais nesse perfil. O ambiente `development` e sua conexão USB permanecem disponíveis.
 

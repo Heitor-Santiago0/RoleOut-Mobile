@@ -44,7 +44,7 @@ No aplicativo, `pnpm run typecheck`, `pnpm run lint` e `pnpm test`. O APK de des
 
 Use o novo APK com suporte a fotos e duas contas de teste. A instalação não é validação por si só. Execute em sequência:
 
-- [ ] Abrir pelo USB; login; fechar/reabrir; conferir que erro de conexão oferece recuperação.
+- [ ] Instalar o novo APK preview descrito em [Hospedagem](hospedagem.md); abrir sem USB/Metro; login; fechar/reabrir; conferir que erro de conexão oferece recuperação. O APK development anterior continua disponível como alternativa local.
 - [ ] Explorar: mapa, posição, locais, categorias e recomendações. Negar localização deve manter consulta por cidade utilizável.
 - [ ] Criar roteiro com duas paradas; ajustar ordem, duração e horário; salvar. Criar outro com data diferente e verificar separação.
 - [ ] Renomear; concluir parada; baixar offline; desconectar rede e consultar o roteiro baixado; reconectar.
@@ -57,13 +57,13 @@ Use o novo APK com suporte a fotos e duas contas de teste. A instalação não �
 - [ ] Ocultar perfil/publicação; verificar que não aparece na comunidade, inclusive após sair e voltar à tela.
 - [ ] Navegação: setas em telas secundárias, sem seta no Explorar; abas acessíveis; teclado não cobre campos de data/relato.
 - [ ] Permissões: autorizar/recusar; configuração reflete o estado real; não solicitar repetidamente sem necessidade.
-- [ ] Aviso de horário com app em segundo plano; viagem com serviço autorizado. A API local precisa estar acessível; viagem real fora da rede depende de hospedagem futura.
+- [ ] Aviso de horário com app em segundo plano; viagem com serviço autorizado. A API Railway precisa estar disponível e com créditos; a validação física da versão online continua pendente.
 
 Se algum item falhar, registrar a tela, a ação e a mensagem para corrigir antes da apresentação. Não é possível garantir perfeição sem esta validação; a rodada foi agrupada para reduzir o trabalho repetido.
 
 ## Fora da entrega acadêmica local
 
-Hospedagem pública/HTTPS, operação contínua do servidor, recuperação de senha por e-mail, backups de produção, distribuição independente do notebook, validação iOS e políticas/controles adicionais para uma comunidade aberta. Não são apresentados como concluídos.
+A API pública/HTTPS e o MySQL foram publicados em 26/11/2026 usando créditos de teste. Permanecem pendentes: operação contínua além desses créditos, recuperação de senha por e-mail, rotina de backups de produção, validação física do APK independente, validação iOS e políticas/controles adicionais para uma comunidade aberta.
 
 
 ## Validação consolidada — 26/11/2026
@@ -74,7 +74,7 @@ Hospedagem pública/HTTPS, operação contínua do servidor, recuperação de se
 - Mantidos 32 cadastros, 12 roteiros e 22 rolês; registros temporários dos testes removidos.
 - Testes no aparelho ainda não realizados nesta consolidação. O checklist acima não foi marcado como concluído.
 
-## APK e GitHub verificados — 26/11/2026
+## APK local anterior e GitHub verificados — 26/11/2026
 
 - [APK de desenvolvimento atualizado](https://expo.dev/artifacts/eas/UkswMJk2xHcaOxRCV4dLwohNFXOUYbkC29JBeAhgVvs.apk).
 - [Build concluído no Expo](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/f17b7092-1f0b-4dda-9a84-73e77410903e), status FINISHED. Arquivo local ignorado pelo Git: `mobile/.expo/apks/roleout-t2-2026-11-26.apk`.
