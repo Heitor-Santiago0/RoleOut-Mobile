@@ -15,7 +15,7 @@ Entrega de 26/11/2026.
 
 Aplicar V030 uma única vez no banco existente antes do servidor novo. Migração aditiva, sem apagar registros. Executar `scripts/seed-uberaba.sql` com UTF-8; é idempotente.
 
-Todos os endpoints exigem sessão:
+Contrato estruturado: [OpenAPI](openapi-perfil-locais.json). Todos os endpoints exigem sessão:
 
 | Método e caminho | Uso |
 |---|---|
@@ -45,3 +45,9 @@ Locais suspensos e organizações não aprovadas não são retornados. Rascunhos
 6. Percorrer as seis perguntas, reabrir e conferir persistência; filtrar novas categorias.
 7. Conferir mapa, fotos, créditos e detalhes dos três locais; horários não devem ser anunciados como confirmados.
 8. Verificar tamanho de fonte, foto, navegação e teclado no Samsung; salvar e abrir roteiros antigos.
+
+## Publicação e verificações online
+
+Servidor publicado em 26/11/2026 (deploy `882da127-7a5d-4a37-ae1e-964a93cf9ab2`). Migração manteve 33 contas e 12 roteiros online, com 25 rolês após adicionar os três locais. Duas contas temporárias do teste foram removidas; o serviço temporário de migração também foi removido. Entec e plano de cobrança não foram alterados.
+
+Teste HTTP online aprovado: cadastro/login com seis caracteres, foto reprocessada, opt-in e revogação dos interesses, seguidores, seguir/deixar de seguir estabelecimento, idempotência e isolamento por conta. Revisão visual em prévia web de 390 × 844: perfil, Feed, editor, catálogo com foto real e seguir local conferidos. A prévia web não substitui a validação nativa de galeria, mapa e teclado no Samsung.

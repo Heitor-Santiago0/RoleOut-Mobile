@@ -1,0 +1,332 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "RolêOut — detalhes de perfil e locais seguidos",
+    "version": "1.0.0",
+    "description": "Complementa a API social existente. Requer V030. Todas as respostas têm Cache-Control: no-store. Publicação do perfil não publica roteiros privados."
+  },
+  "servers": [
+    {
+      "url": "https://roleout-api-production.up.railway.app/RoleOut/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/perfil-detalhes": {
+      "get": {
+        "summary": "Consultar meus detalhes",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetalhesPerfil"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        }
+      },
+      "put": {
+        "summary": "Salvar foto e visibilidade dos interesses",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetalhesPerfil"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetalhesEntrada"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/perfil-detalhes/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Consultar detalhes de perfil público",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetalhesPerfil"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        }
+      }
+    },
+    "/locais-seguidos": {
+      "get": {
+        "summary": "Listar até 100 locais seguidos pela conta",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LocalSeguido"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        }
+      }
+    },
+    "/locais-seguidos/{roleId}": {
+      "parameters": [
+        {
+          "name": "roleId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Consultar se sigo o local do rolê",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalSeguido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        }
+      },
+      "put": {
+        "summary": "Seguir o local (idempotente)",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalSeguido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deixar de seguir o local (idempotente)",
+        "responses": {
+          "200": {
+            "description": "Concluído",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalSeguido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida"
+          },
+          "404": {
+            "description": "Perfil privado, local não publicado ou recurso inexistente"
+          },
+          "400": {
+            "description": "Entrada inválida"
+          },
+          "503": {
+            "description": "Banco temporariamente indisponível"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "DetalhesEntrada": {
+        "type": "object",
+        "required": [
+          "interessesPublicos"
+        ],
+        "properties": {
+          "fotoBase64": {
+            "type": "string",
+            "nullable": true,
+            "description": "JPEG/PNG em base64. Até 2 MB; null remove a foto."
+          },
+          "interessesPublicos": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DetalhesPerfil": {
+        "type": "object",
+        "properties": {
+          "fotoBase64": {
+            "type": "string",
+            "nullable": true,
+            "description": "JPEG/PNG em base64. Até 2 MB; null remove a foto."
+          },
+          "interessesPublicos": {
+            "type": "boolean"
+          },
+          "interesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "publicacoes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "seguidores": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "seguindo": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "LocalSeguido": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "roleId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "seguindo": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}
