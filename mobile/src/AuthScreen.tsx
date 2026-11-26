@@ -4,6 +4,7 @@ import { apiUrl, request, type Session } from './api';
 import { saveToken } from './session';
 import { Button, Field, Message } from './ui';
 import { styles as s } from './theme';
+import { router } from 'expo-router';
 export function AuthScreen({ onLogin, onDemo, message = '' }: { onLogin: (session: Session) => void; onDemo: () => void; message?: string }) {
   const [signup, setSignup] = useState(false);
   const [nome, setNome] = useState(''); const [email, setEmail] = useState(''); const [senha, setSenha] = useState('');
@@ -33,6 +34,7 @@ export function AuthScreen({ onLogin, onDemo, message = '' }: { onLogin: (sessio
     {notice ? <Text style={s.text}>{notice}</Text> : null}<Message text={error || message} />
     <Button title={signup ? 'Criar conta' : 'Entrar'} onPress={submit} busy={busy} />
     <Button title={signup ? 'Já tenho uma conta' : 'Criar minha conta'} secondary busy={busy} onPress={() => { setSignup(!signup); setError(''); setNotice(''); setSenha(''); }} />
+    {!signup && <Button title="Esqueci minha senha" secondary disabled={busy} onPress={() => { setSenha(''); router.push('/recover-password'); }} />}
     {__DEV__ && <View><Button title="Conhecer a demonstração" secondary onPress={onDemo} busy={busy} /><Text style={[s.small, { marginTop: 8 }]}>Explore exemplos fictícios sem criar uma conta.</Text></View>}
   </ScrollView></KeyboardAvoidingView>;
 }

@@ -136,3 +136,9 @@ PDF T2 original revisado: Java, MVC/Controller-Service-DAO, MySQL, CRUD, documen
 Após confirmar o funcionamento da atualização de perfil, feed e catálogo no celular, o usuário autorizou continuar. Implementados cartões com capa reduzida, resumo curto e contagem de fotos, carregamento por janela, recuperação de falhas e atualização desde o início. Endpoint autenticado de miniaturas aplica as regras de privacidade/moderação existentes; sem nova migração ou mudança nos dados originais.
 
 188 testes Java, 96 mobile, TypeScript, lint de `src/`, exportação Android e integração HTTP/MySQL aprovados. Mantidas 32 contas, 12 roteiros e 25 rolês locais após limpar as fixtures. [Entrega e checklist](feed-visual.md). API publicada no Railway e novo APK `a99cc0a6-a503-4cde-8772-77968c89d0c9` concluído e conferido em 26/11/2026. Falta instalar e testar esta atualização no celular; a confirmação anterior do usuário corresponde à etapa de perfil/catálogo.
+
+## Recuperação de senha — entrega local de 26/11/2026
+
+Usuário confirmou instalação e funcionamento do feed com fotos e autorizou seguir. Implementados Esqueci minha senha, fila persistente de envio por e-mail, código de 15 minutos/uso único, limites de pedidos, nova senha e revogação das sessões anteriores. V031 aplicada apenas localmente, preservando dados; SMTP de teste capturado no Mailpit, sem entrega externa.
+
+200 testes Java, 98 mobile, TypeScript, lint de `src/`, exportação Android e integração HTTP/MySQL/SMTP aprovados. [Entrega, configuração e testes físicos pendentes](recuperacao-senha.md). Online permanece na versão do feed: falta configurar remetente SMTP, migrar/publicar a API e gerar APK para recuperação. Nenhum provedor de e-mail foi contratado ou credencial real adicionada.

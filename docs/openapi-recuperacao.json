@@ -1,0 +1,20 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "RolêOut - Recuperação de senha", "version": "1.0.0", "description": "Requer V031 e SMTP configurado. Implementação local; ainda não ativada online."},
+  "servers": [{"url": "http://127.0.0.1:8082/RoleOut/api/v1"}],
+  "paths": {
+    "/auth/recuperacao": {"post": {
+      "operationId": "solicitarRecuperacao", "security": [],
+      "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["email"], "properties": {"email": {"type": "string", "format": "email"}}}}}},
+      "responses": {
+        "202": {"description": "Resposta genérica, inclusive para e-mail ausente ou limite por conta atingido", "content": {"application/json": {"schema": {"type": "object", "required": ["mensagem"], "properties": {"mensagem": {"type": "string"}}}}}},
+        "400": {"description": "JSON ou e-mail inválido"}, "429": {"description": "Limite por endereço atingido"}, "503": {"description": "Envio não configurado ou banco indisponível"}
+      }
+    }},
+    "/auth/nova-senha": {"post": {
+      "operationId": "redefinirSenha", "security": [],
+      "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "additionalProperties": false, "required": ["codigo", "senha"], "properties": {"codigo": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$", "writeOnly": true}, "senha": {"type": "string", "minLength": 6, "maxLength": 128, "writeOnly": true}}}}}},
+      "responses": {"204": {"description": "Senha alterada e sessões revogadas, sem login automático"}, "400": {"description": "Código inválido, expirado, consumido ou senha inválida"}, "429": {"description": "Limite de tentativas ou processamento ocupado"}, "503": {"description": "Banco indisponível"}}
+    }}
+  }
+}

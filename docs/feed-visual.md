@@ -34,6 +34,8 @@ Arquivo local ignorado pelo Git: `mobile/.expo/apks/roleout-feed-2026-11-26.apk`
 
 ## Validação local concluída
 
+Validação no celular: após instalar o APK desta entrega, o usuário informou “Instalei e testei o feed com as fotos, está funcionando”. Registrada a confirmação do feed com fotos em 26/11/2026; isso não declara individualmente concluídos os cenários de moderação, rede interrompida e leitor de tela sem relato específico.
+
 - Compilação limpa: 188 testes Java aprovados, incluindo tamanho/dimensões da capa, preservação da foto original, resumo, privacidade do perfil/publicação, bloqueio de moderação, exclusão, paginação entre autores e autenticação/no-store do endpoint.
 - 96 testes mobile aprovados; TypeScript e lint de `src/` aprovados. Exportação Android/Hermes concluída. Isso não substitui revisão visual no aparelho.
 - Integração HTTP com MySQL/Tomcat: publicação com duas fotos, leitura do feed/capa, limite de tamanho, recusa sem sessão e revogação ao privatizar o perfil aprovados.

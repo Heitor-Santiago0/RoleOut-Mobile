@@ -56,6 +56,9 @@ public class AuthService implements br.com.roleout.model.AuthData {
             try {
                 var dao=new AuthDAO(c);
                 if(!dao.lockAccount(account.id()))throw unauthorized();
+                // A password reset may have committed while verification ran outside the transaction.
+                var current=dao.credentials(email);
+                if(current==null||!java.util.Objects.equals(hash,current.hash()))throw unauthorized();
                 dao.removeExpired(account.id(),Instant.now());
                 if(dao.sessions(account.id())>=10)throw new ApiException(429,"LIMITE_SESSOES","Encerre uma sessão antes de entrar novamente.");
                 dao.insertSession(Tokens.digest(token),account.id(),expiry);
@@ -89,11 +92,11 @@ public class AuthService implements br.com.roleout.model.AuthData {
         } catch (SQLException e) { throw new RuntimeException("Session revocation failed.", e); }
     }
 
-    private String hash(String password) {
+    static String hash(String password) {
         acquireHashSlot();
         try { return Passwords.hash(password); } finally { HASH_SLOTS.release(); }
     }
-    private void acquireHashSlot() {
+    private static void acquireHashSlot() {
         if (!HASH_SLOTS.tryAcquire()) throw new ApiException(429, "TENTE_MAIS_TARDE", "Tente novamente em alguns segundos.");
     }
     private ApiException unauthorized() {
