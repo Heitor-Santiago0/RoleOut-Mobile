@@ -4,7 +4,8 @@ Estado em 26/11/2026: **API e MySQL publicados no Railway**, em projeto separado
 
 - API: https://roleout-api-production.up.railway.app/RoleOut/api/v1
 - Projeto: https://railway.com/project/3ffc6bfd-c4cf-4244-98bc-6be56f269d0d
-- APK independente: https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/cc617841-dcb6-4cc8-85fb-1246e93cbb01 (compilação iniciada; conferir estado antes de instalar).
+- [Baixar APK independente](https://expo.dev/artifacts/eas/W_ff9_G689IwriwLv54MjRxRcWD6kPneMV0TY3fJcyU.apk), 122,5 MB. [Build concluído, FINISHED](https://expo.dev/accounts/toledosantiago0/projects/roleout-mobile/builds/cc617841-dcb6-4cc8-85fb-1246e93cbb01).
+- Arquivo local: `mobile/.expo/apks/roleout-online-2026-11-26.apk`, ignorado pelo Git. SHA-256: `78cbb08b439e16b261f63328874a63c5c129cf7371fc33fbef6daa89a482df58`. Integridade ZIP, pacote `br.com.roleout.mobile`, código embarcado e URL HTTPS verificados; URL local ausente do bundle. Instalação e validação física ainda pendentes.
 - Migração preservou 32 contas, 12 roteiros e 22 rolês. Backup privado em `tmp/roleout-before-cloud.sql`, ignorado pelo Git. Pacote de transferência criptografado; serviços temporários de importação e limpeza removidos após verificação.
 - Banco sem proxy TCP público; API usa `roleout_api` com SELECT/INSERT/UPDATE/DELETE, sem privilégios administrativos. Volume persistente separado do Guardian.
 - MySQL configurado com buffer de 128 MB e máximo de 30 conexões. API com pool máximo de quatro conexões. `PUSH_ENABLED=true`; avisos dependem da disponibilidade e do saldo da hospedagem.
@@ -45,6 +46,8 @@ A publicação usa CLI com uma pasta de envio contendo somente `Dockerfile`, `.d
 No serviço `roleout-api`, configurar Dockerfile `Dockerfile`, porta interna 8080 e healthcheck `/RoleOut/api/v1/roles` com timeout de 180 segundos. As configurações foram salvas diretamente no serviço; não dependem do formato `railway.json`, descontinuado pelo provedor. Atualizações exigem teste, nova publicação explícita e verificação HTTPS. Não reimportar o backup sobre o banco online populado.
 
 Validar no celular com notebook desligado: abertura, login, catálogo/mapa, roteiros, sincronização, imagens e notificações. O acesso a roteiros offline continua limitado aos dados já salvos no aparelho.
+
+Para apresentar: baixar o APK no celular, instalar sobre a versão anterior sem desinstalar, abrir e entrar com a conta habitual. Não é necessário digitar endereço de servidor. Desconectar o cabo e desligar o servidor local para conferir login, mapa e um roteiro usando internet. Baixar um roteiro e conferir também a consulta offline. A validação no aparelho não é substituída pelos testes automatizados.
 
 ## Gratuidade e notificações
 
