@@ -43,6 +43,13 @@ class RegistrationSecurityTest {
     private OrganizationService.VenueInput venueInput(String name) {
         return new OrganizationService.VenueInput(name, "Cultura", "Rua teste 10", "Uberaba", "MG", "38000-000", null, "Rampa");
     }
+    @Test void sixCharacterPasswordsWorkAndBoundariesRemainEnforced() {
+        var account=auth.signup(new AuthService.Signup("Seis", "six@example.com", "abcdef"));
+        assertEquals(account.id(),auth.login(new AuthService.Login("six@example.com","abcdef")).conta().id());
+        assertThrows(IllegalArgumentException.class,()->Inputs.password("abcde"));
+        assertThrows(IllegalArgumentException.class,()->Inputs.password("x".repeat(129)));
+        assertEquals("x".repeat(128),Inputs.password("x".repeat(128)));
+    }
     @Test
     void profileNamePersistsAcrossLoginAndOnlyChangesAuthenticatedAccount() {
         var first = account("first@example.com");

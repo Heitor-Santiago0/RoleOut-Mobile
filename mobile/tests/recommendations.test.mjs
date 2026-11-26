@@ -70,3 +70,11 @@ test('empty metadata keeps explicit fallback and known nonmatching ambience is n
   assert.match(preferenceReasons({ ...role(1, 'Música'), caracteristicas: attributes() }, { ...preferences, musica: ['Rock'] }, '2026-10-20')[0], /gênero não foi informado/);
   assert.deepEqual(preferenceReasons({ ...role(2, 'Cultura'), caracteristicas: attributes([], [], ['Animado']) }, { ...preferences, ambientes: ['Cultural'] }, '2026-10-20'), []);
 });
+
+test('expanded activities match their categories without claiming confirmed availability', () => {
+  for (const [interest, category] of [['História e patrimônio', 'História'], ['Ciência', 'Ciência'], ['Trilhas', 'Natureza'], ['Jogos', 'Jogos'], ['Turismo religioso', 'Turismo religioso']]) {
+    const result = preferenceReasons(role(1, category), { ...preferences, atividades: [interest] }, '2026-11-26');
+    assert.equal(result.length, 1);
+    assert.match(result[0], /se relaciona à categoria/);
+  }
+});

@@ -1,3 +1,4 @@
+import { ProfileHero, type ProfileDetails } from './ProfileHero';
 import { FollowButton } from './Community';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
@@ -8,20 +9,14 @@ import { useSocialResource } from './useSocialResource';
 import type { ProfilePage, PublicProfile } from './socialProfile';
 import { PublicationsList } from './Publications';
 
-function ProfileCard({ profile }: { profile: PublicProfile }) {
-  return <View style={[s.secondary, { padding: 20, borderRadius: 18, gap: 12 }]}>
-    <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#303E65', justifyContent: 'center', alignItems: 'center' }}><Text style={s.title}>{Array.from(profile.nome)[0]?.toLocaleUpperCase()}</Text></View>
-    <Text style={s.title}>{profile.nome}</Text>
-    <Text style={s.text}>{profile.apresentacao || 'Esta pessoa ainda não escreveu uma apresentação.'}</Text>
-  </View>;
-}
 export function PublicProfileScreen({ token, id }: { token: string; id: string }) {
   const remote = useSocialResource<PublicProfile>(`/perfis/${encodeURIComponent(id)}`, token);
+  const details = useSocialResource<ProfileDetails>(`/perfil-detalhes/${encodeURIComponent(id)}`, token);
   return <ScrollView contentContainerStyle={s.content}>
-    <Text style={s.title}>Perfil público</Text>
+
     {remote.loading && <Text style={s.small}>Carregando perfil…</Text>}
-    <Message text={remote.error} />
-    {remote.data && <><ProfileCard profile={remote.data} /><FollowButton token={token} id={id} /></>}
+    <Message text={remote.error || details.error} />
+    {remote.data && <><ProfileHero name={remote.data.nome} bio={remote.data.apresentacao} details={details.data} /><FollowButton token={token} id={id} /></>}
     {remote.data && <PublicationsList key={remote.data.id} token={token} author={remote.data.id} />}
     {!!remote.error && <Button title="Tentar novamente" secondary onPress={remote.reload} />}
   </ScrollView>;

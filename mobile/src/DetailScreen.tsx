@@ -1,3 +1,5 @@
+import { VenueFollow } from './VenueFollow';
+import { Disclosure } from './Disclosure';
 import { describeCharacteristics } from './roleCharacteristics';
 import { describeHours } from './openingHours';
 import { RoleIllustration } from './RoleIllustration';
@@ -23,6 +25,7 @@ export function DetailScreen({ selected, demo, token }: { selected: Role | { id:
   return <ScrollView contentContainerStyle={s.content}>{demo && <DemoBanner />}{busy && <ActivityIndicator color={colors.blue} />}<Message text={error} />{!!error && <Button title="Tentar novamente" onPress={() => { setBusy(true); setError(''); setRetry(v => v + 1); }} />}
     {role && !busy && !error && <><View style={{ borderRadius: 20, overflow: 'hidden' }}><RoleIllustration name={role.nome} category={role.categoria} height={230} /></View><Text style={s.title}>{role.nome}</Text><View style={[s.chip, s.selected, { alignSelf: 'flex-start' }]}><Text style={s.selectedText}>{role.categoria ?? 'Sem categoria'}</Text></View><Text style={s.text}>{price(role.valor)}</Text><Text style={s.text}>{role.descricao ?? 'Descrição não informada.'}</Text><Text style={s.label}>Onde</Text><Text style={s.subtitle}>{role.local ?? 'Local não informado'} • {role.cidade}</Text><Text style={s.label}>Quando</Text><Text style={s.subtitle}>{role.data ? role.data.split('-').reverse().join('/') : 'Data não informada'}</Text></>}
     {role && !busy && !error && <>
+      <Disclosure title="Horários e informações">
       <Text style={s.label}>Início do evento: {role.horario ?? 'não informado'}</Text>
       <Text style={s.label}>Término do evento: {role.horarioFim ?? 'não informado'}{role.dataFim ? ` em ${role.dataFim.split('-').reverse().join('/')}` : ''}</Text>
       <Text style={s.small}>Horários locais informados no cadastro do evento. A duração da sua visita é uma estimativa e não confirma reserva ou disponibilidade.</Text>
@@ -30,6 +33,8 @@ export function DetailScreen({ selected, demo, token }: { selected: Role | { id:
       <Text style={s.text}>{describeCharacteristics(role.caracteristicas)}</Text>
       <Text style={s.text}>{describeHours(role.funcionamento)}</Text>
       {!!role.funcionamento?.length && <Text style={s.small}>Exceções por data substituem a semana. Dias não listados precisam de confirmação. Os horários não garantem vagas.</Text>}
+      </Disclosure>
+      {token && !demo && <VenueFollow token={token} role={role.id} />}
       {role.cancelado && <Message text={`Evento cancelado. ${role.motivoCancelamento ?? ''}`} />}
       <Button disabled={role.cancelado} title={included ? 'Ver em Organizar rolê' : 'Adicionar rolê'} onPress={() => {
         if (!included) {

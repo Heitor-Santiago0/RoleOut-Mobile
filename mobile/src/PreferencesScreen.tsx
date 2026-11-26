@@ -10,7 +10,9 @@ const sections = [
   { key: 'musica', title: 'Que música você curte?' },
   { key: 'comida', title: 'O que você gosta de comer?' },
   { key: 'atividades', title: 'O que gosta de fazer?' },
-  { key: 'ambientes', title: 'Qual é o seu clima?' },
+  { key: 'ambientes', title: 'Qual é o seu clima?', options: ['Tranquilo', 'Animado', 'Ao ar livre', 'Familiar', 'Romântico', 'Cultural'] },
+  { key: 'ambientes', title: 'Quem costuma ir com você?', options: ['Com amigos', 'Com crianças', 'Pet friendly', 'Conhecer pessoas'] },
+  { key: 'ambientes', title: 'Que experiência procura?', options: ['Contato com a natureza', 'Contemplativo', 'Aventura', 'Ao pôr do sol'] },
 ] as const;
 type Category = typeof sections[number]['key'];
 type Selection = Record<Category, string[]>;
@@ -59,16 +61,16 @@ function Editor({ token }: { token: string }) {
   const section = sections[step];
   return <ScrollView contentContainerStyle={[s.content, { maxWidth: 640, width: '100%', alignSelf: 'center' }]}>
     <Text style={s.title}>Seu jeito de curtir</Text>
-    <Text style={s.subtitle}>Escolha seus interesses. É opcional: você pode mudar tudo depois em Minha conta.</Text>
+    <Text style={s.subtitle}>Personalize suas descobertas. Você pode mudar depois.</Text>
     <Message text={error} />
     {!data && !error && <ActivityIndicator color={colors.blue} accessibilityLabel="Carregando preferências" />}
     {!data && !!error && <Button title="Tentar novamente" onPress={() => { setError(''); setAttempt(value => value + 1); }} />}
     {data && <>
       <Text style={s.small}>Etapa {step + 1} de {sections.length}</Text>
       <Text style={s.cardTitle}>{section.title}</Text>
-      <Text style={s.subtitle}>Marque quantas opções quiser, ou continue sem selecionar.</Text>
+      <Text style={s.subtitle}>Escolha quantas quiser.</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        {data.opcoes[section.key].map(option => {
+        {data.opcoes[section.key].filter(option => !('options' in section) || (section.options as readonly string[]).includes(option)).map(option => {
           const checked = selected[section.key].includes(option);
           return <Pressable key={option} accessibilityRole="checkbox" accessibilityLabel={option}
             accessibilityState={{ checked, disabled: busy }} disabled={busy}

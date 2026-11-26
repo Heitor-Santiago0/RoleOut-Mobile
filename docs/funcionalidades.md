@@ -16,7 +16,7 @@ A demonstração de desenvolvimento permite conhecer exemplos sem criar conta. S
 
 **Jornada:** criar conta → entrar → configurar ou pular preferências → acessar o aplicativo.
 
-- Cadastro com nome, e-mail e senha; senha entre 12 e 128 caracteres.
+- Cadastro com nome, e-mail e senha; senha entre 6 e 128 caracteres.
 - Autenticação por sessão, com restauração e conferência do token.
 - Na abertura, falhas ao restaurar a sessão mostram uma tela de recuperação com **Tentar novamente** e **Ir para o login**. Uma falha de rede preserva o token; sessão rejeitada pelo servidor (401) exige novo login. Essa recuperação depende de o aplicativo já ter carregado seu código — não substitui a conexão com o servidor de desenvolvimento.
 - Visualização dos dados da conta e edição do nome.

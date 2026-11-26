@@ -7,6 +7,7 @@ export default function TabLayout() {
   return <Tabs backBehavior="history" tabBar={() => null} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.background } }}>
     <Tabs.Screen name="personalize" options={{ title: 'Criar rolê' }} />
     <Tabs.Screen name="explore" options={{ title: 'Explorar' }} />
+    <Tabs.Screen name="feed" options={{ title: 'Feed' }} />
     <Tabs.Screen name="account" options={{ title: 'Perfil' }} />
   </Tabs>;
 }

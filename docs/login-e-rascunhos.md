@@ -19,7 +19,7 @@ Prefixo: `/RoleOut/api/v1`.
 Enviar corpos JSON com `Content-Type: application/json`. Campos desconhecidos,
 JSON nulo, documentos concatenados e corpos grandes são rejeitados. O limite
 é 16 KiB para Content-Length, mais 16.384 caracteres na leitura de corpo sem
-tamanho declarado. A senha tem entre 12 e 128 caracteres e não é normalizada
+tamanho declarado. A senha tem entre 6 e 128 caracteres e não é normalizada
 nem removida de espaços. E-mail é normalizado para minúsculas e deve ser único.
 
 Senha armazenada com PBKDF2-HMAC-SHA256, 600.000 iterações, salt aleatório de

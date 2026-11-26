@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { ApiError, request } from './api';
 import { useAuth } from './AuthContext';
@@ -8,57 +8,56 @@ import { Button, Message } from './ui';
 import { styles as s } from './theme';
 import { useSocialResource } from './useSocialResource';
 import { profileError, profileInput, type OwnProfile } from './socialProfile';
-
+import type { ProfileDetails } from './ProfileHero';
 export function SocialProfileEditor({ token }: { token: string }) {
-  const remote = useSocialResource<OwnProfile>('/perfil-social', token, false);
-  if (!remote.data) return <ScrollView contentContainerStyle={s.content}>
-    <Text style={s.title}>Meu perfil público</Text>
-    {remote.loading && <Text style={s.small}>Carregando perfil…</Text>}
-    <Message text={remote.error} />
-    {!!remote.error && <Button title="Tentar novamente" secondary onPress={remote.reload} />}
-  </ScrollView>;
-  return <ProfileForm token={token} initial={remote.data} remote={remote} />;
+  const profile = useSocialResource<OwnProfile>('/perfil-social', token, false);
+  const details = useSocialResource<ProfileDetails>('/perfil-detalhes', token, false);
+  if (!profile.data || !details.data) return <ScrollView contentContainerStyle={s.content}><Text style={s.title}>Editar perfil</Text><Message text={profile.error || details.error} /><Text style={s.small}>{profile.loading || details.loading ? 'Carregando…' : ''}</Text>{!!(profile.error || details.error) && <Button title="Tentar novamente" onPress={() => { profile.reload(); details.reload(); }} />}</ScrollView>;
+  return <ProfileForm token={token} initial={profile.data} details={details.data} />;
 }
-function ProfileForm({ token, initial, remote }: { token: string; initial: OwnProfile; remote: ReturnType<typeof useSocialResource<OwnProfile>> }) {
-  const { expire } = useAuth();
-  const [draft, setDraft] = useState<OwnProfile | null>(initial), [saved, setSaved] = useState<OwnProfile | null>(initial);
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState('');
-  const saving = useRef(false);
-  async function save(hide = false) {
-    const value = hide ? saved : draft;
-    if (!value || saving.current) return;
-    const invalid = profileError(value); if (invalid) { setError(invalid); return; }
-    const version = remote.generation.current;
-    saving.current = true; setBusy(true); setError(''); setNotice('');
+function ProfileForm({ token, initial, details }: { token: string; initial: OwnProfile; details: ProfileDetails }) {
+  const { expire, session } = useAuth();
+  const [draft,setDraft]=useState({ ...initial, nome: initial.nome || session?.conta.nome || '' });
+  const [photo,setPhoto]=useState(details.fotoBase64), [interests,setInterests]=useState(details.interessesPublicos);
+  const [busy,setBusy]=useState(false), [error,setError]=useState(''), [notice,setNotice]=useState('');
+  const lock=useRef(false);
+  async function pickPhoto(){
+    if(lock.current)return; lock.current=true;setBusy(true);setError('');
     try {
-      const result = await request<OwnProfile>('/perfil-social', { token, method: 'PUT', body: profileInput(value, hide ? false : value.publico) });
-      if (remote.generation.current !== version) return;
-      setDraft(result); setSaved(result); setNotice(result.publico ? 'Perfil publicado.' : 'Perfil salvo como privado.');
-    } catch (e) {
-      if (remote.generation.current !== version) return;
-      if (e instanceof ApiError && e.status === 401) void expire();
-      else setError(e instanceof Error ? e.message : 'Não foi possível salvar.');
-    } finally { saving.current = false; setBusy(false); }
+      const picker=await import('expo-image-picker');
+      const result=await picker.launchImageLibraryAsync({mediaTypes:['images'],allowsEditing:true,aspect:[1,1],quality:0.8,exif:false});
+      if(result.canceled)return;
+      const {ImageManipulator,SaveFormat}=await import('expo-image-manipulator');
+      const asset=result.assets[0], context=ImageManipulator.manipulate(asset.uri);
+      context.resize(asset.width>=asset.height?{width:512}:{height:512});
+      const image=await context.renderAsync(); const saved=await image.saveAsync({format:SaveFormat.JPEG,compress:0.8,base64:true});
+      if(!saved.base64 || saved.base64.length>2796204)throw new Error('Escolha uma foto menor.');
+      setPhoto(saved.base64);setNotice('');
+    }catch(e){setError(e instanceof Error?e.message:'Não foi possível abrir a foto.');}
+    finally{lock.current=false;setBusy(false);}
   }
-  return <FormKeyboardView><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
-    <Text style={s.title}>Meu perfil público</Text>
-    <Text style={s.subtitle}>Escolha como quer aparecer para outras pessoas no RolêOut.</Text>
-    {remote.loading && <Text style={s.small}>Carregando perfil…</Text>}
-    <Message text={remote.error || error} />
-    {!!notice && <Text accessibilityRole="alert" style={s.label}>{notice}</Text>}
-    {draft && <>
-      <Text style={s.label}>{saved?.publico ? 'Publicado para pessoas com conta no RolêOut' : 'Privado — só você pode ver'}</Text>
-      <View style={{ gap: 8 }}><Text style={s.label}>Nome público</Text><TextInput accessibilityLabel="Nome público" style={s.field} value={draft.nome} maxLength={80} editable={!busy} onChangeText={nome => { setDraft({ ...draft, nome }); setNotice(''); }} placeholder="Como quer ser conhecido?" placeholderTextColor="#667085" /></View>
-      <View style={{ gap: 8 }}><Text style={s.label}>Sobre mim</Text><TextInput accessibilityLabel="Sobre mim" style={[s.field, { minHeight: 120, paddingVertical: 12, textAlignVertical: 'top' }]} multiline maxLength={500} editable={!busy} value={draft.apresentacao} onChangeText={apresentacao => { setDraft({ ...draft, apresentacao }); setNotice(''); }} placeholder="Que tipos de passeio você gosta de fazer?" placeholderTextColor="#667085" /><Text style={s.small}>{draft.apresentacao.length}/500</Text></View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}><Text style={[s.text, { flex: 1 }]}>Mostrar meu perfil para outras pessoas</Text><Switch accessibilityLabel="Mostrar meu perfil para outras pessoas" disabled={busy} value={draft.publico} onValueChange={publico => { setDraft({ ...draft, publico }); setNotice('Salve para aplicar esta escolha.'); }} /></View>
-      <Text style={s.small}>Seu nome, apresentação e passeios que você publicar ficam visíveis. E-mail, localização, preferências e planejamento privado não são compartilhados. Ocultar o perfil esconde também as publicações; republicá-lo volta a mostrar as que não foram ocultadas individualmente.</Text>
-      <Button title={draft.publico ? 'Salvar perfil público' : 'Salvar perfil privado'} busy={busy} onPress={() => void save()} />
-      {saved?.publico && saved.id && <>
-        <Button title="Ver como outras pessoas" secondary disabled={busy} onPress={() => router.push({ pathname: '/people/[id]', params: { id: saved.id! } })} />
-        <Button title="Tornar privado agora" secondary disabled={busy} onPress={() => void save(true)} />
-      </>}
-    </>}
-    {!!(remote.error || error) && <Button title="Recarregar perfil salvo" secondary disabled={busy} onPress={remote.reload} />}
-    <Button title="Conhecer pessoas" secondary disabled={busy} onPress={() => router.push('/people')} />
+  async function save(){
+    if(lock.current)return;const invalid=profileError(draft);if(invalid){setError(invalid);return;}
+    lock.current=true;setBusy(true);setError('');setNotice('');let profileSaved=false;
+    try {
+      const value=await request<OwnProfile>('/perfil-social',{token,method:'PUT',body:profileInput(draft,draft.publico)});
+      setDraft(value);profileSaved=true;
+      await request('/perfil-detalhes',{token,method:'PUT',body:{fotoBase64:photo,interessesPublicos:interests}});
+      setNotice('Perfil salvo.');
+    }catch(e){if(e instanceof ApiError&&e.status===401)void expire();else setError((profileSaved?'Nome, bio e visibilidade salvos. Não foi possível salvar foto e interesses: ':'')+(e instanceof Error?e.message:'Tente novamente.'));}
+    finally{lock.current=false;setBusy(false);}
+  }
+  return <FormKeyboardView><ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+    <Text style={s.title}>Editar perfil</Text><Message text={error} />{!!notice&&<Text style={s.label} accessibilityRole="alert">{notice}</Text>}
+    {photo&&<Image source={{uri:`data:image/jpeg;base64,${photo}`}} accessibilityLabel="Minha foto" style={{width:96,height:96,borderRadius:48,alignSelf:'center'}} />}
+    <Button title={photo?'Trocar foto':'Adicionar foto'} secondary disabled={busy} onPress={()=>void pickPhoto()} />
+    {photo&&<Button title="Remover foto" secondary disabled={busy} onPress={()=>setPhoto(null)} />}
+    <Text style={s.label}>Nome</Text><TextInput accessibilityLabel="Nome público" style={s.field} value={draft.nome} maxLength={80} editable={!busy} onChangeText={nome=>setDraft({...draft,nome})} />
+    <Text style={s.label}>Bio</Text><TextInput accessibilityLabel="Sobre mim" multiline style={[s.field,{minHeight:90,textAlignVertical:'top',paddingVertical:12}]} value={draft.apresentacao} maxLength={500} editable={!busy} onChangeText={apresentacao=>setDraft({...draft,apresentacao})} placeholder="Um pouco sobre você" />
+    <View style={s.row}><Text style={[s.text,{flex:1}]}>Perfil público</Text><Switch accessibilityLabel="Perfil público" value={draft.publico} disabled={busy} onValueChange={publico=>setDraft({...draft,publico})} /></View>
+    <View style={s.row}><Text style={[s.text,{flex:1}]}>Mostrar meus interesses</Text><Switch accessibilityLabel="Mostrar meus interesses" value={interests} disabled={busy} onValueChange={setInterests} /></View>
+    <Text style={s.small}>Com perfil público, outras pessoas veem sua foto, bio e rolês publicados. Seus roteiros privados continuam só seus.</Text>
+    <Button title="Salvar perfil" busy={busy} onPress={()=>void save()} />
+    <Button title="Escolher interesses" secondary disabled={busy} onPress={()=>router.push('/preferences')} />
   </ScrollView></FormKeyboardView>;
 }

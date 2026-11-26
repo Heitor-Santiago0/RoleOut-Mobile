@@ -1,29 +1,29 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../AuthContext';
-import { ProfileEditor } from '../../ProfileEditor';
-import { ApiError, request } from '../../api';
 import { Button, DemoBanner, Message } from '../../ui';
 import { styles as s } from '../../theme';
+import { useSocialResource } from '../../useSocialResource';
+import type { OwnProfile } from '../../socialProfile';
+import { ProfileHero, type ProfileDetails } from '../../ProfileHero';
+import { PublicationsList } from '../../Publications';
+import { Disclosure } from '../../Disclosure';
+import { FollowedVenues } from '../../VenueFollow';
 export default function AccountRoute() {
-  const auth = useAuth(); const [busy, setBusy] = useState(false);
-  const { session, expire, setMessage } = auth;
-  useEffect(() => {
-    if (!session) return;
-    let active = true;
-    request('/auth/me', { token: session.token }).catch(async e => {
-      if (!active) return;
-      if (e instanceof ApiError && e.status === 401) await expire();
-      else setMessage(e instanceof Error ? e.message : 'Não foi possível verificar a conta.');
-    });
-    return () => { active = false; };
-  }, [session, expire, setMessage]);
-  async function exit() {
-    setBusy(true); auth.setMessage('');
-    try { await auth.exit(); router.replace('/auth'); }
-    catch (e) { auth.setMessage(e instanceof Error ? e.message : 'Não foi possível sair.'); }
-    finally { setBusy(false); }
-  }
-  return <ScrollView contentContainerStyle={s.content}>{auth.demo && <DemoBanner />}<Text style={s.title}>Minha conta</Text><Text style={s.text}>{auth.demo ? 'Visitante da demonstração' : auth.session?.conta.nome}</Text>{auth.session && <Text style={s.subtitle}>{auth.session.conta.email}</Text>}<Message text={auth.message} />{auth.session && <><ProfileEditor key={auth.session.token} session={auth.session} /><Button title="Comunidade" secondary onPress={() => router.push('/community')} /><Button title="Meu perfil público" secondary onPress={() => router.push('/social-profile')} /><Button title="Configurações" secondary onPress={() => router.push('/settings')} />{auth.session.conta.administrador && <Button title="Analisar cadastros" secondary onPress={() => router.push('/reviews')} />}{auth.session.conta.administrador && <Button title="Analisar denúncias" secondary onPress={() => router.push('/moderation')} />}<Button title="Meus locais" secondary onPress={() => router.push('/organizations')} /><Button title="Minhas preferências" secondary onPress={() => router.push('/preferences')} /><Button title="Meus rolês" secondary onPress={() => router.push('/itineraries')} /></>}<Button title={auth.demo ? 'Voltar para a entrada' : 'Sair da conta'} onPress={exit} busy={busy} /></ScrollView>;
+  const { session } = useAuth();
+  if (!session) return <ScrollView contentContainerStyle={s.content}><DemoBanner /><Text style={s.title}>Seu perfil</Text><Button title="Entrar na minha conta" onPress={() => router.push('/auth')} /></ScrollView>;
+  return <Account token={session.token} name={session.conta.nome} />;
+}
+function Account({ token, name }: { token: string; name: string }) {
+  const profile = useSocialResource<OwnProfile>('/perfil-social', token);
+  const details = useSocialResource<ProfileDetails>('/perfil-detalhes', token);
+  return <ScrollView contentContainerStyle={s.content}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}><Text style={s.title}>Perfil</Text><Pressable accessibilityRole="button" accessibilityLabel="Configurações" style={{ padding: 12 }} onPress={() => router.push('/settings')}><Text style={{ color: '#BAC1D5', fontSize: 26 }}>⚙</Text></Pressable></View>
+    <Message text={profile.error || details.error} />
+    <ProfileHero name={profile.data?.nome || name} bio={profile.data?.apresentacao || ''} details={details.data} />
+    <View style={s.row}><View style={{ flex: 1 }}><Button title="Editar perfil" secondary onPress={() => router.push('/social-profile')} /></View><View style={{ flex: 1 }}><Button title="Meus rolês" onPress={() => router.push('/itineraries')} /></View></View>
+    <Disclosure title="Locais que sigo"><FollowedVenues token={token} /></Disclosure>
+    {profile.data?.publico && profile.data.id ? <PublicationsList token={token} author={profile.data.id} /> : <Text style={s.small}>Perfil privado. Você controla a visibilidade em Editar perfil.</Text>}
+    {!!(profile.error || details.error) && <Button title="Tentar novamente" secondary onPress={() => { profile.reload(); details.reload(); }} />}
+  </ScrollView>;
 }

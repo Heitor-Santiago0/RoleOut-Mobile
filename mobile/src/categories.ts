@@ -1,0 +1,1 @@
+export const categories = ['Gastronomia', 'Música', 'Cultura', 'Natureza', 'Esporte', 'Cinema', 'Festa', 'Lazer', 'História', 'Ciência', 'Bem-estar', 'Compras', 'Jogos', 'Turismo religioso', 'Outros'];

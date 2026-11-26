@@ -8,7 +8,7 @@ import { useRoutingPlan } from './RoutingPlanContext';
 export function BackArrow({ onPress }: { onPress?: () => void }) {
   const { session, demo } = useAuth();
   const path = usePathname();
-  if (!onPress && (path === '/explore' || path === '/')) return null;
+  if (!onPress && (['/', '/explore', '/feed', '/account'].includes(path))) return null;
   return <View style={styles.header}>
     <Pressable accessibilityRole="button" accessibilityLabel="Voltar" hitSlop={4} style={styles.back} onPress={onPress ?? (() => {
       if (router.canGoBack()) router.back();
@@ -23,8 +23,9 @@ export function BottomNavigation({ beforeNavigate }: { beforeNavigate?: () => vo
   const path = usePathname();
   if (!session && !demo) return null;
   const entries = [
-    { href: '/personalize', label: 'Criar rolê', kind: 'create' },
     { href: '/explore', label: 'Explorar', kind: 'explore' },
+    { href: '/feed', label: 'Feed', kind: 'feed' },
+    { href: '/personalize', label: 'Criar rolê', kind: 'create' },
     { href: '/account', label: 'Perfil', kind: 'account' },
   ] as const;
   return <View style={styles.bar}>

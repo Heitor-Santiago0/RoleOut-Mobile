@@ -1,0 +1,47 @@
+# Perfil, feed e catálogo de Uberaba
+
+Entrega de 26/11/2026.
+
+- Cadastro e login aceitam senhas de 6 a 128 caracteres. Hash e limites de tentativas mantidos.
+- Navegação principal: Explorar, Feed, Criar rolê e Perfil. Feed reúne somente publicações e perfis públicos, com filtro Seguindo e atualização ao puxar a lista.
+- Perfil com foto, nome, bio, quantidade de publicações públicas (exclui conteúdo moderado), seguidores e seguindo. Foto opcional, validada e reprocessada no servidor para remover metadados. Perfil privado continua inacessível a terceiros.
+- Compartilhamento de interesses desativado por padrão. A pessoa escolhe se quer exibi-los. Apenas seleções atuais são apresentadas; e-mail, localização e roteiros privados não são expostos.
+- Configurações concentra conta, interesses, permissões, avisos e administração. Detalhes de funcionamento ficam em seção expansível.
+- Seguir pessoas continua usando o fluxo existente; seguir locais é persistido por conta e estabelecimento, com opção de deixar de seguir e lista no perfil. Seguir não faz reserva nem ativa alertas novos automaticamente.
+- Vocabulário ampliado de música, culinária, atividades e ambiente, com seis etapas opcionais para interesses. Categorias compartilhadas entre descoberta e criação de roteiro.
+- Três locais públicos reais com fotos licenciadas: veja [fontes e créditos](fotos-uberaba.md). Catálogo editorial não representa os gestores dos locais.
+
+## Banco e API
+
+Aplicar V030 uma única vez no banco existente antes do servidor novo. Migração aditiva, sem apagar registros. Executar `scripts/seed-uberaba.sql` com UTF-8; é idempotente.
+
+Todos os endpoints exigem sessão:
+
+| Método e caminho | Uso |
+|---|---|
+| GET /perfil-detalhes | Foto, privacidade dos interesses e contadores próprios |
+| PUT /perfil-detalhes | `{fotoBase64: string ou null, interessesPublicos: boolean}`; null remove foto |
+| GET /perfil-detalhes/{UUID público} | Detalhes de perfil público; privado/inexistente retorna 404 |
+| GET /locais-seguidos | Locais seguidos pela conta, até 100 |
+| GET /locais-seguidos/{id do rolê} | Estado do estabelecimento associado |
+| PUT /locais-seguidos/{id do rolê} | Seguir; operação idempotente |
+| DELETE /locais-seguidos/{id do rolê} | Deixar de seguir |
+
+Locais suspensos e organizações não aprovadas não são retornados. Rascunhos legados sem local associado não oferecem seguir local. Fotos aceitam JPEG/PNG de até 2 MB; a interface reduz a foto de perfil antes de enviar. A edição salva perfil e detalhes em duas operações; falha parcial é informada e permite tentar novamente sem duplicar perfil.
+
+## Validação
+
+- Compilação limpa e 184 testes Java aprovados (incluem limites de senha, privacidade, contadores e seguir local).
+- Migração e seed local: 32 contas e 12 roteiros mantidos; 22 para 25 rolês, sem duplicação ao reaplicar seed.
+- Verificação de tipos e lint aprovados; 96 testes mobile aprovados. Teste HTTP local validou foto, interesses privados/públicos, senha curta, seguidores e isolamento entre contas.
+
+## Validar no celular com o novo APK
+
+1. Criar conta com senha de seis caracteres; senha com cinco deve ser recusada.
+2. Abrir Feed, alternar Todos/Seguindo, abrir autor e seguir/deixar de seguir; conferir em outra conta.
+3. Editar foto e bio, publicar/privatizar perfil; confirmar que perfil privado desaparece para terceiros.
+4. Ativar/desativar interesses públicos e conferir em outra conta; garantir que os interesses permanecem salvos para recomendações.
+5. Seguir um local real, encontrá-lo em Perfil > Locais que sigo e deixar de seguir.
+6. Percorrer as seis perguntas, reabrir e conferir persistência; filtrar novas categorias.
+7. Conferir mapa, fotos, créditos e detalhes dos três locais; horários não devem ser anunciados como confirmados.
+8. Verificar tamanho de fonte, foto, navegação e teclado no Samsung; salvar e abrir roteiros antigos.

@@ -16,7 +16,7 @@ class CommunityServiceTest {
     @BeforeEach void setup()throws Exception {
         source=new JdbcDataSource();source.setURL("jdbc:h2:mem:"+UUID.randomUUID()+";MODE=MySQL;DB_CLOSE_DELAY=-1");
         try(var c=source.getConnection()){
-            for(String file:List.of("V001__roles.sql","V002__organizacoes_e_locais.sql","V003__sessoes.sql","V004__roteiros.sql","V008__progresso_roteiro.sql","V009__horario_evento.sql","V011__horario_parada.sql","V012__termino_evento.sql","V014__cancelamento_publicado.sql","V016__data_termino_evento.sql","V018__funcionamento_evento.sql","V020__horarios_salvos.sql","V027__perfis_sociais.sql","V028__publicacoes_roteiros.sql","V029__comunidade.sql"))
+            for(String file:List.of("V001__roles.sql","V002__organizacoes_e_locais.sql","V003__sessoes.sql","V004__roteiros.sql","V008__progresso_roteiro.sql","V009__horario_evento.sql","V011__horario_parada.sql","V012__termino_evento.sql","V014__cancelamento_publicado.sql","V016__data_termino_evento.sql","V018__funcionamento_evento.sql","V020__horarios_salvos.sql","V027__perfis_sociais.sql","V028__publicacoes_roteiros.sql","V029__comunidade.sql","V005__preferencias.sql","V030__profile_details_and_venue_follows.sql"))
                 try(var r=new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/db/migration/"+file)),StandardCharsets.UTF_8)){RunScript.execute(c,r);}
         }
         execute("INSERT INTO contas(nome,email,senha_hash,administrador) VALUES ('Private A','a@example.com','x',false),('Private B','b@example.com','x',false),('Admin','c@example.com','x',true)");
@@ -29,6 +29,35 @@ class CommunityServiceTest {
     void execute(String sql)throws Exception{try(var c=source.getConnection();var s=c.createStatement()){s.executeUpdate(sql);}}
     int count(String table)throws Exception{try(var c=source.getConnection();var s=c.createStatement();var r=s.executeQuery("SELECT COUNT(*) FROM "+table)){r.next();return r.getInt(1);}}
     ItineraryService.Input plan(String date,long budget){return new ItineraryService.Input("Minha cópia","Uberaba",date,"10:00",180,1,budget,"group",List.of(new ItineraryService.StopInput(1,60)));}
+    @Test void profileDetailsKeepInterestsPrivateAndCountOnlyVisiblePublications()throws Exception {
+        var details=new ProfileDetailsService(new SqlAccess(source));
+        new PreferencesService(new SqlAccess(source)).save(1,new PreferencesService.Input(false,List.of("Jazz"),List.of("Mineira"),List.of("História e patrimônio"),List.of("Com amigos")));
+        assertTrue(details.get(2,author).interesses().isEmpty());
+        assertEquals(1,details.get(2,author).publicacoes());
+        community.follow(2,author,true);assertEquals(1,details.get(2,author).seguidores());
+        details.save(1,new br.com.roleout.model.ProfileDetailsData.Input(null,true));
+        assertTrue(details.get(2,author).interesses().contains("Jazz"));
+        assertTrue(details.get(2,null).interesses().isEmpty());
+        details.save(1,new br.com.roleout.model.ProfileDetailsData.Input(null,false));
+        assertTrue(details.get(2,author).interesses().isEmpty());
+        execute("INSERT INTO comunidade_bloqueios(tipo,alvo) VALUES ('PUBLICACAO','"+post+"')");
+        assertEquals(0,details.get(2,author).publicacoes());
+        profiles.save(1,new SocialProfileService.Input("Autor público","",false,1));
+        assertEquals(404,assertThrows(ApiException.class,()->details.get(2,author)).status());
+        assertThrows(IllegalArgumentException.class,()->details.save(1,new br.com.roleout.model.ProfileDetailsData.Input("not-an-image",false)));
+    }
+    @Test void venueFollowingIsIdempotentAccountScopedAndRespectsApproval()throws Exception {
+        execute("INSERT INTO organizacoes(nome,tipo,contato_email,status) VALUES ('Catálogo','OUTRO','catalog@example.com','APROVADA')");
+        execute("INSERT INTO locais(organizacao_id,nome,categoria,endereco,cidade,uf,status) VALUES (1,'Parque','Natureza','Centro','Uberaba','MG','PUBLICADO')");
+        execute("UPDATE roles SET local_id=1 WHERE id IN (1,2)");
+        var details=new ProfileDetailsService(new SqlAccess(source));
+        assertTrue(details.venue(1,1,true).seguindo());
+        assertTrue(details.venue(1,2,true).seguindo());assertEquals(1,details.followed(1).size());
+        assertFalse(details.venue(2,1,null).seguindo());assertTrue(details.followed(2).isEmpty());
+        assertFalse(details.venue(1,2,false).seguindo());assertTrue(details.followed(1).isEmpty());
+        execute("UPDATE locais SET status='SUSPENSO' WHERE id=1");
+        assertEquals(404,assertThrows(ApiException.class,()->details.venue(1,1,true)).status());
+    }
     @Test void feedAndFollowingRespectBothPrivacyFlags(){
         assertEquals(1,community.feed(2,false,null).itens().size());assertTrue(community.feed(2,true,null).itens().isEmpty());
         community.follow(2,author,true);community.follow(2,author,true);assertTrue(community.follows(2,author));assertEquals(1,community.feed(2,true,null).itens().size());

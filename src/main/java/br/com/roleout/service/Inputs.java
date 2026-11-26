@@ -22,8 +22,8 @@ public final class Inputs {
         return email;
     }
     public static String password(String value) {
-        if (value == null || value.length() < 12 || value.length() > 128) {
-            throw new IllegalArgumentException("A senha deve ter entre 12 e 128 caracteres.");
+        if (value == null || value.length() < 6 || value.length() > 128) {
+            throw new IllegalArgumentException("A senha deve ter entre 6 e 128 caracteres.");
         }
         return value;
     }

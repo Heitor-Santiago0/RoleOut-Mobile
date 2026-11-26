@@ -1,3 +1,4 @@
+import { categories as roleCategories } from './categories';
 import { AutomaticSuggestionCard } from './AutomaticSuggestionCard';
 import type { DiscoveryContext } from './automaticSuggestions';
 import type { Point } from './NearbyMap.types';
@@ -60,7 +61,7 @@ export function ExploreScreen({ demo, token, onSelect }: { demo: boolean; token?
     <TextInput accessibilityLabel="Buscar por cidade" placeholder="Buscar por cidade" placeholderTextColor="#667085" style={s.field} value={cidade} onChangeText={setCidade} returnKeyType="search" onSubmitEditing={searchCity} />
     <Button title="Ver rolês nesta cidade" secondary onPress={searchCity} /></>}
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 12 }} accessibilityLabel="Categorias de rolês">
-      {['Todos', 'Gastronomia', 'Música', 'Cultura', 'Lazer', 'Natureza', 'Esporte', 'Cinema', 'Festa', 'Outros'].map(c => <Pressable key={c} accessibilityRole="button" accessibilityState={{ selected: c === category }} style={[s.chip, c === category && s.selected]} onPress={() => { if (c !== category) { setCategory(c); setPage(0); setMore(false); setItems([]); if (filter) { setBusy(true); setError(''); } else { setError('Selecione a cidade ou ative a localização para ver esta categoria.'); } } }}><Text style={[s.chipText, c === category && s.selectedText]}>{c}</Text></Pressable>)}
+      {['Todos', ...roleCategories].map(c => <Pressable key={c} accessibilityRole="button" accessibilityState={{ selected: c === category }} style={[s.chip, c === category && s.selected]} onPress={() => { if (c !== category) { setCategory(c); setPage(0); setMore(false); setItems([]); if (filter) { setBusy(true); setError(''); } else { setError('Selecione a cidade ou ative a localização para ver esta categoria.'); } } }}><Text style={[s.chipText, c === category && s.selectedText]}>{c}</Text></Pressable>)}
     </ScrollView>
     {!filter && <Text style={s.subtitle}>Ative a localização ou informe sua cidade para ver os rolês.</Text>}
     {busy && <ActivityIndicator color={colors.blue} accessibilityLabel="Carregando rolês" />}<Message text={error} />

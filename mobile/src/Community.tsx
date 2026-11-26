@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { request, ApiError } from './api';
 import { useAuth } from './AuthContext';
@@ -32,25 +32,25 @@ export function FollowButton({ token, id }: { token: string; id: string }) {
   const remote = useSocialResource<{ seguindo: boolean }>(path, token);
   const action = useAction(token, remote.generation);
   return <View style={{ gap: 8 }}><Message text={remote.error || action.message} />
-    <Button title={remote.data?.seguindo ? 'Deixar de acompanhar' : 'Acompanhar passeios'} secondary disabled={!remote.data || remote.loading} busy={action.busy} onPress={() => { void action.run(path, remote.data?.seguindo ? 'DELETE' : 'PUT', undefined, remote.reload); }} />
+    <Button title={remote.data?.seguindo ? 'Seguindo' : 'Seguir'} secondary disabled={!remote.data || remote.loading} busy={action.busy} onPress={() => { void action.run(path, remote.data?.seguindo ? 'DELETE' : 'PUT', undefined, remote.reload); }} />
   </View>;
 }
 export function CommunityFeed({ token }: { token: string }) {
   const [following, setFollowing] = useState(false), [pages, setPages] = useState<number[]>([0]);
   const after = pages[pages.length - 1];
   const remote = useSocialResource<Feed>(`/comunidade/feed?seguindo=${following}${after ? `&apos=${after}` : ''}`, token);
-  return <ScrollView contentContainerStyle={s.content}>
-    <Text style={s.title}>Passeios da comunidade</Text><Text style={s.subtitle}>Inspire-se e monte sua própria versão.</Text>
-    <View style={{ flexDirection: 'row', gap: 8 }}><Button title="Todos" secondary={following} onPress={() => { setFollowing(false); setPages([0]); }} /><Button title="Acompanhando" secondary={!following} onPress={() => { setFollowing(true); setPages([0]); }} /></View>
+  return <ScrollView contentContainerStyle={s.content} refreshControl={<RefreshControl refreshing={remote.loading} onRefresh={remote.reload} tintColor="#4386FF" />}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={s.title}>Feed</Text><Pressable accessibilityRole="button" onPress={() => router.push('/people')} style={{ padding: 12 }}><Text style={s.label}>Pessoas</Text></Pressable></View>
+    <View style={{ flexDirection: 'row', gap: 8 }}><Button title="Todos" secondary={following} onPress={() => { setFollowing(false); setPages([0]); }} /><Button title="Seguindo" secondary={!following} onPress={() => { setFollowing(true); setPages([0]); }} /></View>
     <Message text={remote.error} />{remote.loading && <Text style={s.small}>Carregando passeios…</Text>}
     {remote.data?.itens.map(item => <View key={item.id} style={[s.secondary, { padding: 18, borderRadius: 18, gap: 10 }]}>
-      <Text style={s.cardTitle}>{item.titulo}</Text><Text style={s.small}>Por {item.autor.nome} · {item.cidade} · {item.paradas} paradas</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Ver perfil de ${item.autor.nome}`} onPress={() => router.push({ pathname: '/people/[id]', params: { id: item.autor.id } })}><Text style={s.label}>{item.autor.nome} ↗</Text></Pressable><Text style={s.cardTitle}>{item.titulo}</Text><Text style={s.small}>{item.cidade} · {item.paradas} paradas</Text>
       <Button title="Conhecer passeio" secondary onPress={() => router.push({ pathname: '/publications/[id]', params: { id: item.id } })} />
     </View>)}
     {remote.data?.itens.length === 0 && <Text style={s.text}>{following ? 'Ainda não há passeios públicos das pessoas que você acompanha.' : 'Ainda não há passeios publicados. Compartilhe um em Meus rolês.'}</Text>}
     {!!remote.data?.proximo && <Button title="Mais passeios" secondary onPress={() => setPages([...pages, remote.data!.proximo!])} />}
     {pages.length > 1 && <Button title="Página anterior" secondary onPress={() => setPages(pages.slice(0, -1))} />}
-    <Button title="Conhecer pessoas" secondary onPress={() => router.push('/people')} /><Button title="Atualizar" secondary disabled={remote.loading} onPress={remote.reload} />
+
   </ScrollView>;
 }
 export function TextsScreen({ token, type, target }: { token: string; type: 'COMENTARIO' | 'AVALIACAO'; target: string }) {

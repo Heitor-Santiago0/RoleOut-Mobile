@@ -579,7 +579,7 @@
           },
           "senha": {
             "type": "string",
-            "minLength": 12,
+            "minLength": 6,
             "maxLength": 128
           }
         }
@@ -598,7 +598,7 @@
           },
           "senha": {
             "type": "string",
-            "minLength": 12,
+            "minLength": 6,
             "maxLength": 128
           }
         }

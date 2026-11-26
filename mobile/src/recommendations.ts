@@ -7,6 +7,7 @@ type Candidate = { caracteristicas?: Characteristics | null; id: number; categor
 const normalized = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 const activityCategories: Record<string, string[]> = {
   'Música ao vivo': ['musica'], Cinema: ['cinema', 'cultura'], Museus: ['museu', 'museus', 'cultura'],
+  Teatro: ['cultura'], Dança: ['cultura', 'musica'], Fotografia: ['cultura', 'natureza'], 'História e patrimônio': ['historia', 'cultura'], Ciência: ['ciencia'], 'Feiras e artesanato': ['compras', 'cultura'], Jogos: ['jogos', 'lazer'], 'Bem-estar': ['bem-estar'], 'Turismo religioso': ['turismo religioso'], Trilhas: ['natureza'], Compras: ['compras'],
   Gastronomia: ['gastronomia'], 'Passeios ao ar livre': ['natureza'], Esportes: ['esporte', 'esportes'],
 };
 
