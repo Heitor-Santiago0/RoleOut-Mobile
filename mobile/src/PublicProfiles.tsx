@@ -1,3 +1,4 @@
+import { FollowButton } from './Community';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
@@ -5,6 +6,7 @@ import { Button, Message } from './ui';
 import { styles as s } from './theme';
 import { useSocialResource } from './useSocialResource';
 import type { ProfilePage, PublicProfile } from './socialProfile';
+import { PublicationsList } from './Publications';
 
 function ProfileCard({ profile }: { profile: PublicProfile }) {
   return <View style={[s.secondary, { padding: 20, borderRadius: 18, gap: 12 }]}>
@@ -19,7 +21,8 @@ export function PublicProfileScreen({ token, id }: { token: string; id: string }
     <Text style={s.title}>Perfil público</Text>
     {remote.loading && <Text style={s.small}>Carregando perfil…</Text>}
     <Message text={remote.error} />
-    {remote.data && <ProfileCard profile={remote.data} />}
+    {remote.data && <><ProfileCard profile={remote.data} /><FollowButton token={token} id={id} /></>}
+    {remote.data && <PublicationsList key={remote.data.id} token={token} author={remote.data.id} />}
     {!!remote.error && <Button title="Tentar novamente" secondary onPress={remote.reload} />}
   </ScrollView>;
 }

@@ -42,6 +42,7 @@ export function DetailScreen({ selected, demo, token }: { selected: Role | { id:
         }
         router.replace('/organize');
       }} />
+      {token && !demo && <Button title="Avaliações de visitantes" secondary onPress={() => router.push({ pathname: '/community-texts', params: { tipo: 'AVALIACAO', alvo: String(role.id) } })} />}
       <Message text={selectionError} />
       {!!selectionError && <Button title="Revisar paradas em Organizar rolê" secondary onPress={() => router.push('/organize')} />}
       <Text style={s.small}>Adicionar não faz reserva nem compra ingresso. As escolhas ficam nesta sessão até você salvar o roteiro na conta.</Text>

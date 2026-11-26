@@ -1,5 +1,7 @@
 # Perfis públicos — primeira entrega social
 
+Atualização de 19/11/2026: [publicação de roteiros com fotos e relatos](publicacoes-roteiros.md) já implementada localmente. O restante desta página registra a entrega original de perfis.
+
 Implementação local de 22/10/2026. A publicação de fotos e roteiros, feed, comentários, seguir pessoas e Copiar rolê serão entregas posteriores. Este fluxo estabelece a identidade pública com privacidade explícita.
 
 ## Fluxo no aplicativo

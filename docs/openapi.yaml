@@ -2,10 +2,533 @@ openapi: 3.0.3
 info:
   title: RolêOut API
   version: 1.0.0
-  description: API Java de contas, descoberta, roteiros, aprovação, horários, notificações e perfis. Requer migrações V001 a V027. Consulte trabalho-api-t2.md para o CRUD e a arquitetura.
+  description: API Java de contas, descoberta, roteiros, aprovação, horários, notificações, perfis e publicações. Requer migrações V001 a V029. Consulte trabalho-api-t2.md para o CRUD e publicacoes-roteiros.md para o compartilhamento.
 servers:
   - url: http://127.0.0.1:8082/RoleOut/api/v1
 paths:
+  /comunidade/feed:
+    parameters: []
+    get:
+      summary: Passeios públicos; filtro seguindo=true e cursor apos opcional
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      parameters:
+        - name: seguindo
+          in: query
+          schema:
+            type: boolean
+        - name: apos
+          in: query
+          schema:
+            type: integer
+            format: int64
+  /comunidade/seguir/{perfilId}:
+    parameters:
+      - name: perfilId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Consultar, ativar ou remover acompanhamento privado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+    put:
+      summary: Consultar, ativar ou remover acompanhamento privado
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+    delete:
+      summary: Consultar, ativar ou remover acompanhamento privado
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+  /comunidade/copiar/{publicacaoId}:
+    parameters:
+      - name: publicacaoId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Criar nova cópia privada revalidada e com créditos
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - planejamento
+              properties:
+                planejamento:
+                  type: object
+                  required:
+                    - cidade
+                    - data
+                    - partida
+                    - duracaoMinutos
+                    - pessoas
+                    - orcamentoCentavos
+                    - modoOrcamento
+                    - paradas
+                  properties:
+                    nome:
+                      type: string
+                      maxLength: 200
+                    cidade:
+                      type: string
+                      minLength: 1
+                      maxLength: 150
+                    data:
+                      type: string
+                      format: date
+                    partida:
+                      type: string
+                      example: 14:00
+                    duracaoMinutos:
+                      type: integer
+                      minimum: 60
+                      maximum: 720
+                    pessoas:
+                      type: integer
+                      minimum: 1
+                      maximum: 50
+                    orcamentoCentavos:
+                      type: integer
+                      format: int64
+                      minimum: 0
+                      maximum: 999999999
+                    modoOrcamento:
+                      type: string
+                      enum:
+                        - person
+                        - group
+                    paradas:
+                      type: array
+                      minItems: 1
+                      maxItems: 48
+                      items:
+                        type: object
+                        required:
+                          - roleId
+                          - minutos
+                        properties:
+                          roleId:
+                            type: integer
+                            minimum: 1
+                          minutos:
+                            type: integer
+                            minimum: 15
+                            maximum: 720
+                            multipleOf: 15
+                          horario:
+                            type: string
+                            nullable: true
+                            example: 14:00
+  /comunidade/creditos/{roteiroId}:
+    parameters:
+      - name: roteiroId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Créditos de roteiro, somente proprietário
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+  /comunidade/origem/{publicacaoId}:
+    parameters:
+      - name: publicacaoId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Créditos da origem de publicação visível
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+  /comunidade/textos/{tipo}/{alvo}:
+    parameters:
+      - name: tipo
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - COMENTARIO
+            - AVALIACAO
+      - name: alvo
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Comentários ou avaliações; itens, proximo, total, media
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      parameters:
+        - name: apos
+          in: query
+          schema:
+            type: integer
+            format: int64
+    put:
+      summary: Criar ou atualizar próprio texto; avaliação exige visita concluída
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - texto
+                - nota
+              properties:
+                texto: &a1
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                nota:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  nullable: true
+    delete:
+      summary: Excluir próprio texto visível
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+  /comunidade/denuncias:
+    parameters: []
+    post:
+      summary: Denunciar conteúdo; repetição idempotente
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - tipo
+                - alvo
+                - motivo
+              properties:
+                tipo:
+                  type: string
+                  enum:
+                    - PUBLICACAO
+                    - TEXTO
+                alvo:
+                  type: string
+                motivo: *a1
+    get:
+      summary: Administrador lista até 20 denúncias pendentes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      parameters:
+        - name: apos
+          in: query
+          schema:
+            type: integer
+            format: int64
+  /comunidade/denuncias/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Administrador decide manter ou ocultar
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Consulte docs/comunidade.md para campos e exemplos
+        "400":
+          description: Formato inválido
+        "401":
+          description: Sessão obrigatória
+        "403":
+          description: Sem permissão
+        "404":
+          description: Indisponível
+        "409":
+          description: Conflito de estado, preço ou horário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - ocultar
+                - justificativa
+              properties:
+                ocultar:
+                  type: boolean
+                justificativa: *a1
+  /minhas-publicacoes/{roteiroId}:
+    parameters:
+      - { name: roteiroId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      summary: Ler publicação própria ou editor privado inicial do roteiro
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: 'id, titulo, relato, cidade, paradas, fotos, publico, versao. Inicial usa id null e versao 0.' }
+        '401': { description: Sessão obrigatória }
+        '404': { description: Roteiro inexistente ou de outra conta }
+    put:
+      summary: Salvar rascunho ou publicar com versão; fotos substituem as anteriores
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [id, titulo, relato, publico, versao, fotos]
+              properties:
+                id: { type: string, format: uuid, nullable: true }
+                titulo: { type: string, minLength: 1, maxLength: 120 }
+                relato: { type: string, maxLength: 3000 }
+                publico: { type: boolean }
+                versao: { type: integer, minimum: 0 }
+                fotos:
+                  type: array
+                  maxItems: 3
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [base64, legenda]
+                    properties:
+                      base64: { type: string, format: byte, maxLength: 2796204, description: JPEG ou PNG de até 2 MiB; servidor reencoda sem metadados }
+                      legenda: { type: string, maxLength: 200 }
+      responses:
+        '200': { description: Publicação salva com versão incrementada }
+        '400': { description: Dados ou foto inválidos }
+        '401': { description: Sessão obrigatória }
+        '404': { description: Roteiro inexistente ou de outra conta }
+        '409': { description: Conflito de versão/UUID, perfil privado ou limite de publicações }
+        '413': { description: Corpo maior que 8500000 bytes/caracteres }
+        '415': { description: Envie JSON }
+        '429': { description: Processamento de fotos ocupado }
+    delete:
+      summary: Excluir publicação e fotos, preservando roteiro privado
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersaoPublicacao' }
+      responses:
+        '204': { description: Excluída }
+        '401': { description: Sessão obrigatória }
+        '404': { description: Indisponível ou de outra conta }
+        '409': { description: Versão/UUID desatualizados }
+  /minhas-publicacoes/{roteiroId}/ocultar:
+    parameters:
+      - { name: roteiroId, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    put:
+      summary: Ocultar somente a versão salva, sem alterar texto/fotos
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersaoPublicacao' }
+      responses:
+        '200': { description: Publicação privada com versão incrementada }
+        '401': { description: Sessão obrigatória }
+        '404': { description: Indisponível ou de outra conta }
+        '409': { description: Versão/UUID desatualizados }
+  /publicacoes:
+    get:
+      summary: Passeios compartilhados em um perfil público
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: autor, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: apos, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: 'itens (até 20 resumos sem imagens) e proximo (UUID ou null)' }
+        '400': { description: UUID inválido }
+        '401': { description: Sessão obrigatória }
+        '404': { description: Perfil privado ou inexistente }
+  /publicacoes/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Ler publicação visível com autor, paradas, relato e fotos JPEG sanitizadas
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: 'id, autor, titulo, relato, cidade, paradas e fotos; sem dados privados do planejamento' }
+        '401': { description: Sessão obrigatória }
+        '404': { description: Publicação/perfil privado ou inexistente }
   /auth/cadastro:
     post:
       summary: Criar uma conta (não inicia sessão)
@@ -479,6 +1002,13 @@ components:
           schema:
             $ref: '#/components/schemas/Erro'
   schemas:
+    VersaoPublicacao:
+      type: object
+      additionalProperties: false
+      required: [id, versao]
+      properties:
+        id: { type: string, format: uuid }
+        versao: { type: integer, minimum: 1 }
     RoleCharacteristics:
       type: object
       nullable: true

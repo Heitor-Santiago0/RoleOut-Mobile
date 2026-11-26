@@ -22,6 +22,7 @@ module.exports = ({ config }) => {
     },
     plugins: [
       ...(config.plugins ?? []),
+      ['expo-image-picker', { photosPermission: 'Escolha fotos para compartilhar no seu passeio.', cameraPermission: false, microphonePermission: false }],
       ['expo-notifications', { defaultChannel: 'horarios', color: '#3478F6' }],
       ...(mapsKey ? [['react-native-maps', { androidGoogleMapsApiKey: mapsKey }]] : []),
     ],

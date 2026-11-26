@@ -19,7 +19,13 @@ public class ItineraryService implements br.com.roleout.model.ItineraryData {
     public ItineraryService() { this(new SqlAccess()); }
     public ItineraryService(SqlAccess sql) { this.sql = sql; }
 
-    public Detail create(int account, Input input) {
+    public Detail create(int account, Input input) { return create(account,input,null); }
+    public Detail copy(int account,String publication,Input input) {
+        SocialProfileService.validId(publication);
+        return create(account,input,publication);
+    }
+    private Detail create(int account,Input input,String publication) {
+        if(input==null)throw new IllegalArgumentException("Informe o planejamento da cópia.");
         String city = Inputs.required(input.cidade(), 150);
         String name = Inputs.optional(input.nome(), 200);
         if (name == null) name = "Rolê em " + city;
@@ -49,6 +55,15 @@ public class ItineraryService implements br.com.roleout.model.ItineraryData {
                 var dao = new ItineraryDAO(c);
                 if (!dao.lockAccount(account)) throw missing();
                 if (dao.count(account) >= 100) throw new ApiException(409, "LIMITE_ROTEIROS", "Limite de 100 roteiros salvos nesta conta.");
+                br.com.roleout.model.CommunityData.Credit credit=null;
+                if(publication!=null){
+                    var community=new br.com.roleout.dao.CommunityDAO(c);
+                    var original=new br.com.roleout.dao.PublicationDAO(c).view(publication);
+                    if(original==null||community.blocked("PUBLICACAO",publication))throw new ApiException(404,"PUBLICACAO_INDISPONIVEL","A publicação original não está mais disponível.");
+                    if(input.paradas().stream().noneMatch(p->original.paradas().stream().anyMatch(o->o.roleId()==p.roleId())))throw new IllegalArgumentException("Mantenha ao menos uma parada do passeio original.");
+                    credit=new br.com.roleout.model.CommunityData.Credit(original.id(),original.autor().id(),original.autor().nome(),original.titulo());
+                    var inherited=community.publicCredit(publication);if(inherited!=null)credit=inherited;
+                }
                 List<Stop> stops = new ArrayList<>();
                 var snapshots = new java.util.HashMap<Integer, String>();
                 var openingHours = new java.util.HashMap<Integer, List<OpeningHours.Rule>>();
@@ -91,6 +106,7 @@ public class ItineraryService implements br.com.roleout.model.ItineraryData {
                 if (total > budget) throw new ApiException(409, "ORCAMENTO_EXCEDIDO", "O preço atual das paradas ultrapassa o orçamento. Atualize as opções.");
                 int id=dao.insert(account,name,city,date,input,budget,total);
                 dao.insertStops(id,stops,snapshots);
+                if(credit!=null)new br.com.roleout.dao.CommunityDAO(c).credit(id,credit);
                 Detail saved = find(c, account, id);
                 c.commit();
                 return saved;

@@ -12,7 +12,7 @@ Planeje seu tempo livre, encontre lugares e organize experiências dentro do seu
 ![Java](https://img.shields.io/badge/Java-17-E76F00?style=flat-square)
 ![MySQL](https://img.shields.io/badge/MySQL-8.4-4479A1?style=flat-square)
 
-[Funcionalidades](docs/funcionalidades.md) · [Etapas do projeto](docs/etapas.md) · [Executar o app](mobile/README.md) · [API](docs/openapi.yaml) · [Trabalho T2](docs/trabalho-api-t2.md)
+[Funcionalidades](docs/funcionalidades.md) · [Etapas do projeto](docs/etapas.md) · [Executar o app](mobile/README.md) · [API](docs/openapi.yaml) · [Trabalho T2](docs/trabalho-api-t2.md) · [Checklist da entrega](docs/entrega-final-t2.md)
 
 </div>
 
@@ -26,7 +26,7 @@ Restaurantes, bares, museus, prefeituras e outras organizações podem cadastrar
 
 Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual é validar a experiência completa no Android e preparar uma versão para testes remotos.
 
-> **Estado atual (19/11/2026):** desenvolvimento local com API Java, MySQL e app Android. Descoberta, roteiros, horários e notificações implementados; perfis públicos disponíveis como primeira etapa social. Arquitetura Controller → Service → DAO revisada para o T2. A API ainda não está hospedada para acesso público; testes físicos pendentes estão documentados.
+> **Estado atual (25/11/2026):** desenvolvimento local com API Java, MySQL e app Android. Descoberta, roteiros, horários e notificações implementados; perfis públicos, publicação de roteiros com fotos/relatos, feed, acompanhamento, comentários, avaliações, denúncias/moderação e cópia com créditos implementados. Arquitetura Controller → Service → DAO revisada para o T2. A API ainda não está hospedada para acesso público; testes físicos pendentes estão documentados.
 >
 > **Código atual:** a implementação descrita está na branch [`develop/api-pool`](https://github.com/Heitor-Santiago0/RoleOut-Mobile/tree/develop/api-pool). Use esse link para consultar código e documentação da entrega; a `main` pode conter uma versão anterior.
 
@@ -52,7 +52,7 @@ Este repositório reúne o **aplicativo mobile** e a **API Java**. O foco atual 
 | **Meus locais** | Cadastro de organizações e locais, endereço, acessibilidade, coordenadas e envio para análise. |
 | **Rolês dos locais** | Rascunhos de atividades, edição, envio, acompanhamento e publicação após aprovação. |
 | **Avisos** | Alterações de horários nos roteiros, sugestões automáticas e avisos opcionais em viagens; controles de frequência e permissões. |
-| **Perfis públicos** | Nome/apresentação públicos opcionais, publicação e ocultação; feed e cópia de roteiros ainda previstos. |
+| **Perfis e publicações** | Perfil opcional, roteiros compartilhados com fotos/relatos, prévia, rascunho privado, feed, acompanhamento de autores, comentários, avaliações e cópia privada com créditos/revalidação. |
 | **Administração** | Filas de análise, justificativas, histórico e proteção contra decisões com dados desatualizados. |
 
 Consulte o [catálogo de funcionalidades](docs/funcionalidades.md) para conhecer os fluxos, regras e limitações de cada área. Implementado não significa homologado em todos os dispositivos.
@@ -116,7 +116,7 @@ RoleOut-Mobile/
 │   ├── security/                 Senhas, tokens e limitação de autenticação
 │   ├── dao/                      Acesso aos dados
 │   └── config/                   Pool e ciclo de vida da aplicação
-├── src/main/resources/db/migration/ Scripts SQL V001 a V027
+├── src/main/resources/db/migration/ Scripts SQL V001 a V028
 ├── src/main/webapp/               Interface JSP mantida por compatibilidade
 ├── src/test/                     Testes Java
 ├── scripts/                      Verificação de integração HTTP
@@ -149,7 +149,7 @@ Aguarde a inicialização do MySQL e do Tomcat. A API fica disponível em `http:
 
 O Compose usa volume próprio, não expõe a porta do MySQL e publica o Tomcat apenas no computador local. As credenciais desse ambiente são exclusivamente de desenvolvimento.
 
-> Os scripts **V001 a V027** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
+> Os scripts **V001 a V028** são executados automaticamente somente em um volume novo. Um banco existente exige conferência e aplicação controlada dos scripts faltantes. Reiniciar os containers não aplica novas migrações e não é necessário apagar o volume.
 
 Depois de recompilar o WAR, reinicie o Tomcat para carregar a versão atualizada:
 
@@ -230,7 +230,10 @@ O [roteiro de entregas](docs/etapas.md) detalha o objetivo, a entrega e o crité
 
 | Documento | Conteúdo |
 | :--- | :--- |
-| [Trabalho T2](docs/trabalho-api-t2.md) | Matriz dos requisitos, arquitetura, CRUD e roteiro de apresentação |
+| [Comunidade e cópia](docs/comunidade.md) | Feed, acompanhamento, comentários, avaliações, denúncias e créditos |
+| [Entrega final T2](docs/entrega-final-t2.md) | Evidências do PDF, apresentação e rodada única no celular |
+| [Publicações de roteiros](docs/publicacoes-roteiros.md) | Fotos, relatos, privacidade, API e testes físicos pendentes |
+| [Trabalho T2](docs/trabalho-api-t2.md) · [Checklist da entrega](docs/entrega-final-t2.md) | Matriz dos requisitos, arquitetura, CRUD e roteiro de apresentação |
 | [Funcionalidades](docs/funcionalidades.md) | Jornadas, regras e limites do produto |
 | [Etapas](docs/etapas.md) | Entregas realizadas e próximos critérios de validação |
 | [Aplicativo mobile](mobile/README.md) | Ambiente, execução, mapa e APK Android |

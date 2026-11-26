@@ -1,8 +1,12 @@
 # Documentação técnica
 
+**Atualização 25/11/2026:** [Comunidade e cópia de roteiros](comunidade.md) · [Entrega T2 e checklist único](entrega-final-t2.md). As seções históricas devem ser lidas junto desta atualização.
+
 [← Apresentação do RolêOut](../README.md)
 
 ## Visão atual
+
+- [Publicações com fotos e relatos](publicacoes-roteiros.md).
 
 - [Trabalho T2: arquitetura, CRUD e apresentação](trabalho-api-t2.md).
 

@@ -8,11 +8,11 @@ export const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') ?? '';
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
-export async function request<T>(path: string, options: { method?: string; body?: unknown; token?: string } = {}): Promise<T> {
+export async function request<T>(path: string, options: { method?: string; body?: unknown; token?: string; timeoutMs?: number } = {}): Promise<T> {
   if (!apiUrl) throw new Error('Conexão com o servidor não configurada.');
   if (!__DEV__ && !apiUrl.startsWith('https://')) throw new Error('A conexão precisa usar HTTPS.');
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10000);
+  const timer = setTimeout(() => controller.abort(), Math.min(60000, options.timeoutMs ?? 10000));
   try {
     const response = await fetch(`${apiUrl}${path}`, {
       method: options.method ?? 'GET', signal: controller.signal,
@@ -28,7 +28,7 @@ export async function request<T>(path: string, options: { method?: string; body?
     const body = await response.json().catch(() => null);
     if (!response.ok) throw new ApiError(response.status, body?.mensagem ?? 'Não foi possível concluir a operação.');
     if (body === null) throw new Error('Resposta inválida do servidor.');
-    if (options.token && /^\/roteiros(?:\/|$)/.test(path) && body.roteiro && Array.isArray(body.paradas)) {
+    if (options.token && (/^(?:\/roteiros(?:\/|$)|\/comunidade\/copiar\/)/.test(path)) && body.roteiro && Array.isArray(body.paradas)) {
       // A device-storage failure must not turn a successful server save into a retry/duplicate.
       await offlineItineraries.save(options.token, body as SavedItinerary).catch(() => {});
     }

@@ -1,5 +1,7 @@
 # Funcionalidades do RolêOut
 
+**Atualização 25/11/2026:** [Comunidade e cópia de roteiros](comunidade.md) · [Entrega T2 e checklist único](entrega-final-t2.md). As seções históricas devem ser lidas junto desta atualização.
+
 [← Apresentação do projeto](../README.md) · [Etapas](etapas.md) · [Aplicativo](../mobile/README.md)
 
 Este catálogo descreve a implementação da branch `develop/api-pool`. **Implementado** significa que o fluxo existe no código; a homologação completa em dispositivos continua em andamento.
@@ -144,9 +146,9 @@ Validação no celular pendente: criar um rascunho com início/término, revisar
 | Descoberta sob demanda | Busca por cidade/categoria, proximidade e interesses já existem; sugestões não comprovam que um local esteja aberto agora. |
 | Confiabilidade | Alterações e cancelamentos publicados implementados com revisão e histórico. Próximos passos: intervalos de datas, fusos, funcionamento e exceções. |
 | Roteiros | Já há várias paradas, ordem manual/sugerida, duração, data, hora, quantidade de participantes, orçamento e cópia offline. Falta revalidar roteiros históricos e obter deslocamentos confiáveis. |
-| Alertas personalizados e viagens | Cartão automático no Explorar implementado, com ativação, frequência e controle de outras cidades. Detecção e push de viagens com app fechado ainda pendentes. |
-| Perfis públicos e feed | Ainda não implementados. Planejar privacidade, publicação de fotos/relatos e moderação antes da exposição pública. |
-| Copiar rolê publicado | Ainda não implementado. Deve criar um roteiro independente, guardar autoria e revalidar a nova data. |
+| Alertas personalizados e viagens | Cartão automático no Explorar implementado, com ativação, frequência e controle de outras cidades. Detecção e avisos em viagens implementados localmente; homologação em segundo plano pendente. |
+| Perfis públicos e feed | Implementados com opt-in, fotos/relatos, acompanhamento, comentários e moderação. Ver comunidade.md; uso público exige operação e controles adicionais. |
+| Copiar rolê publicado | Implementado com nova cópia privada, créditos da origem e revalidação de datas, horários e preços. |
 | Avaliações e denúncias | Ainda não implementadas; precisam de regras de elegibilidade, privacidade e moderação. |
 
 ### Alternativas durante a montagem
@@ -205,7 +207,7 @@ O servidor usa a cidade e o endereço do local aprovado. Edição e revisão con
 
 Cancelados saem das listas e recomendações, mas o detalhe por ID mostra o motivo. A API impede adicioná-los a novos roteiros. Roteiros antigos mantêm seus dados e exibem aviso de cancelamento ao consultar online; a cópia offline reflete a última atualização. Direções consultam a situação atual antes de abrir o mapa. Fluxo e validações em [rascunhos-roles.md](rascunhos-roles.md).
 
-**Limites:** sem edição após publicação ou suspensão individual do rolê pela interface atual. Criar um local não cria automaticamente uma atividade no catálogo.
+**Limites:** alterações e cancelamentos passam por nova análise; não há alteração direta sem aprovação. Criar um local não cria automaticamente uma atividade no catálogo.
 
 ## 10. Análise administrativa
 

@@ -1,3 +1,4 @@
+import { ItineraryCredits } from './Community';
 import { ScheduleAlerts } from './ScheduleAlerts';
 import { Fragment, useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
@@ -159,7 +160,7 @@ export function SavedItinerariesScreen({ id }: { id?: number }) {
     </>}
     {!demo && !!offlineMessage && <Text accessibilityRole="alert" style={s.small}>{offlineMessage}</Text>}
     {header && !demo && <>
-      <Text style={s.small}>{offlineLabel(header.id)}</Text>
+      {token && <ItineraryCredits token={token} id={header.id} />}<Text style={s.small}>{offlineLabel(header.id)}</Text>
       <Button title={copyDates?.[header.id] ? 'Atualizar cópia offline' : 'Baixar este roteiro'} secondary busy={downloading} disabled={busy} onPress={() => { void download(header.id); }} />
     </>}
     {id === undefined && !demo && <Text style={s.subtitle}>Veja seus próximos passeios e retome de onde parou.</Text>}
@@ -197,6 +198,7 @@ export function SavedItinerariesScreen({ id }: { id?: number }) {
       })}
     </Fragment>)}
     {header && !error && <>
+      <Button title="Compartilhar passeio" secondary disabled={busy || downloading} onPress={() => router.push({ pathname: '/publish/[id]', params: { id: header.id } })} />
       {editingName ? <View style={{ gap: 12 }}>
         <Field label="Nome do rolê" value={name} onFocus={focusField} setValue={value => { if (!renaming.current) setName(value); }} />
         <Message text={nameError} />

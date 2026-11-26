@@ -14,7 +14,7 @@ O tema é descoberta de lazer e planejamento de passeios. A entidade escolhida p
 | DAO | `dao/ItineraryDAO.java`: consultas parametrizadas, gravação e leitura do MySQL |
 | Model | `model/ItineraryData.java`: dados de entrada e saída; `roteiros` e `roteiro_paradas` no banco |
 | CRUD | POST criar, GET consultar, PUT editar o nome, DELETE excluir; exemplos abaixo |
-| MySQL | MySQL 8.4; migrações versionadas V001–V027; Compose local |
+| MySQL | MySQL 8.4; migrações versionadas V001–V029; Compose local |
 | Organização | Pacotes por responsabilidade, transações, testes de regras e limites entre camadas |
 | Documentação | Este guia, [README](../README.md) e [OpenAPI](openapi.yaml) |
 | GitHub | [Código do projeto](https://github.com/Heitor-Santiago0/RoleOut-Mobile/tree/develop/api-pool) |
@@ -50,7 +50,7 @@ docker compose -f compose.integration.yml up -d
 
 Base: `http://127.0.0.1:8082/RoleOut/api/v1`.
 
-O Compose cria uma base MySQL isolada em volume persistente. V001–V027 são aplicadas automaticamente **somente em uma base nova**. Em uma base existente, confira e aplique apenas migrações faltantes; não apague o volume. Após recompilar, use `docker compose -f compose.integration.yml restart tomcat`.
+O Compose cria uma base MySQL isolada em volume persistente. V001–V029 são aplicadas automaticamente **somente em uma base nova**. Em uma base existente, confira e aplique apenas migrações faltantes; não apague o volume. Após recompilar, use `docker compose -f compose.integration.yml restart tomcat`.
 
 Não é necessário Firebase, APK, Google Maps ou hospedagem para demonstrar o CRUD Java. As credenciais do Compose são fictícias e exclusivas do ambiente local; não use esse ambiente em produção.
 
@@ -116,7 +116,7 @@ O script `node scripts/test-t2-crud.mjs` usa a API local e o MySQL do Compose pa
 
 ## Preservação do aplicativo
 
-A adequação não adiciona um CRUD inseguro de eventos públicos nem remove o fluxo de aprovação. Não muda o esquema do banco, não apaga dados existentes e mantém os endpoints consumidos pelo app. A parte social permanece na base de perfis públicos; feed, publicação de roteiros e “Copiar rolê” não fazem parte desta entrega.
+A adequação não adiciona um CRUD inseguro de eventos públicos nem remove o fluxo de aprovação. A separação de camadas preservou os endpoints e dados. As funcionalidades sociais posteriores adicionam tabelas pelas migrações V028/V029, sem apagar os registros existentes. A parte social foi ampliada após a adequação arquitetural: publicações, feed, comentários, avaliações, denúncias e cópia com revalidação. Consulte [comunidade](comunidade.md) e [checklist da entrega](entrega-final-t2.md). Essas melhorias não são exigidas pelo PDF.
 
 Após a reorganização, validar no celular: login; Explorar/mapa; salvar, renomear e excluir roteiro; verificação de horários; aprovação de cadastros; registro e recebimento de notificações. Os testes automatizados não substituem essa rodada física.
 
@@ -126,3 +126,12 @@ Após a reorganização, validar no celular: login; Explorar/mapa; salvar, renom
 - 90 testes móveis aprovados; checagem TypeScript e lint sem erros.
 - CRUD HTTP com MySQL 8.4 aprovado: criar, listar, consultar, renomear, concluir parada e excluir; isolamento entre contas, nome inválido, orçamento insuficiente e ausência de gravação parcial. Fixtures removidas ao final.
 - Nenhuma nova migração ou remoção de dados existentes. Testes no celular não executados nesta entrega.
+
+
+## Validação consolidada — 26/11/2026
+
+- 179 testes Java aprovados, incluindo autenticação, arquitetura e regras sociais.
+- 95 testes móveis aprovados; TypeScript e lint sem erros; bundle Android exportado (1.608 módulos).
+- CRUD T2, publicação com foto e comunidade/cópia aprovados por HTTP com MySQL real.
+- Mantidos 32 cadastros, 12 roteiros e 22 rolês; registros temporários dos testes removidos.
+- Testes no aparelho ainda não realizados nesta consolidação. O checklist acima não foi marcado como concluído.

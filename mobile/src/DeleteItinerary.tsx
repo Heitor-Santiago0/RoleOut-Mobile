@@ -33,7 +33,7 @@ export function DeleteItinerary({ id, name, token }: { id: number; name: string;
   }
   return <View>{confirming ? <>
     <Text style={s.cardTitle}>Excluir “{name}”?</Text>
-    <Text style={s.text}>O roteiro e suas paradas salvas serão removidos da sua conta. Essa ação não pode ser desfeita.</Text>
+    <Text style={s.text}>O roteiro, suas paradas e a publicação desse passeio (se houver) serão removidos da sua conta. Essa ação não pode ser desfeita.</Text>
     <Message text={error} />
     <Button title="Cancelar exclusão" secondary disabled={busy} onPress={() => { setConfirming(false); setError(''); }} />
     <Button title="Confirmar exclusão" busy={busy} onPress={remove} />

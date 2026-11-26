@@ -116,3 +116,17 @@ Próxima entrega prevista: publicação voluntária de roteiros com relato e pri
 Concluída separação Controller → Service → DAO na API: consultas e mapeamento no DAO, regras/autorização/transações no Service, transporte HTTP nos Servlets. Modelos compartilhados e vocabulário de preferências em `model/`. Sem migração nova, mudança de endpoint ou remoção de dados. Parte social permanece pausada nesta etapa.
 
 [Guia do trabalho](trabalho-api-t2.md): requisitos, CRUD de roteiros, execução, apresentação e pendências da dupla. Validação: suíte Java, teste de limites entre camadas e CRUD HTTP com MySQL real, incluindo isolamento entre contas e limpeza das fixtures. Testes no celular continuam pendentes: login, Explorar, roteiro/renomeação/exclusão, revisão de horários, aprovação e notificações. As entradas anteriores são registros históricos, não o estado final de todas as funcionalidades.
+
+
+## Publicações com fotos e relatos — 19/11/2026
+
+Implementada publicação explícita a partir de roteiro próprio: rascunho privado, até três fotos/legendas, relato, prévia, perfil público obrigatório, consulta por outra conta, edição, ocultação e exclusão independente. Snapshot preserva o planejamento privado; fotos validadas/reencodadas sem metadados. V028 adiciona duas tabelas sem alterar cadastros existentes. 168 testes Java, 93 móveis, TypeScript/lint e integração HTTP/MySQL aprovados; bundle Android exportado. Novo APK necessário para o seletor de fotos; todos os testes físicos permanecem anotados em [publicações](publicacoes-roteiros.md).
+
+Próximas frentes: feed e interações, controles de denúncia/moderação, Copiar rolê com revalidação. Não há hospedagem pública nesta entrega.
+
+
+## Consolidação acadêmica e comunidade — 25/11/2026
+
+Implementados feed público/seguindo, acompanhamento privado de autores, comentários editáveis por autoria, avaliações de visitas autodeclaradas concluídas, denúncias e moderação administrativa. Copiar rolê cria um novo roteiro privado na conta do usuário, personalizável, com revalidação de datas/horários/preços e créditos da origem; não altera o roteiro do autor. V029 adiciona tabelas sem excluir registros. Ver [comunidade](comunidade.md).
+
+PDF T2 original revisado: Java, MVC/Controller-Service-DAO, MySQL, CRUD, documentação, GitHub e apresentação. [Checklist consolidado](entrega-final-t2.md) reúne a validação física pendente e os passos de entrega. Hospedagem e produção pública permanecem fora desta entrega local.
