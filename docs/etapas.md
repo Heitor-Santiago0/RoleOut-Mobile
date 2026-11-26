@@ -142,3 +142,7 @@ Após confirmar o funcionamento da atualização de perfil, feed e catálogo no 
 Usuário confirmou instalação e funcionamento do feed com fotos e autorizou seguir. Implementados Esqueci minha senha, fila persistente de envio por e-mail, código de 15 minutos/uso único, limites de pedidos, nova senha e revogação das sessões anteriores. V031 aplicada apenas localmente, preservando dados; SMTP de teste capturado no Mailpit, sem entrega externa.
 
 200 testes Java, 98 mobile, TypeScript, lint de `src/`, exportação Android e integração HTTP/MySQL/SMTP aprovados. [Entrega, configuração e testes físicos pendentes](recuperacao-senha.md). Online permanece na versão do feed: falta configurar remetente SMTP, migrar/publicar a API e gerar APK para recuperação. Nenhum provedor de e-mail foi contratado ou credencial real adicionada.
+
+## Recuperação online com Brevo — 26/11/2026
+
+Integração HTTPS publicada no Railway, sem mudança de plano, com remetente verificado e credencial somente no servidor. V031 aplicada preservando 33 contas, 12 roteiros e 25 rolês. 203 testes Java aprovados; endpoints online conferidos sem alterar senhas reais. Brevo confirmou entrega do e-mail de configuração ao próprio remetente. [Detalhes](recuperacao-senha.md). Próxima validação: novo APK e fluxo completo de recuperação no celular; envio direto de teste não substitui esse teste ponta a ponta.

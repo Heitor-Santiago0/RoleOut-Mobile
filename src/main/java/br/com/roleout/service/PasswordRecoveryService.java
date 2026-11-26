@@ -9,7 +9,7 @@ import java.util.*;
 
 public final class PasswordRecoveryService implements PasswordRecoveryData {
     private final SqlAccess sql;private final RecoveryMail mail;private final Clock clock;
-    public PasswordRecoveryService(){this(new SqlAccess(),new SmtpRecoveryMail(),Clock.systemUTC());}
+    public PasswordRecoveryService(){this(new SqlAccess(),RecoveryMailProvider.configured(System.getenv()),Clock.systemUTC());}
     public PasswordRecoveryService(SqlAccess sql,RecoveryMail mail,Clock clock){this.sql=sql;this.mail=mail;this.clock=clock;}
     public boolean enabled(){return mail.enabled();}
     private interface Action<T>{T run(Connection c)throws SQLException;}

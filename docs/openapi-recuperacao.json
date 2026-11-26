@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
-  "info": {"title": "RolêOut - Recuperação de senha", "version": "1.0.0", "description": "Requer V031 e SMTP configurado. Implementação local; ainda não ativada online."},
-  "servers": [{"url": "http://127.0.0.1:8082/RoleOut/api/v1"}],
+  "info": {"title": "RolêOut - Recuperação de senha", "version": "1.1.0", "description": "Requer V031 e envio configurado: Brevo HTTPS em produção ou SMTP no ambiente local."},
+  "servers": [{"url": "https://roleout-api-production.up.railway.app/RoleOut/api/v1"}, {"url": "http://127.0.0.1:8082/RoleOut/api/v1"}],
   "paths": {
     "/auth/recuperacao": {"post": {
       "operationId": "solicitarRecuperacao", "security": [],
